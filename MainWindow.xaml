@@ -84,9 +84,11 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Button Grid.Column="0" Click="BtnRun_Click">运行</Button>
-                    <Button Grid.Column="1" Click="BtnStop_Click">停止</Button>
+                    <Button Grid.Column="1" Click="BtnSetZero_Click">置零</Button>
+                    <Button Grid.Column="2" Click="BtnStop_Click">停止</Button>
                 </Grid>
             </StackPanel>
         </GroupBox>

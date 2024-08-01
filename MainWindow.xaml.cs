@@ -43,29 +43,6 @@ namespace DOF5RobotControl
         internal static partial int TestDll();
     }
 
-    //internal static class D5RControl
-    //{
-    //    internal struct Joints
-    //    {
-    //        public int r1;
-    //        public int p2;
-    //        public int p3;
-    //        public int p4;
-    //        public int r5;
-    //    };
-
-    //    [DllImport("libDOF5RobotControl.dll", CharSet = CharSet.Auto)]
-    //    internal static extern int D5R_Init();
-    //    [DllImport("libDOF5RobotControl.dll", CharSet = CharSet.Auto)]
-    //    internal static extern int D5R_DeInit();
-    //    [DllImport("libDOF5RobotControl.dll", CharSet = CharSet.Auto)]
-    //    internal static extern int D5R_Stop();
-    //    [DllImport("libDOF5RobotControl.dll", CharSet = CharSet.Auto)]
-    //    internal static extern int D5R_JointsControl(Joints j);
-    //    [DllImport("libDOF5RobotControl.dll", CharSet = CharSet.Auto)]
-    //    internal static extern int D5R_Test(int x);
-    //}
-
     internal static partial class D5RControl
     {
         internal struct Joints
@@ -77,12 +54,14 @@ namespace DOF5RobotControl
             public int r5;
         };
 
-        [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_Init")]
-        internal static partial int Init();
+        [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_Init", StringMarshalling = StringMarshalling.Utf8)]
+        internal static partial int Init(string RMDSerialPort);
         [LibraryImport ("libDOF5RobotControl.dll", EntryPoint = "D5R_DeInit")]
         internal static partial int DeInit();
         [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_Stop")]
         internal static partial int Stop();
+        [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_SetZero")]
+        internal static partial int SetZero(int r1 = 0, int p2 = 0, int p3 = 0, int p4 = 0, int r5 = 0);
         [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_JointsControl")]
         internal static partial int JointsControl(Joints j);
         [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_Test")]
@@ -182,7 +161,12 @@ namespace DOF5RobotControl
                 //readTaskCancelToken = readTaskCancelSource.Token;
                 //readTask = new Task(() => ReadSerial(), readTaskCancelToken, TaskCreationOptions.LongRunning);
                 //readTask.Start();
-                D5RControl.Init();
+                int result = D5RControl.Init(portBox.Text);
+                if(result != 0)
+                {
+                    MessageBox.Show($"Initialize error: {result}");
+                    return;
+                }
                 isConnected = true;
 
                 // UI 处理
@@ -254,6 +238,15 @@ namespace DOF5RobotControl
             if (result != 0)
             {
                 throw new Exception("Robot stop error.");
+            }
+        }
+
+        private void BtnSetZero_Click(object sender, RoutedEventArgs e)
+        {
+            int result = D5RControl.SetZero();
+            if (result != 0)
+            {
+                MessageBox.Show($"Set zero error: {result}.");
             }
         }
     }
