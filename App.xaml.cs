@@ -2,7 +2,7 @@
 using System.Data;
 using System.Windows;
 
-namespace DOF5RobotControl
+namespace DOF5RobotControl_GUI
 {
     /// <summary>
     /// Interaction logic for App.xaml

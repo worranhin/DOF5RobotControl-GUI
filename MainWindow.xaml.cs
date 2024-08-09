@@ -11,7 +11,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace DOF5RobotControl
+namespace DOF5RobotControl_GUI
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -79,7 +79,7 @@ namespace DOF5RobotControl
 
         [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_Init")]
         internal static partial int Init();
-        [LibraryImport ("libDOF5RobotControl.dll", EntryPoint = "D5R_DeInit")]
+        [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_DeInit")]
         internal static partial int DeInit();
         [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_Stop")]
         internal static partial int Stop();
@@ -182,7 +182,15 @@ namespace DOF5RobotControl
                 //readTaskCancelToken = readTaskCancelSource.Token;
                 //readTask = new Task(() => ReadSerial(), readTaskCancelToken, TaskCreationOptions.LongRunning);
                 //readTask.Start();
-                D5RControl.Init();
+                try
+                {
+                    int result = D5RControl.Init();
+
+                }
+                catch (AggregateException except)
+                {
+                    MessageBox.Show(("Init Error:" + except.Message));
+                }
                 isConnected = true;
 
                 // UI 处理
@@ -244,7 +252,8 @@ namespace DOF5RobotControl
             int result = D5RControl.JointsControl(j);
             if (result != 0)
             {
-                throw new Exception("Joints control error.");
+                //throw new Exception("Joints control error.");
+                MessageBox.Show("Joints control error.");
             }
         }
 
@@ -253,7 +262,8 @@ namespace DOF5RobotControl
             int result = D5RControl.Stop();
             if (result != 0)
             {
-                throw new Exception("Robot stop error.");
+                //throw new Exception("Robot stop error.");
+                MessageBox.Show("Robot stop error.");
             }
         }
     }
