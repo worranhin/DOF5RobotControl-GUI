@@ -19,6 +19,21 @@
         </Style>
     </Window.Resources>
     <StackPanel>
+        <DockPanel xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+       xmlns:c="clr-namespace:DOF5RobotControl_GUI">
+            <DockPanel.Resources>
+                <c:MyData x:Key="myDataSource"/>
+            </DockPanel.Resources>
+            <DockPanel.DataContext>
+                <Binding Source="{StaticResource myDataSource}"/>
+            </DockPanel.DataContext>
+            <Button Background="{Binding Path=ColorName}"
+        Width="150" Height="30">
+                I am bound to be RED!
+            </Button>
+        </DockPanel>
+
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="auto"/>
@@ -44,18 +59,20 @@
                 <Button x:Name="btnConnect" Click="BtnConnect_Click" Margin="5,0,0,0">连接</Button>
             </StackPanel>
         </Grid>
+        <GroupBox Header="预存点位" Margin="0,8,0,0">
+            <UniformGrid Columns="4">
+                <Button Click="BtnIdlePos_Click">待机位</Button>
+                <Button Click="BtnPreChangeJawPos_Click">换夹钳预备位</Button>
+                <Button Click="BtnChangeJawPos_Click">换夹钳位</Button>
+                <Button Click="BtnPreFetchRingPos_Click">取零件环预备位</Button>
+                <Button Click="BtnFetchRingPos_Click">取零件环位</Button>
+                <Button Click="BtnAssemblePos1_Click">装配位1</Button>
+                <Button Click="BtnAssemblePos2_Click">装配位2</Button>
+                <Button Click="BtnAssemblePos3_Click">装配位3</Button>
+            </UniformGrid>
+        </GroupBox>
         <GroupBox Header="关节控制" Margin="0,8,0,0">
-            <StackPanel>
-                <UniformGrid Columns="4">
-                    <Button Click="BtnIdlePos_Click">待机位</Button>
-                    <Button Click="BtnPreChangeJawPos_Click">换夹钳预备位</Button>
-                    <Button Click="BtnChangeJawPos_Click">换夹钳位</Button>
-                    <Button Click="BtnPreFetchRingPos_Click">取零件环预备位</Button>
-                    <Button Click="BtnFetchRingPos_Click">取零件环位</Button>
-                    <Button Click="BtnAssemblePos1_Click">装配位1</Button>
-                    <Button Click="BtnAssemblePos2_Click">装配位2</Button>
-                    <Button Click="BtnAssemblePos3_Click">装配位3</Button>
-                </UniformGrid>
+            <StackPanel>                
                 <Grid Margin="0,8,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="auto"/>
@@ -69,6 +86,10 @@
                         <ColumnDefinition Width="auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                    </Grid.RowDefinitions>
                     <Label Grid.Column="0" Target="{Binding ElementName=JointValueR1}">r1</Label>
                     <TextBox Grid.Column="1" x:Name="JointValueR1"></TextBox>
                     <Label Grid.Column="2" Target="{Binding ElementName=JointValueP2}">p2</Label>
@@ -79,16 +100,87 @@
                     <TextBox Grid.Column="7" x:Name="JointValueP4"></TextBox>
                     <Label Grid.Column="8" Target="{Binding ElementName=JointValueR5}">r5</Label>
                     <TextBox Grid.Column="9" x:Name="JointValueR5"></TextBox>
+                    <UniformGrid Grid.Column="1" Grid.Row="1" Rows="1">
+                        <Button>Jog-</Button>
+                        <Button>Jog+</Button>
+                    </UniformGrid>
+                    <UniformGrid Grid.Column="3" Grid.Row="1" Rows="1">
+                        <Button>Jog-</Button>
+                        <Button>Jog+</Button>
+                    </UniformGrid>
+                    <UniformGrid Grid.Column="5" Grid.Row="1" Rows="1">
+                        <Button>Jog-</Button>
+                        <Button>Jog+</Button>
+                    </UniformGrid>
+                    <UniformGrid Grid.Column="7" Grid.Row="1" Rows="1">
+                        <Button>Jog-</Button>
+                        <Button>Jog+</Button>
+                    </UniformGrid>
+                    <UniformGrid Grid.Column="9" Grid.Row="1" Rows="1">
+                        <Button>Jog-</Button>
+                        <Button>Jog+</Button>
+                    </UniformGrid>
                 </Grid>
-                <Grid Margin="0,8,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Button Grid.Column="0" Click="BtnRun_Click">运行</Button>
-                    <Button Grid.Column="1" Click="BtnStop_Click">停止</Button>
-                </Grid>
+                
             </StackPanel>
         </GroupBox>
+        <GroupBox Header="位姿控制">
+            <Grid Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                </Grid.RowDefinitions>
+                <Label Grid.Column="0" Target="{Binding ElementName=PosValueX}">px</Label>
+                <TextBox Grid.Column="1" x:Name="PosValueX"></TextBox>
+                <Label Grid.Column="2" Target="{Binding ElementName=PosValueY}">py</Label>
+                <TextBox Grid.Column="3" x:Name="PosValueY"></TextBox>
+                <Label Grid.Column="4" Target="{Binding ElementName=PosValueZ}">pz</Label>
+                <TextBox Grid.Column="5" x:Name="PosValueZ"></TextBox>
+                <Label Grid.Column="6" Target="{Binding ElementName=PosValueRy}">ry</Label>
+                <TextBox Grid.Column="7" x:Name="PosValueRy"></TextBox>
+                <Label Grid.Column="8" Target="{Binding ElementName=PosValueRz}">rz</Label>
+                <TextBox Grid.Column="9" x:Name="PosValueRz"></TextBox>
+                <UniformGrid Grid.Column="1" Grid.Row="1" Rows="1">
+                    <Button>Jog-</Button>
+                    <Button>Jog+</Button>
+                </UniformGrid>
+                <UniformGrid Grid.Column="3" Grid.Row="1" Rows="1">
+                    <Button>Jog-</Button>
+                    <Button>Jog+</Button>
+                </UniformGrid>
+                <UniformGrid Grid.Column="5" Grid.Row="1" Rows="1">
+                    <Button>Jog-</Button>
+                    <Button>Jog+</Button>
+                </UniformGrid>
+                <UniformGrid Grid.Column="7" Grid.Row="1" Rows="1">
+                    <Button>Jog-</Button>
+                    <Button>Jog+</Button>
+                </UniformGrid>
+                <UniformGrid Grid.Column="9" Grid.Row="1" Rows="1">
+                    <Button>Jog-</Button>
+                    <Button>Jog+</Button>
+                </UniformGrid>
+            </Grid>
+        </GroupBox>
+        <Grid Margin="0,8,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Click="BtnRun_Click">运行</Button>
+            <Button Grid.Column="1" Click="BtnStop_Click">停止</Button>
+        </Grid>
     </StackPanel>
 </Window>
