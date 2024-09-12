@@ -36,13 +36,6 @@ namespace DOF5RobotControl
         }
     };
 
-    internal partial class TestDllMethods
-    {
-        //[DllImport("TestDll.dll", CharSet = CharSet.Auto)]
-        [LibraryImport("TestDll.dll")]
-        internal static partial int TestDll();
-    }
-
     internal static partial class D5RControl
     {
         internal struct Joints
