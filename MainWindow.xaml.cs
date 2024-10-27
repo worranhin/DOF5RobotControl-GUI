@@ -209,6 +209,8 @@ namespace DOF5RobotControl_GUI
             }
         }
 
+        // 点位设置按钮回调 //
+
         private void BtnIdlePos_Click(object sender, RoutedEventArgs e)
         {
             UpdateJointControlTextBox(IdlePos);
