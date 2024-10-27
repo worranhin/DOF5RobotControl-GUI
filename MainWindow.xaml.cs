@@ -165,11 +165,11 @@ namespace DOF5RobotControl_GUI
                 {
                     //readTask.Wait(2000);
                 }
-                catch (AggregateException except)
+                catch (AggregateException)
                 {
                     //DebugMessage($"{nameof(AggregateException)} thrown with message: {except.Message}\n");
                 }
-                catch (OperationCanceledException except)
+                catch (OperationCanceledException)
                 {
                     //DebugMessage($"{nameof(OperationCanceledException)} thrown with message: {except.Message}\n");
                 }
@@ -415,6 +415,12 @@ namespace DOF5RobotControl_GUI
         private void BtnR5JogUp_P(object sender, MouseButtonEventArgs e)
         {
             jogHandler.StopJogging();
+        }
+
+        private void BtnOpenManualControl_Click(object sender, RoutedEventArgs e)
+        {
+            ManualControlWindow window = new ManualControlWindow();
+            window.Show();
         }
     }
 }

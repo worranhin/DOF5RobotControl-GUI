@@ -8,6 +8,6 @@ namespace DOF5RobotControl_GUI
 {
     internal class JointPosition
     {
-        public string ColorName { get; set; }
+        public string ColorName { get; set; } = "Red";
     }
 }
