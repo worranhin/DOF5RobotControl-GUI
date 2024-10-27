@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <None Update="libDOF5RobotControl.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="TestDll.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

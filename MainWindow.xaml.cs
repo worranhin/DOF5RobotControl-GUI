@@ -83,12 +83,14 @@ namespace DOF5RobotControl_GUI
             public int R5 = r5;
         };
 
-        [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_Init")]
-        internal static partial int Init();
+        [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_Init", StringMarshalling = StringMarshalling.Utf8)]
+        internal static partial int Init(string RMDSerialPort);
         [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_DeInit")]
         internal static partial int DeInit();
         [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_Stop")]
         internal static partial int Stop();
+        [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_SetZero")]
+        internal static partial int SetZero(int r1 = 0, int p2 = 0, int p3 = 0, int p4 = 0, int r5 = 0);
         [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_JointsMoveAbsolute")]
         internal static partial int JointsMoveAbsolute(Joints j);
         [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_JointsMoveRelative")]
@@ -191,14 +193,11 @@ namespace DOF5RobotControl_GUI
                 //readTaskCancelToken = readTaskCancelSource.Token;
                 //readTask = new Task(() => ReadSerial(), readTaskCancelToken, TaskCreationOptions.LongRunning);
                 //readTask.Start();
-                try
+                int result = D5RControl.Init(portBox.Text);
+                if(result != 0)
                 {
-                    int result = D5RControl.Init();
-
-                }
-                catch (AggregateException except)
-                {
-                    MessageBox.Show(("Init Error:" + except.Message));
+                    MessageBox.Show($"Initialize error: {result}");
+                    return;
                 }
                 isConnected = true;
 
@@ -273,6 +272,15 @@ namespace DOF5RobotControl_GUI
             {
                 //throw new Exception("Robot stop error.");
                 MessageBox.Show("Robot stop error.");
+            }
+        }
+
+        private void BtnSetZero_Click(object sender, RoutedEventArgs e)
+        {
+            int result = D5RControl.SetZero();
+            if (result != 0)
+            {
+                MessageBox.Show($"Set zero error: {result}.");
             }
         }
 
@@ -383,28 +391,28 @@ namespace DOF5RobotControl_GUI
             jogHandler.StopJogging();
         }
 
-        // P5 jogging button callbacks //
+        // R5 jogging button callbacks //
 
-        private void BtnP5JogDown_N(object sender, MouseButtonEventArgs e)
+        private void BtnR5JogDown_N(object sender, MouseButtonEventArgs e)
         {
-            const int deltaP5 = 100;
-            D5RControl.Joints joints = new(0, 0, 0, 0, -deltaP5);
+            const int deltaR5 = 100;
+            D5RControl.Joints joints = new(0, 0, 0, 0, -deltaR5);
             jogHandler.StartJogging(joints);
         }
 
-        private void BtnP5JogUp_N(object sender, MouseButtonEventArgs e)
+        private void BtnR5JogUp_N(object sender, MouseButtonEventArgs e)
         {
             jogHandler.StopJogging();
         }
 
-        private void BtnP5JogDown_P(object sender, MouseButtonEventArgs e)
+        private void BtnR5JogDown_P(object sender, MouseButtonEventArgs e)
         {
-            const int deltaP5 = 100;
-            D5RControl.Joints joints = new(0, 0, 0, 0, deltaP5);
+            const int deltaR5 = 100;
+            D5RControl.Joints joints = new(0, 0, 0, 0, deltaR5);
             jogHandler.StartJogging(joints);
         }
 
-        private void BtnP5JogUp_P(object sender, MouseButtonEventArgs e)
+        private void BtnR5JogUp_P(object sender, MouseButtonEventArgs e)
         {
             jogHandler.StopJogging();
         }
