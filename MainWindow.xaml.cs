@@ -1,7 +1,9 @@
 ﻿using System.ComponentModel;
+using System.Diagnostics;
 using System.IO.Ports;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -20,12 +22,12 @@ namespace DOF5RobotControl_GUI
     /// </summary>
     /// 
 
-    public class MyData: INotifyPropertyChanged
+    public class MyData : INotifyPropertyChanged
     {
         public MyData()
         {
-            _colorName = "Red";
-            ColorName = "Red";
+            _colorName = "Blue";
+            ColorName = "Blue";
         }
 
         private string _colorName;
@@ -42,11 +44,11 @@ namespace DOF5RobotControl_GUI
             }
         }
 
-        
+
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        protected void OnpropertyChanged([CallerMemberName] string propertyName = null)
+        protected void OnpropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
@@ -70,45 +72,15 @@ namespace DOF5RobotControl_GUI
         }
     };
 
-    internal partial class TestDllMethods
-    {
-        //[DllImport("TestDll.dll", CharSet = CharSet.Auto)]
-        [LibraryImport("TestDll.dll")]
-        internal static partial int TestDll();
-    }
-
-    //internal static class D5RControl
-    //{
-    //    internal struct Joints
-    //    {
-    //        public int r1;
-    //        public int p2;
-    //        public int p3;
-    //        public int p4;
-    //        public int r5;
-    //    };
-
-    //    [DllImport("libDOF5RobotControl.dll", CharSet = CharSet.Auto)]
-    //    internal static extern int D5R_Init();
-    //    [DllImport("libDOF5RobotControl.dll", CharSet = CharSet.Auto)]
-    //    internal static extern int D5R_DeInit();
-    //    [DllImport("libDOF5RobotControl.dll", CharSet = CharSet.Auto)]
-    //    internal static extern int D5R_Stop();
-    //    [DllImport("libDOF5RobotControl.dll", CharSet = CharSet.Auto)]
-    //    internal static extern int D5R_JointsControl(Joints j);
-    //    [DllImport("libDOF5RobotControl.dll", CharSet = CharSet.Auto)]
-    //    internal static extern int D5R_Test(int x);
-    //}
-
     internal static partial class D5RControl
     {
-        internal struct Joints
+        internal struct Joints(int r1, int p2, int p3, int p4, int r5)
         {
-            public int r1;
-            public int p2;
-            public int p3;
-            public int p4;
-            public int r5;
+            public int R1 = r1;
+            public int P2 = p2;
+            public int P3 = p3;
+            public int P4 = p4;
+            public int R5 = r5;
         };
 
         [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_Init")]
@@ -117,8 +89,10 @@ namespace DOF5RobotControl_GUI
         internal static partial int DeInit();
         [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_Stop")]
         internal static partial int Stop();
-        [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_JointsControl")]
-        internal static partial int JointsControl(Joints j);
+        [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_JointsMoveAbsolute")]
+        internal static partial int JointsMoveAbsolute(Joints j);
+        [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_JointsMoveRelative")]
+        internal static partial int JointsMoveRelative(Joints j);
         [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_Test")]
         internal static partial int Test(int x);
     }
@@ -149,6 +123,7 @@ namespace DOF5RobotControl_GUI
         private readonly JointsPositon AssemblePos3 = new(0, 0, 7004200, 15275000, 0);
 
         private bool isConnected = false;
+        private JogHandler jogHandler = new();
 
         public MainWindow()
         {
@@ -278,12 +253,12 @@ namespace DOF5RobotControl_GUI
         private void BtnRun_Click(object sender, RoutedEventArgs e)
         {
             D5RControl.Joints j;
-            j.r1 = int.Parse(JointValueR1.Text);
-            j.p2 = int.Parse(JointValueP2.Text);
-            j.p3 = int.Parse(JointValueP3.Text);
-            j.p4 = int.Parse(JointValueP4.Text);
-            j.r5 = int.Parse(JointValueR5.Text);
-            int result = D5RControl.JointsControl(j);
+            j.R1 = int.Parse(JointValueR1.Text);
+            j.P2 = int.Parse(JointValueP2.Text);
+            j.P3 = int.Parse(JointValueP3.Text);
+            j.P4 = int.Parse(JointValueP4.Text);
+            j.R5 = int.Parse(JointValueR5.Text);
+            int result = D5RControl.JointsMoveAbsolute(j);
             if (result != 0)
             {
                 //throw new Exception("Joints control error.");
@@ -299,6 +274,139 @@ namespace DOF5RobotControl_GUI
                 //throw new Exception("Robot stop error.");
                 MessageBox.Show("Robot stop error.");
             }
+        }
+
+        // R1 jogging button callbacks //
+
+        private void BtnR1JogDown_N(object sender, MouseButtonEventArgs e)
+        {
+            //Debug.WriteLine("button down");
+            //jogHandler.TestStartJogging();
+            const int deltaR1 = 100;
+            D5RControl.Joints joints = new(-deltaR1, 0, 0, 0, 0);
+            jogHandler.StartJogging(joints);
+        }
+
+        private void BtnR1JogUp_N(object sender, MouseButtonEventArgs e)
+        {
+            //Debug.WriteLine("button up.");
+            jogHandler.StopJogging();
+        }
+
+        private void BtnR1JogDown_P(object sender, MouseButtonEventArgs e)
+        {
+            const int deltaR1 = 100;
+            D5RControl.Joints joints = new(deltaR1, 0, 0, 0, 0);
+            jogHandler.StartJogging(joints);
+        }
+
+        private void BtnR1JogUp_P(object sender, MouseButtonEventArgs e)
+        {
+            jogHandler.StopJogging();
+        }
+
+        // P2 jogging button callbacks //
+
+        private void BtnP2JogDown_N(object sender, MouseButtonEventArgs e)
+        {
+            const int deltaP2 = 100;
+            D5RControl.Joints joints = new(0, -deltaP2, 0, 0, 0);
+            jogHandler.StartJogging(joints);
+        }
+
+        private void BtnP2JogUp_N(object sender, MouseButtonEventArgs e)
+        {
+            jogHandler.StopJogging();
+        }
+
+        private void BtnP2JogDown_P(object sender, MouseButtonEventArgs e)
+        {
+            const int deltaP2 = 100;
+            D5RControl.Joints joints = new(0, deltaP2, 0, 0, 0);
+            jogHandler.StartJogging(joints);
+        }
+
+        private void BtnP2JogUp_P(object sender, MouseButtonEventArgs e)
+        {
+            jogHandler.StopJogging();
+        }
+
+        // P3 jogging button callbacks //
+
+        private void BtnP3JogDown_N(object sender, MouseButtonEventArgs e)
+        {
+            const int deltaP3 = 100;
+            D5RControl.Joints joints = new(0, 0, -deltaP3, 0, 0);
+            jogHandler.StartJogging(joints);
+        }
+
+        private void BtnP3JogUp_N(object sender, MouseButtonEventArgs e)
+        {
+            jogHandler.StopJogging();
+        }
+
+        private void BtnP3JogDown_P(object sender, MouseButtonEventArgs e)
+        {
+            const int deltaP3 = 100;
+            D5RControl.Joints joints = new(0, 0, deltaP3, 0, 0);
+            jogHandler.StartJogging(joints);
+        }
+
+        private void BtnP3JogUp_P(object sender, MouseButtonEventArgs e)
+        {
+            jogHandler.StopJogging();
+        }
+
+        // P4 jogging button callbacks //
+
+        private void BtnP4JogDown_N(object sender, MouseButtonEventArgs e)
+        {
+            const int deltaP4 = 100;
+            D5RControl.Joints joints = new(0, 0, 0, -deltaP4, 0);
+            jogHandler.StartJogging(joints);
+        }
+
+        private void BtnP4JogUp_N(object sender, MouseButtonEventArgs e)
+        {
+            jogHandler.StopJogging();
+        }
+
+        private void BtnP4JogDown_P(object sender, MouseButtonEventArgs e)
+        {
+            const int deltaP4 = 100;
+            D5RControl.Joints joints = new(0, 0, 0, deltaP4, 0);
+            jogHandler.StartJogging(joints);
+        }
+
+        private void BtnP4JogUp_P(object sender, MouseButtonEventArgs e)
+        {
+            jogHandler.StopJogging();
+        }
+
+        // P5 jogging button callbacks //
+
+        private void BtnP5JogDown_N(object sender, MouseButtonEventArgs e)
+        {
+            const int deltaP5 = 100;
+            D5RControl.Joints joints = new(0, 0, 0, 0, -deltaP5);
+            jogHandler.StartJogging(joints);
+        }
+
+        private void BtnP5JogUp_N(object sender, MouseButtonEventArgs e)
+        {
+            jogHandler.StopJogging();
+        }
+
+        private void BtnP5JogDown_P(object sender, MouseButtonEventArgs e)
+        {
+            const int deltaP5 = 100;
+            D5RControl.Joints joints = new(0, 0, 0, 0, deltaP5);
+            jogHandler.StartJogging(joints);
+        }
+
+        private void BtnP5JogUp_P(object sender, MouseButtonEventArgs e)
+        {
+            jogHandler.StopJogging();
         }
     }
 }
