@@ -74,7 +74,7 @@ namespace DOF5RobotControl_GUI
 
     internal static partial class D5RControl
     {
-        internal struct Joints(int r1, int p2, int p3, int p4, int r5)
+        internal struct Joints(int r1 = 0, int p2 = 0, int p3 = 0, int p4 = 0, int r5 = 0)
         {
             public int R1 = r1;
             public int P2 = p2;
@@ -194,7 +194,7 @@ namespace DOF5RobotControl_GUI
                 //readTask = new Task(() => ReadSerial(), readTaskCancelToken, TaskCreationOptions.LongRunning);
                 //readTask.Start();
                 int result = D5RControl.Init(portBox.Text);
-                if(result != 0)
+                if (result != 0)
                 {
                     MessageBox.Show($"Initialize error: {result}");
                     return;

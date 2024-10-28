@@ -5,6 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DOF5RobotControl_GUI"
         mc:Ignorable="d"
+        KeyDown="Window_KeyDown"
+        KeyUp="Window_KeyUp"
         Title="ManualControlWindow" Height="720" Width="1280"
         FontSize="16">
     <DockPanel Margin="8">

@@ -10,6 +10,8 @@ namespace DOF5RobotControl_GUI
 {
     internal class JogHandler
     {
+        public bool isJogging = false;
+        
         private CancellationTokenSource cancelJoggingSource;
         private CancellationToken cancelJoggingToken;
 
@@ -22,8 +24,7 @@ namespace DOF5RobotControl_GUI
 
         public void StartJogging(D5RControl.Joints joints)
         {
-            cancelJoggingSource = new();  // initialize CancelSource
-            cancelJoggingToken = cancelJoggingSource.Token;
+            isJogging = true;
 
             Task.Run(() =>
             {
@@ -39,14 +40,18 @@ namespace DOF5RobotControl_GUI
                         });
                         break;
                     }
+
+                    Thread.Sleep(100);
                 }
-            });
+
+                cancelJoggingSource = new();  // initialize CancelSource
+                cancelJoggingToken = cancelJoggingSource.Token;
+            }, cancelJoggingToken);
         }
 
         public void TestStartJogging()
         {
-            cancelJoggingSource = new();
-            cancelJoggingToken = cancelJoggingSource.Token;
+            isJogging = true;
 
             Task.Run(() =>
             {
@@ -55,12 +60,16 @@ namespace DOF5RobotControl_GUI
                     Debug.WriteLine("Is jogging...");
                     Thread.Sleep(500);
                 }
+
+                cancelJoggingSource = new();
+                cancelJoggingToken = cancelJoggingSource.Token;
             }, cancelJoggingToken);
         }
 
         public void StopJogging()
         {
             cancelJoggingSource?.Cancel();
+            isJogging = false;
         }
     }
 }
