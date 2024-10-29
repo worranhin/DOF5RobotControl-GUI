@@ -39,6 +39,8 @@ namespace DOF5RobotControl_GUI
                         });
                         break;
                     }
+
+                    Thread.Sleep(20);
                 }
             });
         }
