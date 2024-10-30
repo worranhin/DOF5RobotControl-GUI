@@ -22,56 +22,6 @@ namespace DOF5RobotControl_GUI
     /// </summary>
     /// 
 
-    public class MyData : INotifyPropertyChanged
-    {
-        public MyData()
-        {
-            _colorName = "Blue";
-            ColorName = "Blue";
-        }
-
-        private string _colorName;
-        public string ColorName
-        {
-            get { return _colorName; }
-            set
-            {
-                if (_colorName != value)
-                {
-                    _colorName = value;
-                    OnpropertyChanged();
-                }
-            }
-        }
-
-
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        protected void OnpropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-    }
-
-    public class JointsPositon
-    {
-        public int R1 { get; set; }
-        public int P2 { get; set; }
-        public int P3 { get; set; }
-        public int P4 { get; set; }
-        public int R5 { get; set; }
-
-        public JointsPositon(int r1, int p2, int p3, int p4, int r5)
-        {
-            R1 = r1;
-            P2 = p2;
-            P3 = p3;
-            P4 = p4;
-            R5 = r5;
-        }
-    };
-
     internal static partial class D5RControl
     {
         internal struct Joints(int r1 = 0, int p2 = 0, int p3 = 0, int p4 = 0, int r5 = 0)
@@ -99,8 +49,6 @@ namespace DOF5RobotControl_GUI
         internal static partial int Test(int x);
     }
 
-
-
     public partial class MainWindow : Window
     {
         //const Joints BeforeChangeJawPos1 = { 0, 5000000, -5000000, -15184980, 0 };
@@ -114,7 +62,7 @@ namespace DOF5RobotControl_GUI
         //const Joints AssemblePos3 = { 0, 0, 7004200, 15275000, 0 };
         //const Joints IdlePos = { 0, 0, -15000000, -10000000, 0 };
 
-
+        private readonly JointsPositon ZeroPos = new(0, 0, 0, 0, 0);
         private readonly JointsPositon IdlePos = new(0, 0, -15000000, -10000000, 0);
         private readonly JointsPositon ChangeJawPos = new(0, -72195, 5174842, -6912012, 0);
         private readonly JointsPositon PreChangeJawPos = new(0, -72195, -15000000, -6912012, 0);
@@ -124,6 +72,7 @@ namespace DOF5RobotControl_GUI
         private readonly JointsPositon AssemblePos2 = new(6000, -8027000, -15911400, 1783100, 0);
         private readonly JointsPositon AssemblePos3 = new(0, 0, 7004200, 15275000, 0);
 
+        private JointsPositon targetJointPos = new(0, 0, 0, 0, 0);
         private bool isConnected = false;
         private JogHandler jogHandler = new();
 
@@ -138,15 +87,7 @@ namespace DOF5RobotControl_GUI
             //JointValueR1.Text = x.ToString();
             portBox.ItemsSource = SerialPort.GetPortNames();
             portBox.SelectedIndex = 0;
-        }
-
-        private void UpdateJointControlTextBox(JointsPositon j)
-        {
-            JointValueR1.Text = j.R1.ToString();
-            JointValueP2.Text = j.P2.ToString();
-            JointValueP3.Text = j.P3.ToString();
-            JointValueP4.Text = j.P4.ToString();
-            JointValueR5.Text = j.R5.ToString();
+            this.DataContext = targetJointPos;
         }
 
         private void PortRefresh_Click(object sender, RoutedEventArgs e)
@@ -209,54 +150,68 @@ namespace DOF5RobotControl_GUI
             }
         }
 
+        private void BtnZeroPos_Click(object sender, RoutedEventArgs e)
+        {
+            targetJointPos = ZeroPos;
+            this.DataContext = targetJointPos;
+        }
+
         private void BtnIdlePos_Click(object sender, RoutedEventArgs e)
         {
-            UpdateJointControlTextBox(IdlePos);
+            targetJointPos = IdlePos;
+            this.DataContext = targetJointPos;
         }
 
         private void BtnPreChangeJawPos_Click(object sender, RoutedEventArgs e)
         {
-            UpdateJointControlTextBox(PreChangeJawPos);
+            targetJointPos = PreChangeJawPos;
+            this.DataContext = targetJointPos;
         }
 
         private void BtnChangeJawPos_Click(object sender, RoutedEventArgs e)
         {
-            UpdateJointControlTextBox(ChangeJawPos);
+            targetJointPos = ChangeJawPos;
+            this.DataContext = targetJointPos;
         }
 
         private void BtnAssemblePos1_Click(object sender, RoutedEventArgs e)
         {
-            UpdateJointControlTextBox(AssemblePos1);
+            targetJointPos = AssemblePos1;
+            this.DataContext = targetJointPos;
         }
 
         private void BtnAssemblePos2_Click(object sender, RoutedEventArgs e)
         {
-            UpdateJointControlTextBox(AssemblePos2);
+            targetJointPos = AssemblePos2;
+            this.DataContext = targetJointPos;
         }
 
         private void BtnAssemblePos3_Click(object sender, RoutedEventArgs e)
         {
-            UpdateJointControlTextBox(AssemblePos3);
+            targetJointPos = AssemblePos3;
+            this.DataContext = targetJointPos;
         }
 
         private void BtnPreFetchRingPos_Click(object sender, RoutedEventArgs e)
         {
-            UpdateJointControlTextBox(PreFetchRingPos);
+            targetJointPos = PreFetchRingPos;
+            this.DataContext = targetJointPos;
         }
 
         private void BtnFetchRingPos_Click(object sender, RoutedEventArgs e)
         {
-            UpdateJointControlTextBox(FetchRingPos);
+            targetJointPos = FetchRingPos;
+            this.DataContext = targetJointPos;
         }
 
         private void BtnRun_Click(object sender, RoutedEventArgs e)
         {
-            D5RControl.Joints j;
-            j.R1 = int.Parse(JointValueR1.Text);
-            j.P2 = int.Parse(JointValueP2.Text);
-            j.P3 = int.Parse(JointValueP3.Text);
-            j.P4 = int.Parse(JointValueP4.Text);
-            j.R5 = int.Parse(JointValueR5.Text);
+            var j = ((JointsPositon)this.DataContext).ToD5RJoints();
+
+            // TODO: Clear Code
+            //Debug.WriteLine($"R1: {j.R1}, P2: {j.P2}, P3: {j.P3}, P4: {j.P4}, R5: {j.R5}");
+            //return;
+            
             int result = D5RControl.JointsMoveAbsolute(j);
             if (result != 0)
             {
