@@ -41,7 +41,7 @@ namespace DOF5RobotControl_GUI
                         break;
                     }
 
-                    Thread.Sleep(100);
+                    Thread.Sleep(20);
                 }
 
                 cancelJoggingSource = new();  // initialize CancelSource
