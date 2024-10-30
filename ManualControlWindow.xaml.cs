@@ -194,7 +194,10 @@ namespace DOF5RobotControl_GUI
                     {
                         int result = D5RControl.JointsMoveRelative(joints);
                         if (result != 0)
+                        {
                             Dispatcher.Invoke(() => MessageBox.Show("JointsMoveRelative error in xInputControlTask."));
+                            break;
+                        }
                     }
                     Thread.Sleep(100);
                     previousState = state;
