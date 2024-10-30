@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DOF5RobotControl_GUI"
         mc:Ignorable="d"
-        Title="MainWindow" Height="600" Width="800">
+        Title="MainWindow" Height="600" Width="800"
+        FontSize="16">
     <Window.Resources>
         <Style x:Key="JointControlTextBlock" TargetType="TextBlock">
             <Setter Property="Margin" Value="2"/>
@@ -45,7 +46,8 @@
             </StackPanel>
         </Grid>
         <GroupBox Header="预存点位" Margin="0,8,0,0">
-            <UniformGrid Columns="4">
+            <UniformGrid>
+                <Button Click="BtnZeroPos_Click">零点位</Button>
                 <Button Click="BtnIdlePos_Click">待机位</Button>
                 <Button Click="BtnPreChangeJawPos_Click">换夹钳预备位</Button>
                 <Button Click="BtnChangeJawPos_Click">换夹钳位</Button>

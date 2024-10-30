@@ -209,6 +209,12 @@ namespace DOF5RobotControl_GUI
             }
         }
 
+        private void BtnZeroPos_Click(object sender, RoutedEventArgs e)
+        {
+            JointsPositon joint = new(0, 0, 0, 0, 0);
+            UpdateJointControlTextBox(joint);
+        }
+
         private void BtnIdlePos_Click(object sender, RoutedEventArgs e)
         {
             UpdateJointControlTextBox(IdlePos);
