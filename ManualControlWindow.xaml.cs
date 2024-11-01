@@ -19,6 +19,8 @@ using System.Windows.Shapes;
 using SharpDX.XInput;
 using System.Net.Http.Headers;
 using System.Printing;
+using System.Media;
+using System.Runtime.CompilerServices;
 
 namespace DOF5RobotControl_GUI
 {
@@ -27,15 +29,20 @@ namespace DOF5RobotControl_GUI
     /// </summary>
     public partial class ManualControlWindow : System.Windows.Window
     {
+        private readonly static SoundPlayer lowPlayer = new("res/Low.wav");
+        private readonly static SoundPlayer mediumPlayer = new("res/Medium.wav");
+        private readonly static SoundPlayer highPlayer = new("res/High.wav");
+        private readonly static int controlPeriod = 20;  // ms
+        private readonly CancellationTokenSource captureCancelSource;
         private readonly VideoCapture capture;
         private readonly Mat frame;
-        private readonly CancellationTokenSource captureCancelSource;
         private readonly CancellationTokenSource xInputCancelSource;
         private readonly CancellationToken captureCancelToken;
         private readonly CancellationToken xInputCancelToken;
         private readonly JogHandler jogHandler = new();
         private readonly int natorJogResolution = 100000;
         private readonly int RMDJogResolution = 20;
+        private int speedLevel = 0;
 
         public ManualControlWindow()
         {
@@ -49,17 +56,9 @@ namespace DOF5RobotControl_GUI
             xInputCancelSource = new();
             xInputCancelToken = xInputCancelSource.Token;
 
+            // 运行两个 Task
             Task.Run(CaptureCameraTask, captureCancelToken);
             Task.Run(XInputControlTask, xInputCancelToken);
-
-            //var controller = new Controller();
-            //if(controller.IsConnected)
-            //{
-            //    Debug.WriteLine("controller connected");
-            //} else
-            //{
-            //    Debug.WriteLine("Controller not connected.");
-            //}
         }
 
         private void WindowClosed(object? sender, EventArgs e)
@@ -143,6 +142,9 @@ namespace DOF5RobotControl_GUI
 
         private void XInputControlTask()
         {
+            const int ThumbsThreshold = 15000;
+            const int TrigerThreshold = 120;
+
             var controllers = new[] { new Controller(UserIndex.One), new Controller(UserIndex.Two), new Controller(UserIndex.Three), new Controller(UserIndex.Four) };
             // Get 1st controller available
             Controller? controller = null;
@@ -158,46 +160,86 @@ namespace DOF5RobotControl_GUI
             if (controller == null)
             {
                 //Debug.WriteLine("No XInput controller installed");
-                Dispatcher.Invoke(() =>
-                {
-                    MessageBox.Show("No XInput controller installed.");
-                });
+                Dispatcher.Invoke(() => MessageBox.Show("No XInput controller installed."));
             }
             else
             {
                 Debug.WriteLine("Found a XInput controller available");
+
                 //Debug.WriteLine("Press buttons on the controller to display events or escape key to exit... ");
 
                 // Poll events from joystick
-                var previousState = controller.GetState();
                 while (controller.IsConnected && !xInputCancelToken.IsCancellationRequested)
                 {
                     var state = controller.GetState();
-                    //Debug.WriteLine(state.Gamepad);
+
+                    // 判断是否切换速度
+                    var res = controller.GetKeystroke(DeviceQueryType.Gamepad, out Keystroke ks);
+                    //Debug.WriteLine($"result:{res}");
+                    //Debug.WriteLine($"Flags:{ks.Flags}, VirtualKey:{ks.VirtualKey}");
+                    if (res == 0 && ks.Flags == KeyStrokeFlags.KeyDown)
+                    {
+                        if (ks.VirtualKey == GamepadKeyCode.DPadUp)
+                        {
+                            speedLevel++;
+                            speedLevel = speedLevel > 2 ? 2 : speedLevel;
+                            PlaySound(speedLevel);
+                            continue;
+                        }
+                        else if (ks.VirtualKey == GamepadKeyCode.DPadDown)
+                        {
+                            speedLevel--;
+                            speedLevel = speedLevel < 0 ? 0 : speedLevel;
+                            PlaySound(speedLevel);
+                            continue;
+                        }
+                    }
 
                     // 根据手柄输入确定输出的位移量
-                    D5RControl.Joints joints = new()
-                    {
-                        P2 = GamepadThumb2NatorsMap(state.Gamepad.LeftThumbX),
-                        P3 = GamepadThumb2NatorsMap(state.Gamepad.LeftThumbY),
-                        R1 = GamepadThumb2RMDsMap(state.Gamepad.RightThumbX),
-                        R5 = GamepadThumb2RMDsMap(state.Gamepad.RightThumbY)
-                    };
+                    D5RControl.Joints joints = new();
 
-                    if (state.Gamepad.LeftTrigger > 10)
-                        joints.P4 = -LinearMap(state.Gamepad.LeftTrigger, 10, 255, 100000, 1000000);
-                    else if (state.Gamepad.RightTrigger > 10)
-                        joints.P4 = LinearMap(state.Gamepad.RightTrigger, 10, 255, 100000, 1000000);
+                    if (state.Gamepad.RightThumbX <= -ThumbsThreshold)
+                        joints.R1 = SelectRMDSpeed(speedLevel);
+                    else if (state.Gamepad.RightThumbX >= ThumbsThreshold)
+                        joints.R1 = -SelectRMDSpeed(speedLevel);
+
+                    if (state.Gamepad.LeftThumbX <= -ThumbsThreshold)
+                        joints.P2 = SelectNatorSpeed(speedLevel);
+                    else if (state.Gamepad.LeftThumbX >= ThumbsThreshold)
+                        joints.P2 = -SelectNatorSpeed(speedLevel);
+
+                    if (state.Gamepad.LeftThumbY <= -ThumbsThreshold)
+                        joints.P3 = -SelectNatorSpeed(speedLevel);
+                    else if (state.Gamepad.LeftThumbY >= ThumbsThreshold)
+                        joints.P3 = SelectNatorSpeed(speedLevel);
+
+                    if (state.Gamepad.LeftTrigger >= TrigerThreshold)
+                        joints.P4 = -SelectNatorSpeed(speedLevel);
+                    else if (state.Gamepad.RightTrigger >= TrigerThreshold)
+                        joints.P4 = SelectNatorSpeed(speedLevel);
+
+                    if (state.Gamepad.RightThumbY <= -ThumbsThreshold)
+                        joints.R5 = -SelectRMDSpeed(speedLevel);
+                    else if (state.Gamepad.RightThumbY >= ThumbsThreshold)
+                        joints.R5 = SelectRMDSpeed(speedLevel);
 
                     Debug.WriteLine($"R1:{joints.R1}, P2:{joints.P2}, P3:{joints.P3}, P4:{joints.P4}, R5:{joints.R5}");
                     if (!jogHandler.isJogging)
                     {
                         int result = D5RControl.JointsMoveRelative(joints);
                         if (result != 0)
+                        {
                             Dispatcher.Invoke(() => MessageBox.Show("JointsMoveRelative error in xInputControlTask."));
+                            break;
+                        }
                     }
-                    Thread.Sleep(100);
-                    previousState = state;
+                    Thread.Sleep(controlPeriod);  // 控制周期
+                }
+
+                if (!xInputCancelToken.IsCancellationRequested)
+                {
+                    Dispatcher.Invoke(() => MessageBox.Show("Gamepad disconnected!"));
+                    xInputCancelSource.Cancel();
                 }
             }
             //Debug.WriteLine("End XGamepadApp");
@@ -317,60 +359,64 @@ namespace DOF5RobotControl_GUI
             //}
         }
 
-        private static int GamepadThumb2NatorsMap(int gamepadValue)
+        private static int SelectNatorSpeed(int level)
         {
-            const int inputMin = 10000;
-            const int inputMax = 30000;
-            const int outputMin = 100000;
-            const int outputMax = 1000000;
+            int value = 0;
+            switch (level)
+            {
+                case 0:
+                    value = 10000 / 1000 * controlPeriod;  // 0.01 mm/s
+                    break;
+                case 1:
+                    value = 100000 / 1000 * controlPeriod;  // 0.1mm/s
+                    break;
+                case 2:
+                    value = 1000000 / 1000 * controlPeriod;  // 1 mm/s
+                    break;
+                default:
+                    break;
+            }
 
-            int sign = gamepadValue >= 0 ? 1 : -1;
-            int gpValueAbs = Math.Abs(gamepadValue);
-            int outputValue = LinearMap(gpValueAbs, inputMin, inputMax, outputMin, outputMax);
-            //if (gpValueAbs >= inputMin)
-            //{
-            //    outputValue = (gpValueAbs - inputMin) * (outputMax - outputMin)
-            //        / (inputMax - inputMin);
-            //}
-
-            return sign * outputValue;
+            return value;
         }
 
-        private static int GamepadThumb2RMDsMap(int gamepadValue)
+        private static int SelectRMDSpeed(int level)
         {
-            const int inputMin = 10000;
-            const int inputMax = 30000;
-            const int outputMin = 10;
-            const int outputMax = 100;
+            int value = 0;
+            switch (level)
+            {
+                case 0:
+                    value = 1 / 1000 * controlPeriod;  // 0.01 degree/s
+                    break;
+                case 1:
+                    value = 10 / 1000 * controlPeriod; // 0.1 degree/s
+                    break;
+                case 2:
+                    value = 100 / 1000 * controlPeriod;  // 1 degree/s
+                    break;
+                default:
+                    break;
+            }
 
-            int sign = gamepadValue >= 0 ? 1 : -1;
-            int gpValueAbs = Math.Abs(gamepadValue);
-            int outputValue = LinearMap(gpValueAbs, inputMin, inputMax, outputMin, outputMax);
-
-            return sign * outputValue;
+            return value;
         }
 
-        /// <summary>
-        /// 将 x 映射到 y，xMin 对应 yMin, xMax 对应 yMax
-        /// </summary>
-        /// <param name="x">映射的输入</param>
-        /// <param name="xMin">输入的最小值</param>
-        /// <param name="xMax">输入的最大值</param>
-        /// <param name="yMin">输出的最小值</param>
-        /// <param name="yMax">输出的最大值</param>
-        /// <returns>返回 y 值</returns>
-        private static int LinearMap(int x, int xMin, int xMax, int yMin, int yMax)
+        private static void PlaySound(int level)
         {
-            int y;
-
-            if (x < xMin)
-                y = 0;
-            else if (x >= xMax)
-                y = yMax;
-            else
-                y = yMin + (x - xMin) * (yMax - yMin) / (xMax - xMin);
-
-            return y;
+            switch (level)
+            {
+                case 0:
+                    lowPlayer.Play();
+                    break;
+                case 1:
+                    mediumPlayer.Play();
+                    break;
+                case 2:
+                    highPlayer.Play();
+                    break;
+                default:
+                    break;
+            }
         }
     }
 }
