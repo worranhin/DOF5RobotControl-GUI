@@ -22,87 +22,6 @@ namespace DOF5RobotControl_GUI
     /// </summary>
     /// 
 
-    public class MyData : INotifyPropertyChanged
-    {
-        public MyData()
-        {
-            _colorName = "Blue";
-            ColorName = "Blue";
-        }
-
-        private string _colorName;
-        public string ColorName
-        {
-            get { return _colorName; }
-            set
-            {
-                if (_colorName != value)
-                {
-                    _colorName = value;
-                    OnpropertyChanged();
-                }
-            }
-        }
-
-
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        protected void OnpropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-    }
-
-    public class JointsPositon
-    {
-        public int R1 { get; set; }
-        public int P2 { get; set; }
-        public int P3 { get; set; }
-        public int P4 { get; set; }
-        public int R5 { get; set; }
-
-        public JointsPositon(int r1, int p2, int p3, int p4, int r5)
-        {
-            R1 = r1;
-            P2 = p2;
-            P3 = p3;
-            P4 = p4;
-            R5 = r5;
-        }
-    };
-
-    internal static partial class D5RControl
-    {
-        internal struct Joints(int r1, int p2, int p3, int p4, int r5)
-        {
-            public int R1 = r1;
-            public int P2 = p2;
-            public int P3 = p3;
-            public int P4 = p4;
-            public int R5 = r5;
-        };
-
-        [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_Init", StringMarshalling = StringMarshalling.Utf8)]
-        internal static partial int Init(string RMDSerialPort);
-        [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_DeInit")]
-        internal static partial int DeInit();
-        [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_Stop")]
-        internal static partial int Stop();
-        [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_SetZero")]
-        internal static partial int SetZero(int r1 = 0, int p2 = 0, int p3 = 0, int p4 = 0, int r5 = 0);
-        [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_JointsMoveAbsolute")]
-        internal static partial int JointsMoveAbsolute(Joints j);
-        [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_JointsMoveRelative")]
-        internal static partial int JointsMoveRelative(Joints j);
-        [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_SetAccumulateRelative")]
-        internal static partial int SetAccumulateRelative([MarshalAs(UnmanagedType.Bool)] bool accumulate);
-        [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_Test")]
-        internal static partial int Test(int x);
-    }
-
-
-
     public partial class MainWindow : Window
     {
         //const Joints BeforeChangeJawPos1 = { 0, 5000000, -5000000, -15184980, 0 };
@@ -117,14 +36,14 @@ namespace DOF5RobotControl_GUI
         //const Joints IdlePos = { 0, 0, -15000000, -10000000, 0 };
 
 
-        private readonly JointsPositon IdlePos = new(0, 0, -15000000, -10000000, 0);
-        private readonly JointsPositon ChangeJawPos = new(0, -72195, 5174842, -6912012, 0);
-        private readonly JointsPositon PreChangeJawPos = new(0, -72195, -15000000, -6912012, 0);
-        private readonly JointsPositon FetchRingPos = new(0, 8673000, 4000000, -10000000, 0);
-        private readonly JointsPositon PreFetchRingPos = new(0, 8673000, -15000000, -10000000, 0);
-        private readonly JointsPositon AssemblePos1 = new(9000, 15686500, -16819200, -5759600, -10);
-        private readonly JointsPositon AssemblePos2 = new(6000, -8027000, -15911400, 1783100, 0);
-        private readonly JointsPositon AssemblePos3 = new(0, 0, 7004200, 15275000, 0);
+        private readonly JointsPosition IdlePos = new(0, 0, -15000000, -10000000, 0);
+        private readonly JointsPosition ChangeJawPos = new(0, -72195, 5174842, -6912012, 0);
+        private readonly JointsPosition PreChangeJawPos = new(0, -72195, -15000000, -6912012, 0);
+        private readonly JointsPosition FetchRingPos = new(0, 8673000, 4000000, -10000000, 0);
+        private readonly JointsPosition PreFetchRingPos = new(0, 8673000, -15000000, -10000000, 0);
+        private readonly JointsPosition AssemblePos1 = new(9000, 15686500, -16819200, -5759600, -10);
+        private readonly JointsPosition AssemblePos2 = new(6000, -8027000, -15911400, 1783100, 0);
+        private readonly JointsPosition AssemblePos3 = new(0, 0, 7004200, 15275000, 0);
 
         private bool isConnected = false;
         private JogHandler jogHandler = new();
@@ -144,7 +63,7 @@ namespace DOF5RobotControl_GUI
             portBox.SelectedIndex = 0;
         }
 
-        private void UpdateJointControlTextBox(JointsPositon j)
+        private void UpdateJointControlTextBox(JointsPosition j)
         {
             JointValueR1.Text = j.R1.ToString();
             JointValueP2.Text = j.P2.ToString();
