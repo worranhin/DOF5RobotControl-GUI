@@ -180,7 +180,7 @@ namespace DOF5RobotControl_GUI
 
         private void BtnRun_Click(object sender, RoutedEventArgs e)
         {
-            var j = ((JointsPositon)this.DataContext).ToD5RJoints();
+            var j = ((JointsPosition)this.DataContext).ToD5RJoints();
 
             // TODO: Clear Code
             //Debug.WriteLine($"R1: {j.R1}, P2: {j.P2}, P3: {j.P3}, P4: {j.P4}, R5: {j.R5}");

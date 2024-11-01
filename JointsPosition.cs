@@ -15,84 +15,83 @@ namespace DOF5RobotControl_GUI
         public int P3 { get; set; } = p3;
         public int P4 { get; set; } = p4;
         public int R5 { get; set; } = r5;
-    }
 
         public D5RControl.Joints ToD5RJoints()
         {
             D5RControl.Joints j = new(this.R1, this.P2, this.P3, this.P4, this.R5);
             return j;
         }
+    }
 
-        // 尝试使用 INotifyChanged
+    // 尝试使用 INotifyChanged
 
-        //private int _r1;
-        //private int _p2;
-        //private int _p3;
-        //private int _p4;
-        //private int _r5;
+    //private int _r1;
+    //private int _p2;
+    //private int _p3;
+    //private int _p4;
+    //private int _r5;
 
-        //public int R1
-        //{
-        //    get { return _r1; }
-        //    set
-        //    {
-        //        if (_r1 != value)
-        //        {
-        //            _r1 = value;
-        //            OnpropertyChanged();
-        //        }
-        //    }
-        //}
-        //public int P2
-        //{
-        //    get { return _p2; }
-        //    set
-        //    {
-        //        if (_p2 != value)
-        //        {
-        //            _p2 = value; OnpropertyChanged();
-        //        }
-        //    }
-        //}
-        //public int P3
-        //{
-        //    get { return _p3; }
-        //    set
-        //    {
-        //        if (_p3 != value)
-        //        {
-        //            _p3 = value; OnpropertyChanged();
-        //        }
-        //    }
-        //}
-        //public int P4
-        //{
-        //    get { return _p4; }
-        //    set
-        //    {
-        //        if (_p4 != value)
-        //        {
-        //            _p4 = value; OnpropertyChanged();
-        //        }
-        //    }
-        //}
-        //public int R5
-        //{
-        //    get { return _r5; }
-        //    set
-        //    {
-        //        if (_r5 != value)
-        //        {
-        //            _r5 = value; OnpropertyChanged();
-        //        }
-        //    }
-        //}
+    //public int R1
+    //{
+    //    get { return _r1; }
+    //    set
+    //    {
+    //        if (_r1 != value)
+    //        {
+    //            _r1 = value;
+    //            OnpropertyChanged();
+    //        }
+    //    }
+    //}
+    //public int P2
+    //{
+    //    get { return _p2; }
+    //    set
+    //    {
+    //        if (_p2 != value)
+    //        {
+    //            _p2 = value; OnpropertyChanged();
+    //        }
+    //    }
+    //}
+    //public int P3
+    //{
+    //    get { return _p3; }
+    //    set
+    //    {
+    //        if (_p3 != value)
+    //        {
+    //            _p3 = value; OnpropertyChanged();
+    //        }
+    //    }
+    //}
+    //public int P4
+    //{
+    //    get { return _p4; }
+    //    set
+    //    {
+    //        if (_p4 != value)
+    //        {
+    //            _p4 = value; OnpropertyChanged();
+    //        }
+    //    }
+    //}
+    //public int R5
+    //{
+    //    get { return _r5; }
+    //    set
+    //    {
+    //        if (_r5 != value)
+    //        {
+    //            _r5 = value; OnpropertyChanged();
+    //        }
+    //    }
+    //}
 
-        //public event PropertyChangedEventHandler? PropertyChanged;
+    //public event PropertyChangedEventHandler? PropertyChanged;
 
-        //protected void OnpropertyChanged([CallerMemberName] string? propertyName = null)
-        //{
-        //    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        //}
-    };
+    //protected void OnpropertyChanged([CallerMemberName] string? propertyName = null)
+    //{
+    //    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    //}
 }

@@ -29,6 +29,7 @@ namespace DOF5RobotControl_GUI
     /// </summary>
     public partial class ManualControlWindow : System.Windows.Window
     {
+        private ManualControlData data = new();
         private readonly static SoundPlayer lowPlayer = new("res/Low.wav");
         private readonly static SoundPlayer mediumPlayer = new("res/Medium.wav");
         private readonly static SoundPlayer highPlayer = new("res/High.wav");
@@ -59,6 +60,8 @@ namespace DOF5RobotControl_GUI
             // 运行两个 Task
             Task.Run(CaptureCameraTask, captureCancelToken);
             Task.Run(XInputControlTask, xInputCancelToken);
+
+            this.DataContext = this.data;
         }
 
         private void WindowClosed(object? sender, EventArgs e)
