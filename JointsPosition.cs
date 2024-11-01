@@ -8,24 +8,14 @@ using System.Threading.Tasks;
 
 namespace DOF5RobotControl_GUI
 {
-    internal class JointsPositon
+    internal class JointsPosition(int r1, int p2, int p3, int p4, int r5)
     {
-        
-
-        public int R1 { get; set; } = 0;
-        public int P2 { get; set; } = 0;
-        public int P3 { get; set; } = 0;
-        public int P4 { get; set; } = 0;
-        public int R5 { get; set; } = 0;
-
-        public JointsPositon(int r1, int p2, int p3, int p4, int r5)
-        {
-            R1 = r1;
-            P2 = p2;
-            P3 = p3;
-            P4 = p4;
-            R5 = r5;
-        }
+        public int R1 { get; set; } = r1;
+        public int P2 { get; set; } = p2;
+        public int P3 { get; set; } = p3;
+        public int P4 { get; set; } = p4;
+        public int R5 { get; set; } = r5;
+    }
 
         public D5RControl.Joints ToD5RJoints()
         {
