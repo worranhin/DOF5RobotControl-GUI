@@ -25,6 +25,9 @@ namespace DOF5RobotControl_GUI
         public void StartJogging(D5RControl.Joints joints)
         {
             isJogging = true;
+            cancelJoggingSource.Cancel();
+            cancelJoggingSource = new();
+            cancelJoggingToken = cancelJoggingSource.Token;
 
             Task.Run(() =>
             {
@@ -41,7 +44,7 @@ namespace DOF5RobotControl_GUI
                         break;
                     }
 
-                    Thread.Sleep(100);
+                    Thread.Sleep(20);
                 }
 
                 cancelJoggingSource = new();  // initialize CancelSource

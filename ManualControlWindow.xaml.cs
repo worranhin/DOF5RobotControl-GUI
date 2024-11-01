@@ -34,13 +34,15 @@ namespace DOF5RobotControl_GUI
         private readonly CancellationToken captureCancelToken;
         private readonly CancellationToken xInputCancelToken;
         private readonly JogHandler jogHandler = new();
+        private readonly int natorJogResolution = 100000;
+        private readonly int RMDJogResolution = 20;
 
         public ManualControlWindow()
         {
             InitializeComponent();
             this.Closed += WindowClosed;
 
-            capture = new VideoCapture(0);
+            capture = new VideoCapture(1);
             frame = new Mat();
             captureCancelSource = new();
             captureCancelToken = captureCancelSource.Token;
@@ -163,39 +165,36 @@ namespace DOF5RobotControl_GUI
             }
             else
             {
-                //Debug.WriteLine("Found a XInput controller available");
+                Debug.WriteLine("Found a XInput controller available");
                 //Debug.WriteLine("Press buttons on the controller to display events or escape key to exit... ");
 
                 // Poll events from joystick
                 var previousState = controller.GetState();
-                while (controller.IsConnected || !xInputCancelToken.IsCancellationRequested)
+                while (controller.IsConnected && !xInputCancelToken.IsCancellationRequested)
                 {
                     var state = controller.GetState();
-                    if (previousState.PacketNumber != state.PacketNumber)
+                    //Debug.WriteLine(state.Gamepad);
+
+                    // 根据手柄输入确定输出的位移量
+                    D5RControl.Joints joints = new()
                     {
-                        //Debug.WriteLine(state.Gamepad);
+                        P2 = GamepadThumb2NatorsMap(state.Gamepad.LeftThumbX),
+                        P3 = GamepadThumb2NatorsMap(state.Gamepad.LeftThumbY),
+                        R1 = GamepadThumb2RMDsMap(state.Gamepad.RightThumbX),
+                        R5 = GamepadThumb2RMDsMap(state.Gamepad.RightThumbY)
+                    };
 
-                        // 根据手柄输入确定输出的位移量
-                        D5RControl.Joints joints = new()
-                        {
-                            P2 = GamepadThumb2NatorsMap(state.Gamepad.LeftThumbX),
-                            P3 = GamepadThumb2NatorsMap(state.Gamepad.LeftThumbY),
-                            R1 = GamepadThumb2RMDsMap(state.Gamepad.RightThumbX),
-                            R5 = GamepadThumb2RMDsMap(state.Gamepad.RightThumbY)
-                        };
+                    if (state.Gamepad.LeftTrigger > 10)
+                        joints.P4 = -LinearMap(state.Gamepad.LeftTrigger, 10, 255, 100000, 1000000);
+                    else if (state.Gamepad.RightTrigger > 10)
+                        joints.P4 = LinearMap(state.Gamepad.RightTrigger, 10, 255, 100000, 1000000);
 
-                        if (state.Gamepad.LeftTrigger > 10)
-                            joints.P4 = -LinearMap(state.Gamepad.LeftTrigger, 10, 255, 100000, 1000000);
-                        else if (state.Gamepad.RightTrigger > 10)
-                            joints.P4 = LinearMap(state.Gamepad.RightTrigger, 10, 255, 100000, 1000000);
-                        
-                        //Debug.WriteLine($"R1:{joints.R1}, P2:{joints.P2}, P3:{joints.P3}, P4:{joints.P4}, R5:{joints.R5}");
-                        if(!jogHandler.isJogging)
-                        {
-                            int result = D5RControl.JointsMoveRelative(joints);
-                            if (result != 0)
-                                Dispatcher.Invoke(() => MessageBox.Show("JointsMoveRelative error in xInputControlTask."));
-                        }
+                    Debug.WriteLine($"R1:{joints.R1}, P2:{joints.P2}, P3:{joints.P3}, P4:{joints.P4}, R5:{joints.R5}");
+                    if (!jogHandler.isJogging)
+                    {
+                        int result = D5RControl.JointsMoveRelative(joints);
+                        if (result != 0)
+                            Dispatcher.Invoke(() => MessageBox.Show("JointsMoveRelative error in xInputControlTask."));
                     }
                     Thread.Sleep(100);
                     previousState = state;
@@ -208,9 +207,10 @@ namespace DOF5RobotControl_GUI
         {
             if (e.Key == Key.A && !jogHandler.isJogging)
             {
+                Debug.WriteLine("Key A pressed down.");
                 D5RControl.Joints j = new()
                 {
-                    P2 = -100
+                    P2 = -natorJogResolution
                 };
                 jogHandler.StartJogging(j);
                 //jogHandler.TestStartJogging();
@@ -219,7 +219,7 @@ namespace DOF5RobotControl_GUI
             {
                 D5RControl.Joints j = new()
                 {
-                    P2 = 100
+                    P2 = natorJogResolution
                 };
                 jogHandler.StartJogging(j);
                 //jogHandler.TestStartJogging();
@@ -228,7 +228,7 @@ namespace DOF5RobotControl_GUI
             {
                 D5RControl.Joints j = new()
                 {
-                    P3 = 100
+                    P3 = natorJogResolution
                 };
                 jogHandler.StartJogging(j);
             }
@@ -236,7 +236,7 @@ namespace DOF5RobotControl_GUI
             {
                 D5RControl.Joints j = new()
                 {
-                    P3 = -100
+                    P3 = -natorJogResolution
                 };
                 jogHandler.StartJogging(j);
             }
@@ -244,7 +244,7 @@ namespace DOF5RobotControl_GUI
             {
                 D5RControl.Joints j = new()
                 {
-                    P4 = 100
+                    P4 = natorJogResolution
                 };
                 jogHandler.StartJogging(j);
             }
@@ -252,7 +252,7 @@ namespace DOF5RobotControl_GUI
             {
                 D5RControl.Joints j = new()
                 {
-                    P4 = -100
+                    P4 = -natorJogResolution
                 };
                 jogHandler.StartJogging(j);
             }
@@ -260,7 +260,7 @@ namespace DOF5RobotControl_GUI
             {
                 D5RControl.Joints j = new()
                 {
-                    R1 = -100
+                    R1 = -RMDJogResolution
                 };
                 jogHandler.StartJogging(j);
             }
@@ -268,7 +268,7 @@ namespace DOF5RobotControl_GUI
             {
                 D5RControl.Joints j = new()
                 {
-                    R1 = 100
+                    R1 = RMDJogResolution
                 };
                 jogHandler.StartJogging(j);
             }
@@ -276,7 +276,7 @@ namespace DOF5RobotControl_GUI
             {
                 D5RControl.Joints j = new()
                 {
-                    R5 = -100
+                    R5 = -RMDJogResolution
                 };
                 jogHandler.StartJogging(j);
             }
@@ -284,7 +284,7 @@ namespace DOF5RobotControl_GUI
             {
                 D5RControl.Joints j = new()
                 {
-                    R5 = 100
+                    R5 = RMDJogResolution
                 };
                 jogHandler.StartJogging(j);
             }
@@ -367,9 +367,9 @@ namespace DOF5RobotControl_GUI
                 y = 0;
             else if (x >= xMax)
                 y = yMax;
-            else            
+            else
                 y = yMin + (x - xMin) * (yMax - yMin) / (xMax - xMin);
-            
+
             return y;
         }
     }

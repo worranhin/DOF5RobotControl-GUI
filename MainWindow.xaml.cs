@@ -45,6 +45,8 @@ namespace DOF5RobotControl_GUI
         internal static partial int JointsMoveAbsolute(Joints j);
         [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_JointsMoveRelative")]
         internal static partial int JointsMoveRelative(Joints j);
+        [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_SetAccumulateRelative")]
+        internal static partial int SetAccumulateRelative([MarshalAs(UnmanagedType.Bool)] bool accumulate);
         [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_Test")]
         internal static partial int Test(int x);
     }
@@ -75,6 +77,8 @@ namespace DOF5RobotControl_GUI
         private JointsPositon targetJointPos = new(0, 0, 0, 0, 0);
         private bool isConnected = false;
         private JogHandler jogHandler = new();
+        readonly int natorJogResolution = 100000;
+        readonly int RMDJogResolution = 20;
 
         public MainWindow()
         {
@@ -243,23 +247,21 @@ namespace DOF5RobotControl_GUI
 
         private void BtnR1JogDown_N(object sender, MouseButtonEventArgs e)
         {
-            //Debug.WriteLine("button down");
+            Debug.WriteLine("button down");
             //jogHandler.TestStartJogging();
-            const int deltaR1 = 100;
-            D5RControl.Joints joints = new(-deltaR1, 0, 0, 0, 0);
+            D5RControl.Joints joints = new(-RMDJogResolution, 0, 0, 0, 0);
             jogHandler.StartJogging(joints);
         }
 
         private void BtnR1JogUp_N(object sender, MouseButtonEventArgs e)
         {
-            //Debug.WriteLine("button up.");
+            Debug.WriteLine("button up.");
             jogHandler.StopJogging();
         }
 
         private void BtnR1JogDown_P(object sender, MouseButtonEventArgs e)
         {
-            const int deltaR1 = 100;
-            D5RControl.Joints joints = new(deltaR1, 0, 0, 0, 0);
+            D5RControl.Joints joints = new(RMDJogResolution, 0, 0, 0, 0);
             jogHandler.StartJogging(joints);
         }
 
@@ -272,8 +274,7 @@ namespace DOF5RobotControl_GUI
 
         private void BtnP2JogDown_N(object sender, MouseButtonEventArgs e)
         {
-            const int deltaP2 = 100;
-            D5RControl.Joints joints = new(0, -deltaP2, 0, 0, 0);
+            D5RControl.Joints joints = new(0, -natorJogResolution, 0, 0, 0);
             jogHandler.StartJogging(joints);
         }
 
@@ -284,8 +285,7 @@ namespace DOF5RobotControl_GUI
 
         private void BtnP2JogDown_P(object sender, MouseButtonEventArgs e)
         {
-            const int deltaP2 = 100;
-            D5RControl.Joints joints = new(0, deltaP2, 0, 0, 0);
+            D5RControl.Joints joints = new(0, natorJogResolution, 0, 0, 0);
             jogHandler.StartJogging(joints);
         }
 
@@ -298,8 +298,7 @@ namespace DOF5RobotControl_GUI
 
         private void BtnP3JogDown_N(object sender, MouseButtonEventArgs e)
         {
-            const int deltaP3 = 100;
-            D5RControl.Joints joints = new(0, 0, -deltaP3, 0, 0);
+            D5RControl.Joints joints = new(0, 0, -natorJogResolution, 0, 0);
             jogHandler.StartJogging(joints);
         }
 
@@ -310,8 +309,7 @@ namespace DOF5RobotControl_GUI
 
         private void BtnP3JogDown_P(object sender, MouseButtonEventArgs e)
         {
-            const int deltaP3 = 100;
-            D5RControl.Joints joints = new(0, 0, deltaP3, 0, 0);
+            D5RControl.Joints joints = new(0, 0, natorJogResolution, 0, 0);
             jogHandler.StartJogging(joints);
         }
 
@@ -324,8 +322,7 @@ namespace DOF5RobotControl_GUI
 
         private void BtnP4JogDown_N(object sender, MouseButtonEventArgs e)
         {
-            const int deltaP4 = 100;
-            D5RControl.Joints joints = new(0, 0, 0, -deltaP4, 0);
+            D5RControl.Joints joints = new(0, 0, 0, -natorJogResolution, 0);
             jogHandler.StartJogging(joints);
         }
 
@@ -336,8 +333,7 @@ namespace DOF5RobotControl_GUI
 
         private void BtnP4JogDown_P(object sender, MouseButtonEventArgs e)
         {
-            const int deltaP4 = 100;
-            D5RControl.Joints joints = new(0, 0, 0, deltaP4, 0);
+            D5RControl.Joints joints = new(0, 0, 0, natorJogResolution, 0);
             jogHandler.StartJogging(joints);
         }
 
@@ -350,8 +346,7 @@ namespace DOF5RobotControl_GUI
 
         private void BtnR5JogDown_N(object sender, MouseButtonEventArgs e)
         {
-            const int deltaR5 = 100;
-            D5RControl.Joints joints = new(0, 0, 0, 0, -deltaR5);
+            D5RControl.Joints joints = new(0, 0, 0, 0, -RMDJogResolution);
             jogHandler.StartJogging(joints);
         }
 
@@ -362,8 +357,7 @@ namespace DOF5RobotControl_GUI
 
         private void BtnR5JogDown_P(object sender, MouseButtonEventArgs e)
         {
-            const int deltaR5 = 100;
-            D5RControl.Joints joints = new(0, 0, 0, 0, deltaR5);
+            D5RControl.Joints joints = new(0, 0, 0, 0, RMDJogResolution);
             jogHandler.StartJogging(joints);
         }
 
