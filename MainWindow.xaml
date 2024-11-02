@@ -4,8 +4,10 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DOF5RobotControl_GUI"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" 
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="450" Width="800"
+        FontSize="16">
     <Window.Resources>
         <Style x:Key="JointControlTextBlock" TargetType="TextBlock">
             <Setter Property="Margin" Value="2"/>
@@ -31,7 +33,7 @@
                 <RowDefinition Height="auto"></RowDefinition>
             </Grid.RowDefinitions>
             <StackPanel Orientation="Horizontal" Grid.Column="0" Margin="8">
-                <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">端口</TextBlock>
+                <ui:TextBlock FontTypography="Body" VerticalAlignment="Center" Margin="0,0,4,0">端口</ui:TextBlock>
                 <ComboBox x:Name="portBox"/>
                 <Button x:Name="PortRefresh" Click="PortRefresh_Click" Margin="5,0,0,0">刷新</Button>
             </StackPanel>
@@ -41,11 +43,11 @@
                     <ComboBoxItem>9600</ComboBoxItem>
                     <ComboBoxItem>115200</ComboBoxItem>
                 </ComboBox>
-                <Button x:Name="btnConnect" Click="BtnConnect_Click" Margin="5,0,0,0">连接</Button>
+                <ToggleButton x:Name="btnConnect" Click="BtnConnect_Click" Margin="5,0,0,0" Content="连接"/>
             </StackPanel>
         </Grid>
         <GroupBox Header="预存点位" Margin="0,8,0,0">
-            <UniformGrid Columns="4">
+            <WrapPanel>
                 <Button Click="BtnIdlePos_Click">待机位</Button>
                 <Button Click="BtnPreChangeJawPos_Click">换夹钳预备位</Button>
                 <Button Click="BtnChangeJawPos_Click">换夹钳位</Button>
@@ -54,7 +56,7 @@
                 <Button Click="BtnAssemblePos1_Click">装配位1</Button>
                 <Button Click="BtnAssemblePos2_Click">装配位2</Button>
                 <Button Click="BtnAssemblePos3_Click">装配位3</Button>
-            </UniformGrid>
+            </WrapPanel>
         </GroupBox>
         <GroupBox Header="关节控制" Margin="0,8,0,0">
             <StackPanel>                

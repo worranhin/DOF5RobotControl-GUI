@@ -61,6 +61,11 @@ namespace DOF5RobotControl_GUI
             //JointValueR1.Text = x.ToString();
             portBox.ItemsSource = SerialPort.GetPortNames();
             portBox.SelectedIndex = 0;
+            Loaded += (sender, args) =>
+            {
+                Wpf.Ui.Appearance.SystemThemeWatcher
+                    .Watch(this, Wpf.Ui.Controls.WindowBackdropType.Mica, true);
+            };
         }
 
         private void UpdateJointControlTextBox(JointsPosition j)
