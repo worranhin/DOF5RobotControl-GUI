@@ -202,7 +202,6 @@ namespace DOF5RobotControl_GUI
                         }
                     }
 
-                    continue;
 
                     // 根据手柄输入确定输出的位移量
                     D5RControl.Joints joints = new();
