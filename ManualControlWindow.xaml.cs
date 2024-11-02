@@ -29,7 +29,7 @@ namespace DOF5RobotControl_GUI
     /// </summary>
     public partial class ManualControlWindow : System.Windows.Window
     {
-        private ManualControlData data = new();
+        private ManualControlData UIData = new();
         private readonly static SoundPlayer lowPlayer = new("res/Low.wav");
         private readonly static SoundPlayer mediumPlayer = new("res/Medium.wav");
         private readonly static SoundPlayer highPlayer = new("res/High.wav");
@@ -61,7 +61,7 @@ namespace DOF5RobotControl_GUI
             Task.Run(CaptureCameraTask, captureCancelToken);
             Task.Run(XInputControlTask, xInputCancelToken);
 
-            this.DataContext = this.data;
+            this.DataContext = this.UIData;
         }
 
         private void WindowClosed(object? sender, EventArgs e)
@@ -164,10 +164,12 @@ namespace DOF5RobotControl_GUI
             {
                 //Debug.WriteLine("No XInput controller installed");
                 Dispatcher.Invoke(() => MessageBox.Show("No XInput controller installed."));
+                this.UIData.GamepadStatus = false;
             }
             else
             {
                 Debug.WriteLine("Found a XInput controller available");
+                this.UIData.GamepadStatus = true;
 
                 //Debug.WriteLine("Press buttons on the controller to display events or escape key to exit... ");
 
@@ -186,6 +188,7 @@ namespace DOF5RobotControl_GUI
                         {
                             speedLevel++;
                             speedLevel = speedLevel > 2 ? 2 : speedLevel;
+                            UIData.SpeedMode = speedLevel;
                             PlaySound(speedLevel);
                             continue;
                         }
@@ -193,10 +196,13 @@ namespace DOF5RobotControl_GUI
                         {
                             speedLevel--;
                             speedLevel = speedLevel < 0 ? 0 : speedLevel;
+                            UIData.SpeedMode = speedLevel;
                             PlaySound(speedLevel);
                             continue;
                         }
                     }
+
+                    continue;
 
                     // 根据手柄输入确定输出的位移量
                     D5RControl.Joints joints = new();
@@ -233,6 +239,7 @@ namespace DOF5RobotControl_GUI
                         if (result != 0)
                         {
                             Dispatcher.Invoke(() => MessageBox.Show("JointsMoveRelative error in xInputControlTask."));
+                            UIData.GamepadStatus = false;
                             break;
                         }
                     }

@@ -9,19 +9,23 @@
         KeyUp="Window_KeyUp"
         Title="ManualControlWindow" Height="720" Width="1280"
         FontSize="16">
+    <Window.Resources>
+        <local:SpeedLevelConverter x:Key="SpeedLevelConverter"/>
+        <local:GamepadStatusConverter x:Key="GamepadStatusConverter"/>
+    </Window.Resources>
     <DockPanel Margin="8">
         <StatusBar DockPanel.Dock="Bottom">
             <StatusBarItem>
                 <StackPanel Orientation="Horizontal">
                     <TextBlock>手柄连接状态：</TextBlock>
-                    <TextBlock Text="{Binding GamepadStatus}"/>
+                    <TextBlock Text="{Binding GamepadStatus, Converter={StaticResource GamepadStatusConverter}}"/>
                 </StackPanel>
             </StatusBarItem>
             <Separator/>
             <StatusBarItem>
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="速度模式："/>
-                    <TextBlock Text="{Binding SpeedMode}"/>
+                    <TextBlock Text="{Binding SpeedMode, Converter={StaticResource SpeedLevelConverter}}"/>
                 </StackPanel>
             </StatusBarItem>
         </StatusBar>
