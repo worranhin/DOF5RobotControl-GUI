@@ -24,7 +24,7 @@ namespace DOF5RobotControl_GUI
 
     public partial class MainWindow : Window
     {
-        readonly D5RControl.Joints IdlePos = new(0, 0, -15000000, -10000000, 0);
+        readonly D5RControl.Joints IdlePos = new(0, 0, -14000000, -10000000, 0);
         readonly D5RControl.Joints ChangeJawPos = new(0, -72195, 5174842, -6912012, 0);
         readonly D5RControl.Joints PreChangeJawPos = new(0, 5000000, -5000000, -15184980, 0);
         readonly D5RControl.Joints FetchRingPos = new(0, 8673000, 4000000, -10000000, 0);
@@ -132,9 +132,6 @@ namespace DOF5RobotControl_GUI
         private void BtnRun_Click(object sender, RoutedEventArgs e)
         {
             D5RControl.Joints j = mainViewModel.TargetPosition.ToJoints();
-
-            Debug.WriteLine($"Joints: {j.R1}, {j.P2}, {j.P3}, {j.P4}, {j.R5}");
-            return;
 
             int result = D5RControl.JointsMoveAbsolute(j);
             if (result != 0)
