@@ -21,6 +21,7 @@ using System.Net.Http.Headers;
 using System.Printing;
 using System.Media;
 using System.Runtime.CompilerServices;
+using DOF5RobotControl_GUI.ViewModel;
 
 namespace DOF5RobotControl_GUI
 {
@@ -29,7 +30,7 @@ namespace DOF5RobotControl_GUI
     /// </summary>
     public partial class ManualControlWindow : System.Windows.Window
     {
-        private ManualControlData UIData = new();
+        private ManualControlViewModel UIData = new();
         private readonly static SoundPlayer lowPlayer = new("res/Low.wav");
         private readonly static SoundPlayer mediumPlayer = new("res/Medium.wav");
         private readonly static SoundPlayer highPlayer = new("res/High.wav");
@@ -164,12 +165,12 @@ namespace DOF5RobotControl_GUI
             {
                 //Debug.WriteLine("No XInput controller installed");
                 Dispatcher.Invoke(() => MessageBox.Show("No XInput controller installed."));
-                this.UIData.GamepadStatus = false;
+                this.UIData.GamepadConnected = false;
             }
             else
             {
                 Debug.WriteLine("Found a XInput controller available");
-                this.UIData.GamepadStatus = true;
+                this.UIData.GamepadConnected = true;
 
                 //Debug.WriteLine("Press buttons on the controller to display events or escape key to exit... ");
 
@@ -238,7 +239,7 @@ namespace DOF5RobotControl_GUI
                         if (result != 0)
                         {
                             Dispatcher.Invoke(() => MessageBox.Show("JointsMoveRelative error in xInputControlTask."));
-                            UIData.GamepadStatus = false;
+                            UIData.GamepadConnected = false;
                             break;
                         }
                     }

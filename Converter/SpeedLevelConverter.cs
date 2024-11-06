@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Data;
 
-namespace DOF5RobotControl_GUI
+namespace DOF5RobotControl_GUI.Converter
 {
     internal class SpeedLevelConverter : IValueConverter
     {

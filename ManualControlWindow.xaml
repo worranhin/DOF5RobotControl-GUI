@@ -3,22 +3,25 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:DOF5RobotControl_GUI" d:DataContext="{d:DesignInstance Type=local:ManualControlData}"
+        xmlns:local="clr-namespace:DOF5RobotControl_GUI" 
+        xmlns:viewmodel="clr-namespace:DOF5RobotControl_GUI.ViewModel" 
+        xmlns:cvt="clr-namespace:DOF5RobotControl_GUI.Converter"
+        d:DataContext="{d:DesignInstance Type=viewmodel:ManualControlViewModel}"
         mc:Ignorable="d"
         KeyDown="Window_KeyDown"
         KeyUp="Window_KeyUp"
         Title="ManualControlWindow" Height="720" Width="1280"
         FontSize="16">
     <Window.Resources>
-        <local:SpeedLevelConverter x:Key="SpeedLevelConverter"/>
-        <local:GamepadStatusConverter x:Key="GamepadStatusConverter"/>
+        <cvt:SpeedLevelConverter x:Key="SpeedLevelConverter"/>
+        <cvt:GamepadStatusConverter x:Key="GamepadStatusConverter"/>
     </Window.Resources>
     <DockPanel Margin="8">
         <StatusBar DockPanel.Dock="Bottom">
             <StatusBarItem>
                 <StackPanel Orientation="Horizontal">
                     <TextBlock>手柄连接状态：</TextBlock>
-                    <TextBlock Text="{Binding GamepadStatus, Converter={StaticResource GamepadStatusConverter}}"/>
+                    <TextBlock Text="{Binding GamepadConnected, Converter={StaticResource GamepadStatusConverter}}"/>
                 </StackPanel>
             </StatusBarItem>
             <Separator/>
@@ -35,10 +38,16 @@
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
             <GroupBox Header="Camera 1" Grid.Column="0">
-                <Image x:Name="FrameImage"></Image>
+                <Grid>
+                    <Image x:Name="FrameImage"></Image>
+                    <TextBlock Text="Camera 1 disconnected!" Visibility="Visible" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                </Grid>
             </GroupBox>
             <GroupBox Header="Camera 2" Grid.Column="1">
-                <TextBlock Text="Hello, this is the camera2!" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Grid>
+                    <Image x:Name="FrameImage2"></Image>
+                    <TextBlock Text="Camera 2 disconnected!" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Grid>
             </GroupBox>
         </Grid>
 
