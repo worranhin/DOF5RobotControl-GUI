@@ -84,7 +84,15 @@ namespace DOF5RobotControl_GUI
             }
             else
             {
-                int result = D5RControl.Init(mainViewModel.SelectedPort);
+                string newStr;
+                if(mainViewModel.SelectedPort.Length > 4)
+                {
+                    newStr = "\\\\.\\" + mainViewModel.SelectedPort;
+                } else
+                {
+                    newStr = mainViewModel.SelectedPort;
+                }
+                int result = D5RControl.Init(newStr);
                 if (result != 0)
                 {
                     MessageBox.Show($"Initialize error: {result}");

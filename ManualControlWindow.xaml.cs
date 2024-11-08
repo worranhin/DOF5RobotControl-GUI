@@ -232,10 +232,14 @@ namespace DOF5RobotControl_GUI
                     else if (state.Gamepad.RightThumbY >= ThumbsThreshold)
                         joints.R5 = SelectRMDSpeed(speedLevel);
 
-                    Debug.WriteLine($"R1:{joints.R1}, P2:{joints.P2}, P3:{joints.P3}, P4:{joints.P4}, R5:{joints.R5}");
                     if (!jogHandler.isJogging)
                     {
-                        int result = D5RControl.JointsMoveRelative(joints);
+                        int result = 0;
+                        if(joints.R1 != 0 || joints.P2 != 0 || joints.P3 != 0 || joints.P4 != 0 || joints.R5 != 0)
+                        {
+                            Debug.WriteLine($"R1:{joints.R1}, P2:{joints.P2}, P3:{joints.P3}, P4:{joints.P4}, R5:{joints.R5}");
+                            result = D5RControl.JointsMoveRelative(joints);
+                        }
                         if (result != 0)
                         {
                             Dispatcher.Invoke(() => MessageBox.Show("JointsMoveRelative error in xInputControlTask."));
@@ -376,12 +380,15 @@ namespace DOF5RobotControl_GUI
             {
                 case 0:
                     value = 10000 / 1000 * controlPeriod;  // 0.01 mm/s
+                    //value = 1;
                     break;
                 case 1:
                     value = 100000 / 1000 * controlPeriod;  // 0.1mm/s
+                    //value = 10;
                     break;
                 case 2:
                     value = 1000000 / 1000 * controlPeriod;  // 1 mm/s
+                    //value = 100;
                     break;
                 default:
                     break;
@@ -396,13 +403,16 @@ namespace DOF5RobotControl_GUI
             switch (level)
             {
                 case 0:
-                    value = 1 / 1000 * controlPeriod;  // 0.01 degree/s
+                    //value = (int)(50.0 / 1000.0 * (double)(controlPeriod));  // 0.01 degree/s
+                    value = 1;
                     break;
                 case 1:
-                    value = 10 / 1000 * controlPeriod; // 0.1 degree/s
+                    //value = (int)(100.0 / 1000 * (double)controlPeriod); // 0.1 degree/s
+                    value = 10;
                     break;
                 case 2:
-                    value = 100 / 1000 * controlPeriod;  // 1 degree/s
+                    //value = (int)(200.0 / 1000 * controlPeriod);  // 1 degree/s
+                    value = 100;
                     break;
                 default:
                     break;
