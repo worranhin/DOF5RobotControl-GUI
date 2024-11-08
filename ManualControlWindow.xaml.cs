@@ -235,7 +235,7 @@ namespace DOF5RobotControl_GUI
                     if (!jogHandler.isJogging)
                     {
                         int result = 0;
-                        if(joints.R1 != 0 || joints.P2 != 0 || joints.P3 != 0 || joints.P4 != 0 || joints.R5 != 0)
+                        if(!D5RControl.IsZeroJoints(joints))
                         {
                             Debug.WriteLine($"R1:{joints.R1}, P2:{joints.P2}, P3:{joints.P3}, P4:{joints.P4}, R5:{joints.R5}");
                             result = D5RControl.JointsMoveRelative(joints);
