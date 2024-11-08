@@ -47,8 +47,8 @@ namespace DOF5RobotControl_GUI
         //private readonly JointsPosition AssemblePos2 = new(6000, -8027000, -15911400, 1783100, 0);
         //private readonly JointsPosition AssemblePos3 = new(0, 0, 7004200, 15275000, 0);
         private JointsPosition targetJointPos = new(0, 0, 0, 0, 0);
-        private bool isConnected = false;
-        private JogHandler jogHandler = new();
+        //private bool isConnected = false;
+        private readonly JogHandler jogHandler = new();
         readonly int natorJogResolution = 100000;
         readonly int RMDJogResolution = 20;
         private readonly MainViewModel mainViewModel = new();
