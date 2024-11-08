@@ -14,6 +14,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using DOF5RobotControl_GUI.ViewModel;
 
 namespace DOF5RobotControl_GUI
 {
@@ -24,6 +25,7 @@ namespace DOF5RobotControl_GUI
 
     public partial class MainWindow : Window
     {
+        readonly D5RControl.Joints ZeroPos = new(0, 0, 0, 0, 0);
         readonly D5RControl.Joints IdlePos = new(0, 0, -14000000, -10000000, 0);
         readonly D5RControl.Joints ChangeJawPos = new(0, -72195, 5174842, -6912012, 0);
         readonly D5RControl.Joints PreChangeJawPos = new(0, 5000000, -5000000, -15184980, 0);
@@ -34,6 +36,8 @@ namespace DOF5RobotControl_GUI
         readonly D5RControl.Joints AssemblePos3 = new(0, 0, 7004200, 15275000, 0);
 
 
+
+        //private readonly JointsPosition ZeroPos = new(0, 0, 0, 0, 0);
         //private readonly JointsPosition IdlePos = new(0, 0, -15000000, -10000000, 0);
         //private readonly JointsPosition ChangeJawPos = new(0, -72195, 5174842, -6912012, 0);
         //private readonly JointsPosition PreChangeJawPos = new(0, -72195, -15000000, -6912012, 0);
@@ -42,7 +46,8 @@ namespace DOF5RobotControl_GUI
         //private readonly JointsPosition AssemblePos1 = new(9000, 15686500, -16819200, -5759600, -10);
         //private readonly JointsPosition AssemblePos2 = new(6000, -8027000, -15911400, 1783100, 0);
         //private readonly JointsPosition AssemblePos3 = new(0, 0, 7004200, 15275000, 0);
-
+        private JointsPosition targetJointPos = new(0, 0, 0, 0, 0);
+        private bool isConnected = false;
         private JogHandler jogHandler = new();
         readonly int natorJogResolution = 100000;
         readonly int RMDJogResolution = 20;
@@ -79,7 +84,15 @@ namespace DOF5RobotControl_GUI
             }
             else
             {
-                int result = D5RControl.Init(mainViewModel.SelectedPort);
+                string newStr;
+                if(mainViewModel.SelectedPort.Length > 4)
+                {
+                    newStr = "\\\\.\\" + mainViewModel.SelectedPort;
+                } else
+                {
+                    newStr = mainViewModel.SelectedPort;
+                }
+                int result = D5RControl.Init(newStr);
                 if (result != 0)
                 {
                     MessageBox.Show($"Initialize error: {result}");
@@ -87,6 +100,13 @@ namespace DOF5RobotControl_GUI
                 }
                 mainViewModel.SystemConnected = true;
             }
+        }
+
+        private void BtnZeroPos_Click(object sender, RoutedEventArgs e)
+        {
+            //targetJointPos = ZeroPos;
+            //this.DataContext = targetJointPos;
+            mainViewModel.TargetPosition.SetFromJoints(ZeroPos);
         }
 
         private void BtnIdlePos_Click(object sender, RoutedEventArgs e)
@@ -131,7 +151,7 @@ namespace DOF5RobotControl_GUI
 
         private void BtnRun_Click(object sender, RoutedEventArgs e)
         {
-            D5RControl.Joints j = mainViewModel.TargetPosition.ToJoints();
+            D5RControl.Joints j = mainViewModel.TargetPosition.ToD5RJoints();
 
             int result = D5RControl.JointsMoveAbsolute(j);
             if (result != 0)
@@ -281,6 +301,12 @@ namespace DOF5RobotControl_GUI
         private void BtnR5JogUp_P(object sender, MouseButtonEventArgs e)
         {
             jogHandler.StopJogging();
+        }
+
+        private void BtnOpenManualControl_Click(object sender, RoutedEventArgs e)
+        {
+            ManualControlWindow window = new ManualControlWindow();
+            window.Show();
         }
     }
 }

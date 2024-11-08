@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace DOF5RobotControl_GUI
+namespace DOF5RobotControl_GUI.ViewModel
 {
     class MainViewModel : ObservableObject
     {
