@@ -6,12 +6,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace DOF5RobotControl_GUI
+namespace DOF5RobotControl_GUI.Model
 {
     internal class JogHandler
     {
         public bool isJogging = false;
-        
+
         private CancellationTokenSource cancelJoggingSource;
         private CancellationToken cancelJoggingToken;
 

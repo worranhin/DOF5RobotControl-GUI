@@ -22,6 +22,7 @@ using System.Printing;
 using System.Media;
 using System.Runtime.CompilerServices;
 using DOF5RobotControl_GUI.ViewModel;
+using DOF5RobotControl_GUI.Model;
 
 namespace DOF5RobotControl_GUI
 {

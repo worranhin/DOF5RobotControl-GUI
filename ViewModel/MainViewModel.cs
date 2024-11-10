@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm;
 using CommunityToolkit.Mvvm.ComponentModel;
+using DOF5RobotControl_GUI.Model;
 
 namespace DOF5RobotControl_GUI.ViewModel
 {
