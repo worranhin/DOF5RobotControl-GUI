@@ -50,7 +50,9 @@ namespace DOF5RobotControl_GUI
         private readonly JogHandler jogHandler = new();
         readonly int natorJogResolution = 100000;
         readonly int RMDJogResolution = 20;
+        readonly string natorId = "usb:id:7547982319";
         private readonly MainViewModel mainViewModel = new();
+        private D5Robot? robot;
 
         public MainWindow()
         {
@@ -73,33 +75,51 @@ namespace DOF5RobotControl_GUI
         {
             if (mainViewModel.SystemConnected)  // 如果目前系统已连接
             {
-                int result = D5RControl.DeInit();
-                if (result != 0)
-                {
-                    MessageBox.Show($"DeInitialize error: {result}");
-                    return;
-                }
+                robot?.Dispose();
+                robot = null;
                 mainViewModel.SystemConnected = false;
+
+                //int result = D5RControl.DeInit();
+                //if (result != 0)
+                //{
+                //    MessageBox.Show($"DeInitialize error: {result}");
+                //    return;
+                //}
+                //mainViewModel.SystemConnected = false;
             }
             else
             {
-                string newStr;
-                if(mainViewModel.SelectedPort.Length > 4)
+                string portName;
+                if (mainViewModel.SelectedPort.Length > 4)
                 {
-                    newStr = "\\\\.\\" + mainViewModel.SelectedPort;
-                } else
-                {
-                    newStr = mainViewModel.SelectedPort;
+                    portName = "\\\\.\\" + mainViewModel.SelectedPort;  // To adapt Window Serial Api
                 }
-                int result = D5RControl.Init(newStr);
-                if (result != 0)
+                else
                 {
-                    MessageBox.Show($"Initialize error: {result}");
-                    return;
+                    portName = mainViewModel.SelectedPort;
                 }
-                mainViewModel.SystemConnected = true;
+
+                try
+                {
+                    robot = new D5Robot(portName, natorId, 1, 2);
+                    mainViewModel.SystemConnected = true;
+                }
+                catch (Exception err)
+                {
+                    MessageBox.Show($"Error while connecting:\n{err.Message}");
+                }
+
+                //int result = D5RControl.Init(portName);
+                //if (result != 0)
+                //{
+                //    MessageBox.Show($"Initialize error: {result}");
+                //    return;
+                //}
+
             }
         }
+
+        // 预设位姿按键 //
 
         private void BtnZeroPos_Click(object sender, RoutedEventArgs e)
         {

@@ -20,7 +20,7 @@ using System.Threading.Tasks;
 
 namespace DOF5RobotControl_GUI.Model
 {
-    public partial class D5Robot(string serialPort, string natorID, int topRMDId, int bottomRMDId)
+    public partial class D5Robot : IDisposable
     {
         public struct Joints(int r1, int p2, int p3, int p4, int r5)
         {
@@ -31,56 +31,103 @@ namespace DOF5RobotControl_GUI.Model
             public int R5 = r5;
         };
 
-        [LibraryImport("libD5Robot.dll", StringMarshalling = StringMarshalling.Utf8)]
-        private static partial IntPtr CreateD5RobotInstance(string serialPort, string natorID, int topRMDId, int bottomRMDId);
+        public enum ErrorCode
+        {
+            OK = 0,
+            SystemError = 100,
+            CreateInstanceError = 101,
+            SerialError = 200,
+            SerialInitError = 201,
+            NatorError = 300,
+            RMDError = 400
+        };
+
         [LibraryImport("libD5Robot.dll")]
-        internal static partial void DestroyD5RobotInstance(IntPtr instance);
+        internal static partial ErrorCode CreateD5RobotInstance(out IntPtr instance, [MarshalAs(UnmanagedType.LPStr)]string serialPort, [MarshalAs(UnmanagedType.LPStr)]string natorID, int topRMDId, int bottomRMDId);
         [LibraryImport("libD5Robot.dll")]
-        [return: MarshalAs(UnmanagedType.U1)]
+        internal static partial ErrorCode DestroyD5RobotInstance(IntPtr instance);
+        [LibraryImport("libD5Robot.dll")]
+        [return: MarshalAs(UnmanagedType.I1)]
         internal static partial bool CallIsInit(IntPtr instance);
         [LibraryImport("libD5Robot.dll")]
-        [return: MarshalAs(UnmanagedType.U1)]
-        internal static partial bool CallSetZero(IntPtr instance);
+        internal static partial ErrorCode CallSetZero(IntPtr instance);
         [LibraryImport("libD5Robot.dll")]
-        [return: MarshalAs(UnmanagedType.U1)]
-        internal static partial bool CallStop(IntPtr instance);
+        internal static partial ErrorCode CallStop(IntPtr instance);
         [LibraryImport("libD5Robot.dll")]
-        [return: MarshalAs(UnmanagedType.U1)]
-        internal static partial bool CallJointsMoveAbsolute(IntPtr instance, Joints j);
+        internal static partial ErrorCode CallJointsMoveAbsolute(IntPtr instance, Joints j);
         [LibraryImport("libD5Robot.dll")]
-        [return: MarshalAs(UnmanagedType.U1)]
-        internal static partial bool CallJointsMoveRelative(IntPtr instance, Joints j);
+        internal static partial ErrorCode CallJointsMoveRelative(IntPtr instance, Joints j);
 
-        private readonly IntPtr _robotPtr = CreateD5RobotInstance(serialPort, natorID, topRMDId, bottomRMDId);
+        private readonly IntPtr _robotPtr;
+        private bool disposedValue;
 
-        ~D5Robot()
+        public D5Robot(string serialPort, string natorID, int topRMDId, int bottomRMDId)
         {
-            DestroyD5RobotInstance(_robotPtr);
+            var result = CreateD5RobotInstance(out _robotPtr, serialPort, natorID, topRMDId, bottomRMDId);
+            if (result != ErrorCode.OK)
+            {
+                throw new Exception($"CreateD5RobotInstance error: {result}");
+            }
         }
+
+        //~D5Robot()
+        //{
+        //    DestroyD5RobotInstance(_robotPtr);
+        //}
 
         public bool IsInit()
         {
             return CallIsInit(_robotPtr);
         }
 
-        public bool SetZero()
+        public ErrorCode SetZero()
         {
             return CallSetZero(_robotPtr);
         }
 
-        public bool Stop()
+        public ErrorCode Stop()
         {
             return CallStop(_robotPtr);
         }
 
-        public bool JointsMoveAbsolute(Joints j)
+        public ErrorCode JointsMoveAbsolute(Joints j)
         {
             return CallJointsMoveAbsolute(_robotPtr, j);
         }
 
-        public bool JointsMoveRelative(Joints j)
+        public ErrorCode JointsMoveRelative(Joints j)
         {
             return CallJointsMoveRelative(_robotPtr, j);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    // TODO: 释放托管状态(托管对象)
+                }
+
+                // TODO: 释放未托管的资源(未托管的对象)并重写终结器
+                DestroyD5RobotInstance(_robotPtr);
+                // TODO: 将大型字段设置为 null
+                disposedValue = true;
+            }
+        }
+
+        // // TODO: 仅当“Dispose(bool disposing)”拥有用于释放未托管资源的代码时才替代终结器
+         ~D5Robot()
+        {
+            // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
+            Dispose(disposing: false);
+        }
+
+        public void Dispose()
+        {
+            // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }
