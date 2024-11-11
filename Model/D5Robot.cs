@@ -20,7 +20,7 @@ using System.Threading.Tasks;
 
 namespace DOF5RobotControl_GUI.Model
 {
-    public partial class D5Robot
+    public partial class D5Robot(string serialPort, string natorID, int topRMDId, int bottomRMDId)
     {
         public struct Joints(int r1, int p2, int p3, int p4, int r5)
         {
@@ -51,12 +51,7 @@ namespace DOF5RobotControl_GUI.Model
         [return: MarshalAs(UnmanagedType.U1)]
         internal static partial bool CallJointsMoveRelative(IntPtr instance, Joints j);
 
-        private readonly IntPtr _robotPtr;
-
-        public D5Robot(string serialPort, string natorID, int topRMDId, int bottomRMDId)
-        {
-            _robotPtr = CreateD5RobotInstance(serialPort, natorID, topRMDId, bottomRMDId);
-        }
+        private readonly IntPtr _robotPtr = CreateD5RobotInstance(serialPort, natorID, topRMDId, bottomRMDId);
 
         ~D5Robot()
         {
