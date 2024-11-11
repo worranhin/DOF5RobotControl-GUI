@@ -4,8 +4,9 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DOF5RobotControl_GUI"
-        xmlns:cvt="clr-namespace:DOF5RobotControl_GUI.Converter"
-        d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
+        xmlns:cvt="clr-namespace:DOF5RobotControl_GUI.Converter" 
+        xmlns:vm="clr-namespace:DOF5RobotControl_GUI.ViewModel"
+        d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
         mc:Ignorable="d"
         Title="MainWindow" Height="600" Width="800"
         FontSize="16">
