@@ -92,24 +92,24 @@
                     <Label Grid.Column="8" Target="{Binding ElementName=JointValueR5}">r5</Label>
                     <TextBox Grid.Column="9" x:Name="JointValueR5" Text="{Binding TargetPosition.R5, Mode=TwoWay}"></TextBox>
                     <UniformGrid Grid.Column="1" Grid.Row="1" Rows="1">
-                        <Button PreviewMouseDown="BtnR1JogDown_N" PreviewMouseUp="BtnR1JogUp_N">Jog-</Button>
-                        <Button PreviewMouseDown="BtnR1JogDown_P" PreviewMouseUp="BtnR1JogUp_P">Jog+</Button>
+                        <Button PreviewMouseDown="BtnR1JogDown_N" PreviewMouseUp="BtnR1JogUp_N" IsEnabled="{Binding SystemConnected}">Jog-</Button>
+                        <Button PreviewMouseDown="BtnR1JogDown_P" PreviewMouseUp="BtnR1JogUp_P" IsEnabled="{Binding SystemConnected}">Jog+</Button>
                     </UniformGrid>
                     <UniformGrid Grid.Column="3" Grid.Row="1" Rows="1">
-                        <Button PreviewMouseDown="BtnP2JogDown_N" PreviewMouseUp="BtnP2JogUp_N">Jog-</Button>
-                        <Button PreviewMouseDown="BtnP2JogDown_P" PreviewMouseUp="BtnP2JogUp_P">Jog+</Button>
+                        <Button PreviewMouseDown="BtnP2JogDown_N" PreviewMouseUp="BtnP2JogUp_N" IsEnabled="{Binding SystemConnected}">Jog-</Button>
+                        <Button PreviewMouseDown="BtnP2JogDown_P" PreviewMouseUp="BtnP2JogUp_P" IsEnabled="{Binding SystemConnected}">Jog+</Button>
                     </UniformGrid>
                     <UniformGrid Grid.Column="5" Grid.Row="1" Rows="1">
-                        <Button PreviewMouseDown="BtnP3JogDown_N" PreviewMouseUp="BtnP3JogUp_N">Jog-</Button>
-                        <Button PreviewMouseDown="BtnP3JogDown_P" PreviewMouseUp="BtnP3JogUp_P">Jog+</Button>
+                        <Button PreviewMouseDown="BtnP3JogDown_N" PreviewMouseUp="BtnP3JogUp_N" IsEnabled="{Binding SystemConnected}">Jog-</Button>
+                        <Button PreviewMouseDown="BtnP3JogDown_P" PreviewMouseUp="BtnP3JogUp_P" IsEnabled="{Binding SystemConnected}">Jog+</Button>
                     </UniformGrid>
                     <UniformGrid Grid.Column="7" Grid.Row="1" Rows="1">
-                        <Button PreviewMouseDown="BtnP4JogDown_N" PreviewMouseUp="BtnP4JogUp_N">Jog-</Button>
-                        <Button PreviewMouseDown="BtnP4JogDown_P" PreviewMouseUp="BtnP4JogUp_P">Jog+</Button>
+                        <Button PreviewMouseDown="BtnP4JogDown_N" PreviewMouseUp="BtnP4JogUp_N" IsEnabled="{Binding SystemConnected}">Jog-</Button>
+                        <Button PreviewMouseDown="BtnP4JogDown_P" PreviewMouseUp="BtnP4JogUp_P" IsEnabled="{Binding SystemConnected}">Jog+</Button>
                     </UniformGrid>
                     <UniformGrid Grid.Column="9" Grid.Row="1" Rows="1">
-                        <Button PreviewMouseDown="BtnR5JogDown_N" PreviewMouseUp="BtnR5JogUp_N">Jog-</Button>
-                        <Button PreviewMouseDown="BtnR5JogDown_P" PreviewMouseUp="BtnR5JogUp_P">Jog+</Button>
+                        <Button PreviewMouseDown="BtnR5JogDown_N" PreviewMouseUp="BtnR5JogUp_N" IsEnabled="{Binding SystemConnected}">Jog-</Button>
+                        <Button PreviewMouseDown="BtnR5JogDown_P" PreviewMouseUp="BtnR5JogUp_P" IsEnabled="{Binding SystemConnected}">Jog+</Button>
                     </UniformGrid>
                 </Grid>
                 
@@ -144,24 +144,24 @@
                 <Label Grid.Column="8" Target="{Binding ElementName=PosValueRz}">rz</Label>
                 <TextBox Grid.Column="9" x:Name="PosValueRz"></TextBox>
                 <UniformGrid Grid.Column="1" Grid.Row="1" Rows="1">
-                    <Button>Jog-</Button>
-                    <Button>Jog+</Button>
+                    <Button IsEnabled="{Binding SystemConnected}">Jog-</Button>
+                    <Button IsEnabled="{Binding SystemConnected}">Jog+</Button>
                 </UniformGrid>
                 <UniformGrid Grid.Column="3" Grid.Row="1" Rows="1">
-                    <Button>Jog-</Button>
-                    <Button>Jog+</Button>
+                    <Button IsEnabled="{Binding SystemConnected}">Jog-</Button>
+                    <Button IsEnabled="{Binding SystemConnected}">Jog+</Button>
                 </UniformGrid>
                 <UniformGrid Grid.Column="5" Grid.Row="1" Rows="1">
-                    <Button>Jog-</Button>
-                    <Button>Jog+</Button>
+                    <Button IsEnabled="{Binding SystemConnected}">Jog-</Button>
+                    <Button IsEnabled="{Binding SystemConnected}">Jog+</Button>
                 </UniformGrid>
                 <UniformGrid Grid.Column="7" Grid.Row="1" Rows="1">
-                    <Button>Jog-</Button>
-                    <Button>Jog+</Button>
+                    <Button IsEnabled="{Binding SystemConnected}">Jog-</Button>
+                    <Button IsEnabled="{Binding SystemConnected}">Jog+</Button>
                 </UniformGrid>
                 <UniformGrid Grid.Column="9" Grid.Row="1" Rows="1">
-                    <Button>Jog-</Button>
-                    <Button>Jog+</Button>
+                    <Button IsEnabled="{Binding SystemConnected}">Jog-</Button>
+                    <Button IsEnabled="{Binding SystemConnected}">Jog+</Button>
                 </UniformGrid>
             </Grid>
         </GroupBox>
