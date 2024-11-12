@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm;
 using CommunityToolkit.Mvvm.ComponentModel;
+using DOF5RobotControl_GUI.Model;
 
 namespace DOF5RobotControl_GUI.ViewModel
 {
@@ -33,11 +34,11 @@ namespace DOF5RobotControl_GUI.ViewModel
             set => SetProperty(ref _selectedPort, value);
         }
 
-        private JointsPosition _targetPosition = new(0, 0, 0, 0, 0);
-        public JointsPosition TargetPosition
+        private RoboticState _targetState = new(0, 0, 0, 0, 0);
+        public RoboticState TargetState
         {
-            get => _targetPosition;
-            set => SetProperty(ref _targetPosition, value);
+            get => _targetState;
+            set => SetProperty(ref _targetState, value);
         }
     }
 }

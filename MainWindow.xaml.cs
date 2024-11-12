@@ -49,28 +49,28 @@ namespace DOF5RobotControl_GUI
         private readonly JogHandler jogHandler = new();
         readonly int natorJogResolution = 100000;
         readonly int RMDJogResolution = 20;
-        private readonly MainViewModel mainViewModel = new();
+        private readonly MainViewModel viewModel = new();
 
         public MainWindow()
         {
             InitializeComponent();
 
             // 初始化 Serial
-            mainViewModel.PortsAvailable = SerialPort.GetPortNames();
-            if (mainViewModel.PortsAvailable.Length > 0)
-                mainViewModel.SelectedPort = mainViewModel.PortsAvailable[0];
+            viewModel.PortsAvailable = SerialPort.GetPortNames();
+            if (viewModel.PortsAvailable.Length > 0)
+                viewModel.SelectedPort = viewModel.PortsAvailable[0];
 
-            DataContext = mainViewModel;
+            DataContext = viewModel;
         }
 
         private void PortRefresh_Click(object sender, RoutedEventArgs e)
         {
-            mainViewModel.PortsAvailable = SerialPort.GetPortNames();
+            viewModel.PortsAvailable = SerialPort.GetPortNames();
         }
 
         private void BtnConnect_Click(object sender, RoutedEventArgs e)
         {
-            if (mainViewModel.SystemConnected)  // 如果目前系统已连接
+            if (viewModel.SystemConnected)  // 如果目前系统已连接
             {
                 int result = D5RControl.DeInit();
                 if (result != 0)
@@ -78,17 +78,17 @@ namespace DOF5RobotControl_GUI
                     MessageBox.Show($"DeInitialize error: {result}");
                     return;
                 }
-                mainViewModel.SystemConnected = false;
+                viewModel.SystemConnected = false;
             }
             else
             {
                 string newStr;
-                if(mainViewModel.SelectedPort.Length > 4)
+                if(viewModel.SelectedPort.Length > 4)
                 {
-                    newStr = "\\\\.\\" + mainViewModel.SelectedPort;
+                    newStr = "\\\\.\\" + viewModel.SelectedPort;
                 } else
                 {
-                    newStr = mainViewModel.SelectedPort;
+                    newStr = viewModel.SelectedPort;
                 }
                 int result = D5RControl.Init(newStr);
                 if (result != 0)
@@ -96,7 +96,7 @@ namespace DOF5RobotControl_GUI
                     MessageBox.Show($"Initialize error: {result}");
                     return;
                 }
-                mainViewModel.SystemConnected = true;
+                viewModel.SystemConnected = true;
             }
         }
 
@@ -104,52 +104,58 @@ namespace DOF5RobotControl_GUI
         {
             //targetJointPos = ZeroPos;
             //this.DataContext = targetJointPos;
-            mainViewModel.TargetPosition.SetFromJoints(ZeroPos);
+            viewModel.TargetState.SetFromD5RJoints(ZeroPos);
         }
 
         private void BtnIdlePos_Click(object sender, RoutedEventArgs e)
         {
-            mainViewModel.TargetPosition.SetFromJoints(IdlePos);
+            viewModel.TargetState.SetFromD5RJoints(IdlePos);
         }
 
         private void BtnPreChangeJawPos_Click(object sender, RoutedEventArgs e)
         {
-            mainViewModel.TargetPosition.SetFromJoints(PreChangeJawPos);
+            viewModel.TargetState.SetFromD5RJoints(PreChangeJawPos);
         }
 
         private void BtnChangeJawPos_Click(object sender, RoutedEventArgs e)
         {
-            mainViewModel.TargetPosition.SetFromJoints(ChangeJawPos);
+            viewModel.TargetState.SetFromD5RJoints(ChangeJawPos);
         }
 
         private void BtnAssemblePos1_Click(object sender, RoutedEventArgs e)
         {
-            mainViewModel.TargetPosition.SetFromJoints(AssemblePos1);
+            viewModel.TargetState.SetFromD5RJoints(AssemblePos1);
         }
 
         private void BtnAssemblePos2_Click(object sender, RoutedEventArgs e)
         {
-            mainViewModel.TargetPosition.SetFromJoints(AssemblePos2);
+            viewModel.TargetState.SetFromD5RJoints(AssemblePos2);
         }
 
         private void BtnAssemblePos3_Click(object sender, RoutedEventArgs e)
         {
-            mainViewModel.TargetPosition.SetFromJoints(AssemblePos3);
+            viewModel.TargetState.SetFromD5RJoints(AssemblePos3);
         }
 
         private void BtnPreFetchRingPos_Click(object sender, RoutedEventArgs e)
         {
-            mainViewModel.TargetPosition.SetFromJoints(PreFetchRingPos);
+            viewModel.TargetState.SetFromD5RJoints(PreFetchRingPos);
         }
 
         private void BtnFetchRingPos_Click(object sender, RoutedEventArgs e)
         {
-            mainViewModel.TargetPosition.SetFromJoints(FetchRingPos);
+            viewModel.TargetState.SetFromD5RJoints(FetchRingPos);
         }
 
         private void BtnRun_Click(object sender, RoutedEventArgs e)
         {
-            D5RControl.Joints j = mainViewModel.TargetPosition.ToD5RJoints();
+            //Debug.WriteLine("Clicked");
+            //Debug.WriteLine(this.viewModel.TargetState.JointSpace);
+            //Debug.WriteLine(this.viewModel.TargetState.TaskSpace);
+            //return;
+
+
+            D5RControl.Joints j = viewModel.TargetState.ToD5RJoints();
 
             int result = D5RControl.JointsMoveAbsolute(j);
             if (result != 0)

@@ -82,15 +82,15 @@
                         <RowDefinition Height="auto"/>
                     </Grid.RowDefinitions>
                     <Label Grid.Column="0" Target="{Binding ElementName=JointValueR1}">r1</Label>
-                    <TextBox Grid.Column="1" x:Name="JointValueR1" Text="{Binding TargetPosition.R1, Mode=TwoWay}"></TextBox>
+                    <TextBox Grid.Column="1" x:Name="JointValueR1" Text="{Binding TargetState.JointSpace.R1, Mode=TwoWay}"></TextBox>
                     <Label Grid.Column="2" Target="{Binding ElementName=JointValueP2}">p2</Label>
-                    <TextBox Grid.Column="3" x:Name="JointValueP2" Text="{Binding TargetPosition.P2, Mode=TwoWay}"></TextBox>
+                    <TextBox Grid.Column="3" x:Name="JointValueP2" Text="{Binding TargetState.JointSpace.P2, Mode=TwoWay}"></TextBox>
                     <Label Grid.Column="4" Target="{Binding ElementName=JointValueP3}">p3</Label>
-                    <TextBox Grid.Column="5" x:Name="JointValueP3" Text="{Binding TargetPosition.P3, Mode=TwoWay}"></TextBox>
+                    <TextBox Grid.Column="5" x:Name="JointValueP3" Text="{Binding TargetState.JointSpace.P3, Mode=TwoWay}"></TextBox>
                     <Label Grid.Column="6" Target="{Binding ElementName=JointValueP4}">p4</Label>
-                    <TextBox Grid.Column="7" x:Name="JointValueP4" Text="{Binding TargetPosition.P4, Mode=TwoWay}"></TextBox>
+                    <TextBox Grid.Column="7" x:Name="JointValueP4" Text="{Binding TargetState.JointSpace.P4, Mode=TwoWay}"></TextBox>
                     <Label Grid.Column="8" Target="{Binding ElementName=JointValueR5}">r5</Label>
-                    <TextBox Grid.Column="9" x:Name="JointValueR5" Text="{Binding TargetPosition.R5, Mode=TwoWay}"></TextBox>
+                    <TextBox Grid.Column="9" x:Name="JointValueR5" Text="{Binding TargetState.JointSpace.R5, Mode=TwoWay}"></TextBox>
                     <UniformGrid Grid.Column="1" Grid.Row="1" Rows="1">
                         <Button PreviewMouseDown="BtnR1JogDown_N" PreviewMouseUp="BtnR1JogUp_N">Jog-</Button>
                         <Button PreviewMouseDown="BtnR1JogDown_P" PreviewMouseUp="BtnR1JogUp_P">Jog+</Button>
@@ -134,15 +134,15 @@
                     <RowDefinition Height="auto"/>
                 </Grid.RowDefinitions>
                 <Label Grid.Column="0" Target="{Binding ElementName=PosValueX}">px</Label>
-                <TextBox Grid.Column="1" x:Name="PosValueX"></TextBox>
+                <TextBox Grid.Column="1" x:Name="PosValueX" Text="{Binding TargetState.TaskSpace.Px}"></TextBox>
                 <Label Grid.Column="2" Target="{Binding ElementName=PosValueY}">py</Label>
-                <TextBox Grid.Column="3" x:Name="PosValueY"></TextBox>
+                <TextBox Grid.Column="3" x:Name="PosValueY" Text="{Binding TargetState.TaskSpace.Py}"></TextBox>
                 <Label Grid.Column="4" Target="{Binding ElementName=PosValueZ}">pz</Label>
-                <TextBox Grid.Column="5" x:Name="PosValueZ"></TextBox>
+                <TextBox Grid.Column="5" x:Name="PosValueZ" Text="{Binding TargetState.TaskSpace.Pz}"></TextBox>
                 <Label Grid.Column="6" Target="{Binding ElementName=PosValueRy}">ry</Label>
-                <TextBox Grid.Column="7" x:Name="PosValueRy"></TextBox>
+                <TextBox Grid.Column="7" x:Name="PosValueRy" Text="{Binding TargetState.TaskSpace.Ry}"></TextBox>
                 <Label Grid.Column="8" Target="{Binding ElementName=PosValueRz}">rz</Label>
-                <TextBox Grid.Column="9" x:Name="PosValueRz"></TextBox>
+                <TextBox Grid.Column="9" x:Name="PosValueRz" Text="{Binding TargetState.TaskSpace.Rz}"></TextBox>
                 <UniformGrid Grid.Column="1" Grid.Row="1" Rows="1">
                     <Button>Jog-</Button>
                     <Button>Jog+</Button>
