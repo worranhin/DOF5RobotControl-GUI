@@ -23,25 +23,13 @@ namespace DOF5RobotControl_GUI.Model
         public int P4 { get => _p4; set => SetProperty(ref _p4, value); }
         public int R5 { get => _r5; set => SetProperty(ref _r5, value); }
 
-        public D5RControl.Joints ToJoints()
+        public D5Robot.Joints ToD5RJoints()
         {
-            return new D5RControl.Joints()
-            {
-                R1 = R1,
-                P2 = P2,
-                P3 = P3,
-                P4 = P4,
-                R5 = R5
-            };
-        }
-
-        public D5RControl.Joints ToD5RJoints()
-        {
-            D5RControl.Joints j = new(R1, P2, P3, P4, R5);
+            D5Robot.Joints j = new(R1, P2, P3, P4, R5);
             return j;
         }
 
-        public void SetFromJoints(D5RControl.Joints j)
+        public void SetFromJoints(D5Robot.Joints j)
         {
             R1 = j.R1;
             P2 = j.P2;

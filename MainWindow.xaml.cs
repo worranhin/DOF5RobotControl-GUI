@@ -16,6 +16,8 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using DOF5RobotControl_GUI.Model;
 using DOF5RobotControl_GUI.ViewModel;
+using Window = System.Windows.Window;
+using Joints = DOF5RobotControl_GUI.Model.D5Robot.Joints;
 
 namespace DOF5RobotControl_GUI
 {
@@ -26,17 +28,15 @@ namespace DOF5RobotControl_GUI
 
     public partial class MainWindow : Window
     {
-        readonly D5RControl.Joints ZeroPos = new(0, 0, 0, 0, 0);
-        readonly D5RControl.Joints IdlePos = new(0, 0, -14000000, -10000000, 0);
-        readonly D5RControl.Joints ChangeJawPos = new(0, -72195, 5174842, -6912012, 0);
-        readonly D5RControl.Joints PreChangeJawPos = new(0, 5000000, -5000000, -15184980, 0);
-        readonly D5RControl.Joints FetchRingPos = new(0, 8673000, 4000000, -10000000, 0);
-        readonly D5RControl.Joints PreFetchRingPos = new(0, 8673000, -15000000, -10000000, 0);
-        readonly D5RControl.Joints AssemblePos1 = new(9000, 15686500, -16819200, -5759600, -10);
-        readonly D5RControl.Joints AssemblePos2 = new(6000, -8027000, -15911400, 1783100, 0);
-        readonly D5RControl.Joints AssemblePos3 = new(0, 0, 7004200, 15275000, 0);
-
-
+        readonly Joints ZeroPos = new(0, 0, 0, 0, 0);
+        readonly Joints IdlePos = new(0, 0, -14000000, -10000000, 0);
+        readonly Joints ChangeJawPos = new(0, -72195, 5174842, -6912012, 0);
+        readonly Joints PreChangeJawPos = new(0, 5000000, -5000000, -15184980, 0);
+        readonly Joints FetchRingPos = new(0, 8673000, 4000000, -10000000, 0);
+        readonly Joints PreFetchRingPos = new(0, 8673000, -15000000, -10000000, 0);
+        readonly Joints AssemblePos1 = new(9000, 15686500, -16819200, -5759600, -10);
+        readonly Joints AssemblePos2 = new(6000, -8027000, -15911400, 1783100, 0);
+        readonly Joints AssemblePos3 = new(0, 0, 7004200, 15275000, 0);
 
         //private readonly JointsPosition ZeroPos = new(0, 0, 0, 0, 0);
         //private readonly JointsPosition IdlePos = new(0, 0, -15000000, -10000000, 0);
@@ -47,12 +47,12 @@ namespace DOF5RobotControl_GUI
         //private readonly JointsPosition AssemblePos1 = new(9000, 15686500, -16819200, -5759600, -10);
         //private readonly JointsPosition AssemblePos2 = new(6000, -8027000, -15911400, 1783100, 0);
         //private readonly JointsPosition AssemblePos3 = new(0, 0, 7004200, 15275000, 0);
-        private readonly JogHandler jogHandler = new();
         readonly int natorJogResolution = 100000;
         readonly int RMDJogResolution = 20;
         readonly string natorId = "usb:id:7547982319";
         private readonly MainViewModel mainViewModel = new();
         private D5Robot? robot;
+        private JogHandler? jogHandler;
 
         public MainWindow()
         {
@@ -77,6 +77,7 @@ namespace DOF5RobotControl_GUI
             {
                 robot?.Dispose();
                 robot = null;
+                jogHandler = null;
                 mainViewModel.SystemConnected = false;
 
                 //int result = D5RControl.DeInit();
@@ -102,20 +103,13 @@ namespace DOF5RobotControl_GUI
                 try
                 {
                     robot = new D5Robot(portName, natorId, 1, 2);
+                    jogHandler = new JogHandler(robot);
                     mainViewModel.SystemConnected = true;
                 }
                 catch (Exception err)
                 {
                     MessageBox.Show($"Error while connecting:\n{err.Message}");
                 }
-
-                //int result = D5RControl.Init(portName);
-                //if (result != 0)
-                //{
-                //    MessageBox.Show($"Initialize error: {result}");
-                //    return;
-                //}
-
             }
         }
 
@@ -123,8 +117,6 @@ namespace DOF5RobotControl_GUI
 
         private void BtnZeroPos_Click(object sender, RoutedEventArgs e)
         {
-            //targetJointPos = ZeroPos;
-            //this.DataContext = targetJointPos;
             mainViewModel.TargetPosition.SetFromJoints(ZeroPos);
         }
 
@@ -170,32 +162,51 @@ namespace DOF5RobotControl_GUI
 
         private void BtnRun_Click(object sender, RoutedEventArgs e)
         {
-            D5RControl.Joints j = mainViewModel.TargetPosition.ToD5RJoints();
-
-            int result = D5RControl.JointsMoveAbsolute(j);
-            if (result != 0)
+            if (robot == null)
             {
-                //throw new Exception("Joints control error.");
-                MessageBox.Show($"Joints control error: {result}.");
+                MessageBox.Show("Robot not connected.");
+                return;
+            }
+            
+            D5Robot.Joints j = mainViewModel.TargetPosition.ToD5RJoints();
+            D5Robot.ErrorCode err = robot.JointsMoveRelative(j);
+
+            if (err != D5Robot.ErrorCode.OK)
+            {
+                MessageBox.Show($"Error while running: {err}");
+                return;
             }
         }
 
         private void BtnStop_Click(object sender, RoutedEventArgs e)
         {
-            int result = D5RControl.Stop();
-            if (result != 0)
+            if (robot == null)
             {
-                //throw new Exception("Robot stop error.");
-                MessageBox.Show("Robot stop error.");
+                MessageBox.Show("Robot not connected.");
+                return;
+            }
+
+            var err = robot.Stop();
+            if (err != D5Robot.ErrorCode.OK)
+            {
+                MessageBox.Show($"Error while stopping: {err}");
+                return;
             }
         }
 
         private void BtnSetZero_Click(object sender, RoutedEventArgs e)
         {
-            int result = D5RControl.SetZero();
-            if (result != 0)
+            if (robot == null)
             {
-                MessageBox.Show($"Set zero error: {result}.");
+                MessageBox.Show("Robot not connected.");
+                return;
+            }
+
+            var err = robot.SetZero();
+            if (err != D5Robot.ErrorCode.OK)
+            {
+                MessageBox.Show($"Error while setting zero: {err}");
+                return;
             }
         }
 
@@ -203,128 +214,137 @@ namespace DOF5RobotControl_GUI
 
         private void BtnR1JogDown_N(object sender, MouseButtonEventArgs e)
         {
-            Debug.WriteLine("button down");
-            //jogHandler.TestStartJogging();
-            D5RControl.Joints joints = new(-RMDJogResolution, 0, 0, 0, 0);
-            jogHandler.StartJogging(joints);
+            if (jogHandler == null)
+            {
+                MessageBox.Show("Robot not connected.");
+                return;
+            }
+
+            Joints joints = new(-RMDJogResolution, 0, 0, 0, 0);
+            jogHandler?.StartJogging(joints);
         }
 
         private void BtnR1JogUp_N(object sender, MouseButtonEventArgs e)
         {
-            Debug.WriteLine("button up.");
-            jogHandler.StopJogging();
+            jogHandler?.StopJogging();
         }
 
         private void BtnR1JogDown_P(object sender, MouseButtonEventArgs e)
         {
-            D5RControl.Joints joints = new(RMDJogResolution, 0, 0, 0, 0);
-            jogHandler.StartJogging(joints);
+            Joints joints = new(RMDJogResolution, 0, 0, 0, 0);
+            jogHandler?.StartJogging(joints);
         }
 
         private void BtnR1JogUp_P(object sender, MouseButtonEventArgs e)
         {
-            jogHandler.StopJogging();
+            jogHandler?.StopJogging();
         }
 
         // P2 jogging button callbacks //
 
         private void BtnP2JogDown_N(object sender, MouseButtonEventArgs e)
         {
-            D5RControl.Joints joints = new(0, -natorJogResolution, 0, 0, 0);
-            jogHandler.StartJogging(joints);
+            Joints joints = new(0, -natorJogResolution, 0, 0, 0);
+            jogHandler?.StartJogging(joints);
         }
 
         private void BtnP2JogUp_N(object sender, MouseButtonEventArgs e)
         {
-            jogHandler.StopJogging();
+            jogHandler?.StopJogging();
         }
 
         private void BtnP2JogDown_P(object sender, MouseButtonEventArgs e)
         {
-            D5RControl.Joints joints = new(0, natorJogResolution, 0, 0, 0);
-            jogHandler.StartJogging(joints);
+            Joints joints = new(0, natorJogResolution, 0, 0, 0);
+            jogHandler?.StartJogging(joints);
         }
 
         private void BtnP2JogUp_P(object sender, MouseButtonEventArgs e)
         {
-            jogHandler.StopJogging();
+            jogHandler?.StopJogging();
         }
 
         // P3 jogging button callbacks //
 
         private void BtnP3JogDown_N(object sender, MouseButtonEventArgs e)
         {
-            D5RControl.Joints joints = new(0, 0, -natorJogResolution, 0, 0);
-            jogHandler.StartJogging(joints);
+            Joints joints = new(0, 0, -natorJogResolution, 0, 0);
+            jogHandler?.StartJogging(joints);
         }
 
         private void BtnP3JogUp_N(object sender, MouseButtonEventArgs e)
         {
-            jogHandler.StopJogging();
+            jogHandler?.StopJogging();
         }
 
         private void BtnP3JogDown_P(object sender, MouseButtonEventArgs e)
         {
-            D5RControl.Joints joints = new(0, 0, natorJogResolution, 0, 0);
-            jogHandler.StartJogging(joints);
+            Joints joints = new(0, 0, natorJogResolution, 0, 0);
+            jogHandler?.StartJogging(joints);
         }
 
         private void BtnP3JogUp_P(object sender, MouseButtonEventArgs e)
         {
-            jogHandler.StopJogging();
+            jogHandler?.StopJogging();
         }
 
         // P4 jogging button callbacks //
 
         private void BtnP4JogDown_N(object sender, MouseButtonEventArgs e)
         {
-            D5RControl.Joints joints = new(0, 0, 0, -natorJogResolution, 0);
-            jogHandler.StartJogging(joints);
+            Joints joints = new(0, 0, 0, -natorJogResolution, 0);
+            jogHandler?.StartJogging(joints);
         }
 
         private void BtnP4JogUp_N(object sender, MouseButtonEventArgs e)
         {
-            jogHandler.StopJogging();
+            jogHandler?.StopJogging();
         }
 
         private void BtnP4JogDown_P(object sender, MouseButtonEventArgs e)
         {
-            D5RControl.Joints joints = new(0, 0, 0, natorJogResolution, 0);
-            jogHandler.StartJogging(joints);
+            Joints joints = new(0, 0, 0, natorJogResolution, 0);
+            jogHandler?.StartJogging(joints);
         }
 
         private void BtnP4JogUp_P(object sender, MouseButtonEventArgs e)
         {
-            jogHandler.StopJogging();
+            jogHandler?.StopJogging();
         }
 
         // R5 jogging button callbacks //
 
         private void BtnR5JogDown_N(object sender, MouseButtonEventArgs e)
         {
-            D5RControl.Joints joints = new(0, 0, 0, 0, -RMDJogResolution);
-            jogHandler.StartJogging(joints);
+            Joints joints = new(0, 0, 0, 0, -RMDJogResolution);
+            jogHandler?.StartJogging(joints);
         }
 
         private void BtnR5JogUp_N(object sender, MouseButtonEventArgs e)
         {
-            jogHandler.StopJogging();
+            jogHandler?.StopJogging();
         }
 
         private void BtnR5JogDown_P(object sender, MouseButtonEventArgs e)
         {
-            D5RControl.Joints joints = new(0, 0, 0, 0, RMDJogResolution);
-            jogHandler.StartJogging(joints);
+            Joints joints = new(0, 0, 0, 0, RMDJogResolution);
+            jogHandler?.StartJogging(joints);
         }
 
         private void BtnR5JogUp_P(object sender, MouseButtonEventArgs e)
         {
-            jogHandler.StopJogging();
+            jogHandler?.StopJogging();
         }
 
         private void BtnOpenManualControl_Click(object sender, RoutedEventArgs e)
         {
-            ManualControlWindow window = new ManualControlWindow();
+            if (robot == null)
+            {
+                MessageBox.Show("Robot not connected.");
+                return;
+            }
+
+            ManualControlWindow window = new(robot);
             window.Show();
         }
     }
