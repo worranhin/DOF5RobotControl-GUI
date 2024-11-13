@@ -35,8 +35,6 @@ namespace DOF5RobotControl_GUI
         readonly D5RControl.Joints AssemblePos2 = new(6000, -8027000, -15911400, 1783100, 0);
         readonly D5RControl.Joints AssemblePos3 = new(0, 0, 7004200, 15275000, 0);
 
-
-
         //private readonly JointsPosition ZeroPos = new(0, 0, 0, 0, 0);
         //private readonly JointsPosition IdlePos = new(0, 0, -15000000, -10000000, 0);
         //private readonly JointsPosition ChangeJawPos = new(0, -72195, 5174842, -6912012, 0);
@@ -46,6 +44,7 @@ namespace DOF5RobotControl_GUI
         //private readonly JointsPosition AssemblePos1 = new(9000, 15686500, -16819200, -5759600, -10);
         //private readonly JointsPosition AssemblePos2 = new(6000, -8027000, -15911400, 1783100, 0);
         //private readonly JointsPosition AssemblePos3 = new(0, 0, 7004200, 15275000, 0);
+
         private readonly JogHandler jogHandler = new();
         readonly int natorJogResolution = 100000;
         readonly int RMDJogResolution = 20;
@@ -149,12 +148,6 @@ namespace DOF5RobotControl_GUI
 
         private void BtnRun_Click(object sender, RoutedEventArgs e)
         {
-            //Debug.WriteLine("Clicked");
-            //Debug.WriteLine(this.viewModel.TargetState.JointSpace);
-            //Debug.WriteLine(this.viewModel.TargetState.TaskSpace);
-            //return;
-
-
             D5RControl.Joints j = viewModel.TargetState.ToD5RJoints();
 
             int result = D5RControl.JointsMoveAbsolute(j);

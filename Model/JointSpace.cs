@@ -11,7 +11,7 @@ namespace DOF5RobotControl_GUI.Model
     internal class JointSpace : ObservableObject
     {
         private double _r1 = 0.0;
-        public double R1 { get => _r1; set  { Debug.WriteLine("Set R1 in JointSpace"); SetProperty(ref _r1, value); } }
+        public double R1 { get => _r1; set => SetProperty(ref _r1, value); }
         private double _p2 = 0.0;
         public double P2 { get => _p2; set => SetProperty(ref _p2, value); }
         private double _p3 = 0.0;

@@ -134,15 +134,15 @@
                     <RowDefinition Height="auto"/>
                 </Grid.RowDefinitions>
                 <Label Grid.Column="0" Target="{Binding ElementName=PosValueX}">px</Label>
-                <TextBox Grid.Column="1" x:Name="PosValueX" Text="{Binding TargetState.TaskSpace.Px}"></TextBox>
+                <TextBox Grid.Column="1" x:Name="PosValueX" Text="{Binding TargetState.TaskSpace.Px, Mode=TwoWay}"></TextBox>
                 <Label Grid.Column="2" Target="{Binding ElementName=PosValueY}">py</Label>
-                <TextBox Grid.Column="3" x:Name="PosValueY" Text="{Binding TargetState.TaskSpace.Py}"></TextBox>
+                <TextBox Grid.Column="3" x:Name="PosValueY" Text="{Binding TargetState.TaskSpace.Py, Mode=TwoWay}"></TextBox>
                 <Label Grid.Column="4" Target="{Binding ElementName=PosValueZ}">pz</Label>
-                <TextBox Grid.Column="5" x:Name="PosValueZ" Text="{Binding TargetState.TaskSpace.Pz}"></TextBox>
+                <TextBox Grid.Column="5" x:Name="PosValueZ" Text="{Binding TargetState.TaskSpace.Pz, Mode=TwoWay}"></TextBox>
                 <Label Grid.Column="6" Target="{Binding ElementName=PosValueRy}">ry</Label>
-                <TextBox Grid.Column="7" x:Name="PosValueRy" Text="{Binding TargetState.TaskSpace.Ry}"></TextBox>
+                <TextBox Grid.Column="7" x:Name="PosValueRy" Text="{Binding TargetState.TaskSpace.Ry, Mode=TwoWay}"></TextBox>
                 <Label Grid.Column="8" Target="{Binding ElementName=PosValueRz}">rz</Label>
-                <TextBox Grid.Column="9" x:Name="PosValueRz" Text="{Binding TargetState.TaskSpace.Rz}"></TextBox>
+                <TextBox Grid.Column="9" x:Name="PosValueRz" Text="{Binding TargetState.TaskSpace.Rz, Mode=TwoWay}"></TextBox>
                 <UniformGrid Grid.Column="1" Grid.Row="1" Rows="1">
                     <Button>Jog-</Button>
                     <Button>Jog+</Button>

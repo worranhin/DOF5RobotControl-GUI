@@ -12,43 +12,27 @@ namespace DOF5RobotControl_GUI.Model
 {
     internal class RoboticState : ObservableObject
     {
-        //private int _r1 = r1;
-        //private int _p2 = p2;
-        //private int _p3 = p3;
-        //private int _p4 = p4;
-        //private int _r5 = r5;
-        //private int _px;
-        //private int _py;
-        //private int _pz;
-        //private int _ry;
-        //private int _rz;
-
-
-        //public int R1 { get => _r1; set => SetProperty(ref _r1,value); }
-        //public int P2 { get => _p2; set => SetProperty(ref _p2, value); }
-        //public int P3 { get => _p3; set => SetProperty(ref _p3, value); }
-        //public int P4 { get => _p4; set => SetProperty(ref _p4, value); }
-        //public int R5 { get => _r5; set => SetProperty(ref _r5, value); }
-        //public int Px { get => _px; set => SetProperty(ref _px, value); }
-        //public int Py { get => _py; set => SetProperty(ref _py, value); }
-        //public int Pz { get => _pz; set => SetProperty(ref _pz, value); }
-        //public int Ry { get => _ry; set => SetProperty(ref _ry, value); }
-        //public int Rz { get => _rz; set => SetProperty(ref _rz, value); }
-
         private JointSpace _jointSpace = new();
         public JointSpace JointSpace
         {
             get => _jointSpace;
             set
             {
-                Debug.WriteLine("Set JointSpace in RoboticState");
                 if (SetProperty(ref _jointSpace, value))
-                    TaskSpace = KineHelper.Forward(JointSpace);
+                    _jointSpace.PropertyChanged += UpdateTaskSpace;
             }
         }
 
         private TaskSpace _taskSpace = new();
-        public TaskSpace TaskSpace { get => _taskSpace; set => SetProperty(ref _taskSpace, value); }
+        public TaskSpace TaskSpace
+        {
+            get => _taskSpace;
+            set
+            {
+                if (SetProperty(ref _taskSpace, value))
+                    _taskSpace.PropertyChanged += UpdateJointSpace;
+            }
+        }
 
         public RoboticState()
         {
@@ -62,6 +46,10 @@ namespace DOF5RobotControl_GUI.Model
             TaskSpace = KineHelper.Forward(JointSpace);
         }
 
+        /// <summary>
+        /// 转换为控制用的 struct
+        /// </summary>
+        /// <returns></returns>
         public D5RControl.Joints ToD5RJoints()
         {
             D5RControl.Joints j = new()
@@ -76,6 +64,10 @@ namespace DOF5RobotControl_GUI.Model
             return j;
         }
 
+        /// <summary>
+        /// 从控制用的 struct 设置当前状态
+        /// </summary>
+        /// <param name="j"></param>
         public void SetFromD5RJoints(D5RControl.Joints j)
         {
             JointSpace = new()
@@ -88,6 +80,16 @@ namespace DOF5RobotControl_GUI.Model
             };
 
             TaskSpace = KineHelper.Forward(JointSpace);
+        }
+
+        public void UpdateTaskSpace(object? sender, PropertyChangedEventArgs e)
+        {
+            TaskSpace = KineHelper.Forward(JointSpace);
+        }
+
+        public void UpdateJointSpace(object? sender, PropertyChangedEventArgs e)
+        {
+            JointSpace = KineHelper.Inverse(TaskSpace);
         }
     }
 }
