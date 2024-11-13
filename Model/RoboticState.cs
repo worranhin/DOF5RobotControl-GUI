@@ -7,6 +7,8 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Media.Media3D;
 
 namespace DOF5RobotControl_GUI.Model
 {
@@ -19,7 +21,7 @@ namespace DOF5RobotControl_GUI.Model
             set
             {
                 if (SetProperty(ref _jointSpace, value))
-                    _jointSpace.PropertyChanged += UpdateTaskSpace;
+                    _jointSpace.PropertyChanged += (sender, e) => UpdateTaskSpace();
             }
         }
 
@@ -30,7 +32,7 @@ namespace DOF5RobotControl_GUI.Model
             set
             {
                 if (SetProperty(ref _taskSpace, value))
-                    _taskSpace.PropertyChanged += UpdateJointSpace;
+                    _taskSpace.PropertyChanged += (sender, e) => UpdateJointSpace();
             }
         }
 
@@ -79,17 +81,25 @@ namespace DOF5RobotControl_GUI.Model
                 R5 = j.R5 / 100.0
             };
 
-            TaskSpace = KineHelper.Forward(JointSpace);
+            //TaskSpace = KineHelper.Forward(JointSpace);
+            UpdateTaskSpace();
         }
 
-        public void UpdateTaskSpace(object? sender, PropertyChangedEventArgs e)
+        public void UpdateTaskSpace()
         {
+            JointSpace = KineHelper.ClipJoint(JointSpace);
             TaskSpace = KineHelper.Forward(JointSpace);
         }
 
-        public void UpdateJointSpace(object? sender, PropertyChangedEventArgs e)
+        public void UpdateJointSpace()
         {
             JointSpace = KineHelper.Inverse(TaskSpace);
+            if (!KineHelper.CheckJoint(JointSpace))
+            {
+                MessageBox.Show("Joint out of range.");
+                JointSpace = KineHelper.ClipJoint(JointSpace);
+                TaskSpace = KineHelper.Forward(JointSpace);
+            }
         }
     }
 }
