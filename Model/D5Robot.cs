@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 // D5Robot.h
 //D5R_API D5Robot *CreateD5RobotInstance(const char *serialPort,
@@ -38,8 +39,14 @@ namespace DOF5RobotControl_GUI.Model
             CreateInstanceError = 101,
             SerialError = 200,
             SerialInitError = 201,
+            SerialCloseError = 202,
+            SerialSendError = 203,
+            SerialReceiveError,
             NatorError = 300,
-            RMDError = 400
+            NatorInitError = 301,
+            RMDError = 400,
+            RMDInitError = 401,
+            RMDGetPIError = 402
         };
 
         [LibraryImport("libD5Robot.dll")]
@@ -74,6 +81,13 @@ namespace DOF5RobotControl_GUI.Model
         //{
         //    DestroyD5RobotInstance(_robotPtr);
         //}
+
+        // 仅当“Dispose(bool disposing)”拥有用于释放未托管资源的代码时才替代终结器
+        ~D5Robot()
+        {
+            // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
+            Dispose(disposing: false);
+        }
 
         public bool IsInit()
         {
@@ -110,17 +124,27 @@ namespace DOF5RobotControl_GUI.Model
                 }
 
                 // TODO: 释放未托管的资源(未托管的对象)并重写终结器
-                DestroyD5RobotInstance(_robotPtr);
+                try
+                {
+                    var res = DestroyD5RobotInstance(_robotPtr);
+                    if (res != ErrorCode.OK)
+                    {
+                        MessageBox.Show($"Error Destroying Instance: {res}");
+                    }
+                }
+                catch (SEHException e)
+                {
+                    MessageBox.Show($"Error while destroying robot instance: {e.Message}");
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show($"Error while destroying robot instance:\n{e.Message}");
+                    throw;
+                }
+
                 // TODO: 将大型字段设置为 null
                 disposedValue = true;
             }
-        }
-
-        // // TODO: 仅当“Dispose(bool disposing)”拥有用于释放未托管资源的代码时才替代终结器
-         ~D5Robot()
-        {
-            // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
-            Dispose(disposing: false);
         }
 
         public void Dispose()

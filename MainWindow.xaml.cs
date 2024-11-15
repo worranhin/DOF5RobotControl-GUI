@@ -79,14 +79,6 @@ namespace DOF5RobotControl_GUI
                 robot = null;
                 jogHandler = null;
                 mainViewModel.SystemConnected = false;
-
-                //int result = D5RControl.DeInit();
-                //if (result != 0)
-                //{
-                //    MessageBox.Show($"DeInitialize error: {result}");
-                //    return;
-                //}
-                //mainViewModel.SystemConnected = false;
             }
             else
             {
@@ -169,7 +161,7 @@ namespace DOF5RobotControl_GUI
             }
             
             D5Robot.Joints j = mainViewModel.TargetPosition.ToD5RJoints();
-            D5Robot.ErrorCode err = robot.JointsMoveRelative(j);
+            D5Robot.ErrorCode err = robot.JointsMoveAbsolute(j);
 
             if (err != D5Robot.ErrorCode.OK)
             {
