@@ -22,6 +22,8 @@ using System.Printing;
 using System.Media;
 using System.Runtime.CompilerServices;
 using DOF5RobotControl_GUI.ViewModel;
+using DOF5RobotControl_GUI.Model;
+using Joints = DOF5RobotControl_GUI.Model.D5Robot.Joints;
 
 namespace DOF5RobotControl_GUI
 {
@@ -30,7 +32,7 @@ namespace DOF5RobotControl_GUI
     /// </summary>
     public partial class ManualControlWindow : System.Windows.Window
     {
-        private ManualControlViewModel UIData = new();
+        private readonly ManualControlViewModel viewModel = new();
         private readonly static SoundPlayer lowPlayer = new("res/Low.wav");
         private readonly static SoundPlayer mediumPlayer = new("res/Medium.wav");
         private readonly static SoundPlayer highPlayer = new("res/High.wav");
@@ -41,12 +43,13 @@ namespace DOF5RobotControl_GUI
         private readonly CancellationTokenSource xInputCancelSource;
         private readonly CancellationToken captureCancelToken;
         private readonly CancellationToken xInputCancelToken;
-        private readonly JogHandler jogHandler = new();
+        private readonly JogHandler jogHandler;
+        private readonly D5Robot robot;
         private readonly int natorJogResolution = 100000;
         private readonly int RMDJogResolution = 20;
         private int speedLevel = 0;
 
-        public ManualControlWindow()
+        public ManualControlWindow(D5Robot robot)
         {
             InitializeComponent();
             this.Closed += WindowClosed;
@@ -57,12 +60,14 @@ namespace DOF5RobotControl_GUI
             captureCancelToken = captureCancelSource.Token;
             xInputCancelSource = new();
             xInputCancelToken = xInputCancelSource.Token;
+            this.robot = robot;
+            jogHandler = new(robot);
 
             // 运行两个 Task
             Task.Run(CaptureCameraTask, captureCancelToken);
             Task.Run(XInputControlTask, xInputCancelToken);
 
-            this.DataContext = this.UIData;
+            this.DataContext = this.viewModel;
         }
 
         private void WindowClosed(object? sender, EventArgs e)
@@ -165,98 +170,96 @@ namespace DOF5RobotControl_GUI
             {
                 //Debug.WriteLine("No XInput controller installed");
                 Dispatcher.Invoke(() => MessageBox.Show("No XInput controller installed."));
-                this.UIData.GamepadConnected = false;
+                this.viewModel.GamepadConnected = false;
+                return;
             }
-            else
+
+            Debug.WriteLine("Found a XInput controller available");
+            this.viewModel.GamepadConnected = true;
+
+            // Poll events from joystick
+            while (controller.IsConnected && !xInputCancelToken.IsCancellationRequested)
             {
-                Debug.WriteLine("Found a XInput controller available");
-                this.UIData.GamepadConnected = true;
+                var state = controller.GetState();
 
-                //Debug.WriteLine("Press buttons on the controller to display events or escape key to exit... ");
-
-                // Poll events from joystick
-                while (controller.IsConnected && !xInputCancelToken.IsCancellationRequested)
+                // 判断是否切换速度
+                var res = controller.GetKeystroke(DeviceQueryType.Gamepad, out Keystroke ks);
+                if (res == 0 && ks.Flags == KeyStrokeFlags.KeyDown)
                 {
-                    var state = controller.GetState();
-
-                    // 判断是否切换速度
-                    var res = controller.GetKeystroke(DeviceQueryType.Gamepad, out Keystroke ks);
-                    //Debug.WriteLine($"result:{res}");
-                    //Debug.WriteLine($"Flags:{ks.Flags}, VirtualKey:{ks.VirtualKey}");
-                    if (res == 0 && ks.Flags == KeyStrokeFlags.KeyDown)
+                    if (ks.VirtualKey == GamepadKeyCode.DPadUp)
                     {
-                        if (ks.VirtualKey == GamepadKeyCode.DPadUp)
-                        {
-                            speedLevel++;
-                            speedLevel = speedLevel > 2 ? 2 : speedLevel;
-                            UIData.SpeedMode = speedLevel;
-                            PlaySound(speedLevel);
-                            continue;
-                        }
-                        else if (ks.VirtualKey == GamepadKeyCode.DPadDown)
-                        {
-                            speedLevel--;
-                            speedLevel = speedLevel < 0 ? 0 : speedLevel;
-                            UIData.SpeedMode = speedLevel;
-                            PlaySound(speedLevel);
-                            continue;
-                        }
+                        speedLevel++;
+                        speedLevel = speedLevel > 2 ? 2 : speedLevel;
+                        viewModel.SpeedMode = speedLevel;
+                        PlaySound(speedLevel);
+                        continue;
                     }
-
-
-                    // 根据手柄输入确定输出的位移量
-                    D5RControl.Joints joints = new();
-
-                    if (state.Gamepad.RightThumbX <= -ThumbsThreshold)
-                        joints.R1 = SelectRMDSpeed(speedLevel);
-                    else if (state.Gamepad.RightThumbX >= ThumbsThreshold)
-                        joints.R1 = -SelectRMDSpeed(speedLevel);
-
-                    if (state.Gamepad.LeftThumbX <= -ThumbsThreshold)
-                        joints.P2 = SelectNatorSpeed(speedLevel);
-                    else if (state.Gamepad.LeftThumbX >= ThumbsThreshold)
-                        joints.P2 = -SelectNatorSpeed(speedLevel);
-
-                    if (state.Gamepad.LeftThumbY <= -ThumbsThreshold)
-                        joints.P3 = -SelectNatorSpeed(speedLevel);
-                    else if (state.Gamepad.LeftThumbY >= ThumbsThreshold)
-                        joints.P3 = SelectNatorSpeed(speedLevel);
-
-                    if (state.Gamepad.LeftTrigger >= TrigerThreshold)
-                        joints.P4 = -SelectNatorSpeed(speedLevel);
-                    else if (state.Gamepad.RightTrigger >= TrigerThreshold)
-                        joints.P4 = SelectNatorSpeed(speedLevel);
-
-                    if (state.Gamepad.RightThumbY <= -ThumbsThreshold)
-                        joints.R5 = -SelectRMDSpeed(speedLevel);
-                    else if (state.Gamepad.RightThumbY >= ThumbsThreshold)
-                        joints.R5 = SelectRMDSpeed(speedLevel);
-
-                    if (!jogHandler.isJogging)
+                    else if (ks.VirtualKey == GamepadKeyCode.DPadDown)
                     {
-                        int result = 0;
-                        if(!D5RControl.IsZeroJoints(joints))
-                        {
-                            Debug.WriteLine($"R1:{joints.R1}, P2:{joints.P2}, P3:{joints.P3}, P4:{joints.P4}, R5:{joints.R5}");
-                            result = D5RControl.JointsMoveRelative(joints);
-                        }
-                        if (result != 0)
-                        {
-                            Dispatcher.Invoke(() => MessageBox.Show("JointsMoveRelative error in xInputControlTask."));
-                            UIData.GamepadConnected = false;
-                            break;
-                        }
+                        speedLevel--;
+                        speedLevel = speedLevel < 0 ? 0 : speedLevel;
+                        viewModel.SpeedMode = speedLevel;
+                        PlaySound(speedLevel);
+                        continue;
                     }
-                    Thread.Sleep(controlPeriod);  // 控制周期
                 }
 
-                if (!xInputCancelToken.IsCancellationRequested)
+
+                // 根据手柄输入确定输出的位移量
+                Joints joints = new();
+
+                if (state.Gamepad.RightThumbX <= -ThumbsThreshold)
+                    joints.R1 = SelectRMDSpeed(speedLevel);
+                else if (state.Gamepad.RightThumbX >= ThumbsThreshold)
+                    joints.R1 = -SelectRMDSpeed(speedLevel);
+
+                if (state.Gamepad.LeftThumbX <= -ThumbsThreshold)
+                    joints.P2 = SelectNatorSpeed(speedLevel);
+                else if (state.Gamepad.LeftThumbX >= ThumbsThreshold)
+                    joints.P2 = -SelectNatorSpeed(speedLevel);
+
+                if (state.Gamepad.LeftThumbY <= -ThumbsThreshold)
+                    joints.P3 = -SelectNatorSpeed(speedLevel);
+                else if (state.Gamepad.LeftThumbY >= ThumbsThreshold)
+                    joints.P3 = SelectNatorSpeed(speedLevel);
+
+                if (state.Gamepad.LeftTrigger >= TrigerThreshold)
+                    joints.P4 = -SelectNatorSpeed(speedLevel);
+                else if (state.Gamepad.RightTrigger >= TrigerThreshold)
+                    joints.P4 = SelectNatorSpeed(speedLevel);
+
+                if (state.Gamepad.RightThumbY <= -ThumbsThreshold)
+                    joints.R5 = -SelectRMDSpeed(speedLevel);
+                else if (state.Gamepad.RightThumbY >= ThumbsThreshold)
+                    joints.R5 = SelectRMDSpeed(speedLevel);
+
+                if (!jogHandler.isJogging)
                 {
-                    Dispatcher.Invoke(() => MessageBox.Show("Gamepad disconnected!"));
-                    xInputCancelSource.Cancel();
+                    if (joints.R1 != 0 || joints.P2 != 0 || joints.P3 != 0 || joints.P4 != 0 || joints.R5 != 0)
+                    {
+                        Debug.WriteLine($"R1:{joints.R1}, P2:{joints.P2}, P3:{joints.P3}, P4:{joints.P4}, R5:{joints.R5}");
+                        var result = robot.JointsMoveRelative(joints);
+                        if (result != D5Robot.ErrorCode.OK)
+                        {
+                            Dispatcher.Invoke(() => MessageBox.Show($"JointsMoveRelative error in xInputControlTask: {result}"));
+                            viewModel.GamepadConnected = false;
+                            //break;
+                            return;
+                        }
+                    }
                 }
+
+                Thread.Sleep(controlPeriod);  // 控制周期
             }
-            //Debug.WriteLine("End XGamepadApp");
+
+            // 线程清理
+
+            if (!xInputCancelToken.IsCancellationRequested)
+            {
+                xInputCancelSource.Cancel();
+                viewModel.GamepadConnected = false;
+                Dispatcher.Invoke(() => MessageBox.Show("Gamepad disconnected!"));
+            }
         }
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
@@ -264,7 +267,7 @@ namespace DOF5RobotControl_GUI
             if (e.Key == Key.A && !jogHandler.isJogging)
             {
                 Debug.WriteLine("Key A pressed down.");
-                D5RControl.Joints j = new()
+                Joints j = new()
                 {
                     P2 = -natorJogResolution
                 };
@@ -273,7 +276,7 @@ namespace DOF5RobotControl_GUI
             }
             else if (e.Key == Key.D && !jogHandler.isJogging)
             {
-                D5RControl.Joints j = new()
+                Joints j = new()
                 {
                     P2 = natorJogResolution
                 };
@@ -282,7 +285,7 @@ namespace DOF5RobotControl_GUI
             }
             else if (e.Key == Key.W && !jogHandler.isJogging)
             {
-                D5RControl.Joints j = new()
+                Joints j = new()
                 {
                     P3 = natorJogResolution
                 };
@@ -290,7 +293,7 @@ namespace DOF5RobotControl_GUI
             }
             else if (e.Key == Key.S && !jogHandler.isJogging)
             {
-                D5RControl.Joints j = new()
+                Joints j = new()
                 {
                     P3 = -natorJogResolution
                 };
@@ -298,7 +301,7 @@ namespace DOF5RobotControl_GUI
             }
             else if (e.Key == Key.LeftShift && !jogHandler.isJogging)
             {
-                D5RControl.Joints j = new()
+                Joints j = new()
                 {
                     P4 = natorJogResolution
                 };
@@ -306,7 +309,7 @@ namespace DOF5RobotControl_GUI
             }
             else if (e.Key == Key.LeftCtrl && !jogHandler.isJogging)
             {
-                D5RControl.Joints j = new()
+                Joints j = new()
                 {
                     P4 = -natorJogResolution
                 };
@@ -314,7 +317,7 @@ namespace DOF5RobotControl_GUI
             }
             else if (e.Key == Key.Q && !jogHandler.isJogging)
             {
-                D5RControl.Joints j = new()
+                Joints j = new()
                 {
                     R1 = -RMDJogResolution
                 };
@@ -322,7 +325,7 @@ namespace DOF5RobotControl_GUI
             }
             else if (e.Key == Key.R && !jogHandler.isJogging)
             {
-                D5RControl.Joints j = new()
+                Joints j = new()
                 {
                     R1 = RMDJogResolution
                 };
@@ -330,7 +333,7 @@ namespace DOF5RobotControl_GUI
             }
             else if (e.Key == Key.J && !jogHandler.isJogging)
             {
-                D5RControl.Joints j = new()
+                Joints j = new()
                 {
                     R5 = -RMDJogResolution
                 };
@@ -338,7 +341,7 @@ namespace DOF5RobotControl_GUI
             }
             else if (e.Key == Key.U && !jogHandler.isJogging)
             {
-                D5RControl.Joints j = new()
+                Joints j = new()
                 {
                     R5 = RMDJogResolution
                 };
@@ -366,11 +369,6 @@ namespace DOF5RobotControl_GUI
                 default:
                     break;
             }
-            //if (e.Key == Key.A || e.Key == Key.D)
-            //{
-            //    Debug.WriteLine("Key up");
-            //    jogHandler.StopJogging();
-            //}
         }
 
         private static int SelectNatorSpeed(int level)
