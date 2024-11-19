@@ -6,23 +6,24 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace DOF5RobotControl_GUI
+namespace DOF5RobotControl_GUI.Model
 {
     internal class JogHandler
     {
         public bool isJogging = false;
-        
+
+        private readonly D5Robot robot;
         private CancellationTokenSource cancelJoggingSource;
         private CancellationToken cancelJoggingToken;
 
-
-        public JogHandler()
+        public JogHandler(D5Robot robot)
         {
+            this.robot = robot;
             cancelJoggingSource = new CancellationTokenSource();
             cancelJoggingToken = cancelJoggingSource.Token;
         }
 
-        public void StartJogging(D5RControl.Joints joints)
+        public void StartJogging(D5Robot.Joints joints)
         {
             isJogging = true;
             cancelJoggingSource.Cancel();
@@ -33,13 +34,13 @@ namespace DOF5RobotControl_GUI
             {
                 while (!cancelJoggingToken.IsCancellationRequested)
                 {
-                    int result = D5RControl.JointsMoveRelative(joints);
+                    var result = robot.JointsMoveRelative(joints);
 
-                    if (result != 0)
+                    if (result != D5Robot.ErrorCode.OK)
                     {
                         Application.Current.Dispatcher.Invoke(() =>
                         {
-                            MessageBox.Show("Jog error in JogHandler.");
+                            MessageBox.Show($"Jog error in JogHandler: {result}");
                         });
                         break;
                     }

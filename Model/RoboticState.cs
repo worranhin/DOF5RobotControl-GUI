@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Media3D;
+using Joints = DOF5RobotControl_GUI.Model.D5Robot.Joints;
 
 namespace DOF5RobotControl_GUI.Model
 {
@@ -52,9 +53,9 @@ namespace DOF5RobotControl_GUI.Model
         /// 转换为控制用的 struct
         /// </summary>
         /// <returns></returns>
-        public D5RControl.Joints ToD5RJoints()
+        public Joints ToD5RJoints()
         {
-            D5RControl.Joints j = new()
+            Joints j = new()
             {
                 R1 = (int)(JointSpace.R1 * 100),
                 P2 = (int)(JointSpace.P2 * 1000000),
@@ -70,7 +71,7 @@ namespace DOF5RobotControl_GUI.Model
         /// 从控制用的 struct 设置当前状态
         /// </summary>
         /// <param name="j"></param>
-        public void SetFromD5RJoints(D5RControl.Joints j)
+        public void SetFromD5RJoints(Joints j)
         {
             JointSpace = new()
             {
