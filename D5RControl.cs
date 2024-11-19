@@ -34,5 +34,10 @@ namespace DOF5RobotControl_GUI
         internal static partial int SetAccumulateRelative([MarshalAs(UnmanagedType.Bool)] bool accumulate);
         [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_Test")]
         internal static partial int Test(int x);
+
+        public static bool IsZeroJoints(Joints j)
+        {
+            return j.R1 == 0 && j.P2 == 0 && j.P3 == 0 && j.P4 == 0 && j.R5 == 0;
+        }
     }
 }
