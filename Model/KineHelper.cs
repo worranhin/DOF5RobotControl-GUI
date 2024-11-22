@@ -25,9 +25,9 @@ namespace DOF5RobotControl_GUI.Model
         // 关节限位
         const double _R1min = -90.0, _R1max = 90.0;
         const double _R5min = -45.0, _R5max = 90.0;
-        const double _P2min = -12.0, _P2max = 12.0;
-        const double _P3min = -12.0, _P3max = 12.0;
-        const double _P4min = -12.0, _P4max = 12.0;
+        const double _P2min = -14.5, _P2max = 14.5;
+        const double _P3min = -14.5, _P3max = 14.5;
+        const double _P4min = -14.5, _P4max = 14.5;
 
         /// <summary>
         /// 求正运动学
