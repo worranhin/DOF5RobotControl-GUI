@@ -20,7 +20,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             set => SetProperty(ref _systemConnected, value);
         }
 
-        private string[] _portsAvailable = [];
+        private string[] _portsAvailable = Array.Empty<string>();
         public string[] PortsAvailable
         {
             get => _portsAvailable;

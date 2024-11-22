@@ -9,13 +9,22 @@ namespace DOF5RobotControl_GUI
 {
     internal static partial class D5RControl
     {
-        internal struct Joints(int r1, int p2, int p3, int p4, int r5)
+        internal struct Joints
         {
-            public int R1 = r1;
-            public int P2 = p2;
-            public int P3 = p3;
-            public int P4 = p4;
-            public int R5 = r5;
+            public int R1;
+            public int P2;
+            public int P3;
+            public int P4;
+            public int R5;
+
+            public Joints(int r1, int p2, int p3, int p4, int r5)
+            {
+                this.R1 = r1;
+                this.P2 = p2;
+                this.P3 = p3;
+                this.P4 = p4;
+                this.R5 = r5;
+            }
         };
 
         [LibraryImport("libDOF5RobotControl.dll", EntryPoint = "D5R_Init", StringMarshalling = StringMarshalling.Utf8)]

@@ -23,13 +23,15 @@ namespace DOF5RobotControl_GUI.Model
 {
     public partial class D5Robot : IDisposable
     {
-        public struct Joints(int r1, int p2, int p3, int p4, int r5)
+        public struct Joints
         {
-            public int R1 = r1;
-            public int P2 = p2;
-            public int P3 = p3;
-            public int P4 = p4;
-            public int R5 = r5;
+            public int R1;
+            public int P2;
+            public int P3;
+            public int P4;
+            public int R5;
+
+            public Joints(int r1, int p2, int p3, int p4, int r5) => (R1, P2, P3, P4, R5) = (r1, p2, p3, p4, r5);
         };
 
         public enum ErrorCode
@@ -130,6 +132,7 @@ namespace DOF5RobotControl_GUI.Model
                     if (res != ErrorCode.OK)
                     {
                         MessageBox.Show($"Error Destroying Instance: {res}");
+                        //throw 
                     }
                 }
                 catch (SEHException e)
