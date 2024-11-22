@@ -134,7 +134,7 @@ namespace DOF5RobotControl_GUI.Model
                 }
                 catch (SEHException e)
                 {
-                    MessageBox.Show($"Error while destroying robot instance: {e.Message}");
+                    MessageBox.Show($"Error while destroying robot instance:\n{e.Message}");
                 }
                 catch (Exception e)
                 {

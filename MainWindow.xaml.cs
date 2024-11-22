@@ -80,10 +80,6 @@ namespace DOF5RobotControl_GUI
                 robot = null;
                 jogHandler = null;
                 viewModel.SystemConnected = false;
-                //int result = D5RControl.DeInit();
-                //if (result != 0)
-                //{
-                //    MessageBox.Show($"DeInitialize error: {result}");
             }
             else  // 系统未连接
             {
@@ -106,6 +102,10 @@ namespace DOF5RobotControl_GUI
                 catch (Exception err)
                 {
                     MessageBox.Show(err.Message);
+                    robot?.Dispose();
+                    robot = null;
+                    jogHandler = null;
+                    viewModel.SystemConnected = false;
                 }
             }
         }
