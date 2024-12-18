@@ -53,22 +53,22 @@ namespace DOF5RobotControl_GUI.Model
 
         //[LibraryImport("D5RobotDll.dll")]
         //public static partial ErrorCode CreateD5RobotInstance(out IntPtr instance, [MarshalAs(UnmanagedType.LPStr)]string serialPort, [MarshalAs(UnmanagedType.LPStr)]string natorID, int topRMDId, int bottomRMDId);
-        [LibraryImport("D5RobotDll.dll")]
+        [LibraryImport("Dll/D5RobotDll.dll")]
         public static partial IntPtr CreateD5RobotInstance([MarshalAs(UnmanagedType.LPStr)]string serialPort,
                                 [MarshalAs(UnmanagedType.LPStr)]string natorID, byte topRMDID,
                                 byte bottomRMDID);
-        [LibraryImport("D5RobotDll.dll")]
+        [LibraryImport("Dll/D5RobotDll.dll")]
         internal static partial ErrorCode DestroyD5RobotInstance(IntPtr instance);
-        [LibraryImport("D5RobotDll.dll")]
+        [LibraryImport("Dll/D5RobotDll.dll")]
         [return: MarshalAs(UnmanagedType.I1)]
         internal static partial bool CallIsInit(IntPtr instance);
-        [LibraryImport("D5RobotDll.dll")]
+        [LibraryImport("Dll/D5RobotDll.dll")]
         internal static partial ErrorCode CallSetZero(IntPtr instance);
-        [LibraryImport("D5RobotDll.dll")]
+        [LibraryImport("Dll/D5RobotDll.dll")]
         internal static partial ErrorCode CallStop(IntPtr instance);
-        [LibraryImport("D5RobotDll.dll")]
+        [LibraryImport("Dll/D5RobotDll.dll")]
         internal static partial ErrorCode CallJointsMoveAbsolute(IntPtr instance, Joints j);
-        [LibraryImport("D5RobotDll.dll")]
+        [LibraryImport("Dll/D5RobotDll.dll")]
         internal static partial ErrorCode CallJointsMoveRelative(IntPtr instance, Joints j);
 
         private readonly IntPtr _robotPtr;
