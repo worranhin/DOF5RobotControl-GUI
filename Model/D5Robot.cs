@@ -51,31 +51,35 @@ namespace DOF5RobotControl_GUI.Model
             RMDGetPIError = 402
         };
 
-        [LibraryImport("libD5Robot.dll")]
-        internal static partial ErrorCode CreateD5RobotInstance(out IntPtr instance, [MarshalAs(UnmanagedType.LPStr)]string serialPort, [MarshalAs(UnmanagedType.LPStr)]string natorID, int topRMDId, int bottomRMDId);
-        [LibraryImport("libD5Robot.dll")]
+        //[LibraryImport("D5RobotDll.dll")]
+        //public static partial ErrorCode CreateD5RobotInstance(out IntPtr instance, [MarshalAs(UnmanagedType.LPStr)]string serialPort, [MarshalAs(UnmanagedType.LPStr)]string natorID, int topRMDId, int bottomRMDId);
+        [LibraryImport("Dll/D5RobotDll.dll")]
+        public static partial IntPtr CreateD5RobotInstance([MarshalAs(UnmanagedType.LPStr)]string serialPort,
+                                [MarshalAs(UnmanagedType.LPStr)]string natorID, byte topRMDID,
+                                byte bottomRMDID);
+        [LibraryImport("Dll/D5RobotDll.dll")]
         internal static partial ErrorCode DestroyD5RobotInstance(IntPtr instance);
-        [LibraryImport("libD5Robot.dll")]
+        [LibraryImport("Dll/D5RobotDll.dll")]
         [return: MarshalAs(UnmanagedType.I1)]
         internal static partial bool CallIsInit(IntPtr instance);
-        [LibraryImport("libD5Robot.dll")]
+        [LibraryImport("Dll/D5RobotDll.dll")]
         internal static partial ErrorCode CallSetZero(IntPtr instance);
-        [LibraryImport("libD5Robot.dll")]
+        [LibraryImport("Dll/D5RobotDll.dll")]
         internal static partial ErrorCode CallStop(IntPtr instance);
-        [LibraryImport("libD5Robot.dll")]
+        [LibraryImport("Dll/D5RobotDll.dll")]
         internal static partial ErrorCode CallJointsMoveAbsolute(IntPtr instance, Joints j);
-        [LibraryImport("libD5Robot.dll")]
+        [LibraryImport("Dll/D5RobotDll.dll")]
         internal static partial ErrorCode CallJointsMoveRelative(IntPtr instance, Joints j);
 
         private readonly IntPtr _robotPtr;
         private bool disposedValue;
 
-        public D5Robot(string serialPort, string natorID, int topRMDId, int bottomRMDId)
+        public D5Robot(string serialPort, string natorID, byte topRMDId, byte bottomRMDId)
         {
-            var result = CreateD5RobotInstance(out _robotPtr, serialPort, natorID, topRMDId, bottomRMDId);
-            if (result != ErrorCode.OK)
+            _robotPtr = CreateD5RobotInstance(serialPort, natorID, topRMDId, bottomRMDId);
+            if (_robotPtr == 0)
             {
-                throw new Exception($"CreateD5RobotInstance error: {result}");
+                throw new Exception($"CreateD5RobotInstance error.");
             }
         }
 
