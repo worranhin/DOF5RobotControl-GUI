@@ -24,6 +24,7 @@ using Opc.UaFx.Server;
 using Opc.UaFx.Services;
 using Window = System.Windows.Window;
 using Joints = DOF5RobotControl_GUI.Model.D5Robot.Joints;
+using System.IO;
 
 namespace DOF5RobotControl_GUI
 {
@@ -56,11 +57,13 @@ namespace DOF5RobotControl_GUI
 
         readonly int natorJogResolution = 100000;
         readonly int RMDJogResolution = 20;
-        readonly string natorId = "usb:id:7547982319";
+        //readonly string natorId = "usb:id:7547982319";
+        readonly string natorId = "usb:id:2250716012";
         static private readonly MainViewModel viewModel = new();
         static private D5Robot? robot;
         static private JogHandler? jogHandler;
         static public double[] joints100;
+        private SerialPort? cameraMotorSerial;
 
         public MainWindow()
         {
@@ -455,6 +458,57 @@ namespace DOF5RobotControl_GUI
         {
             serverThread = new Thread(serverRun);
             serverThread.Start();
+        }
+
+        private void BtnCameraMotorConnect_Click(object sender, RoutedEventArgs e)
+        {
+            if (!viewModel.CameraMotorConnected)  // 如果目前系统未连接
+            {
+                string portName;
+                if (viewModel.SelectedCameraMotorPort.Length > 4)
+                {
+                    portName = "\\\\.\\" + viewModel.SelectedCameraMotorPort;
+                }
+                else
+                {
+                    portName = viewModel.SelectedCameraMotorPort;
+                    viewModel.CameraMotorConnected = true;
+                }
+
+                try
+                {
+                    cameraMotorSerial = new SerialPort(portName, 9600);
+                }
+                catch (IOException err)
+                {
+                    MessageBox.Show("Error when open camera motor serial: " + err.Message);
+                }
+            }
+            else  // 系统已连接
+            {
+                try
+                {
+                    cameraMotorSerial?.Close();
+                    viewModel.CameraMotorConnected = false;
+                }
+                catch (IOException err)
+                {
+                    MessageBox.Show("Error when close camera motor serial: " + err.Message);
+                }
+            }
+        }
+
+        private void BtnCameraGoToGripper_Click(object sender, RoutedEventArgs e)
+        {
+            if (cameraMotorSerial == null)
+            {
+                MessageBox.Show("相机电机未连接");
+            }
+            else
+            {
+                cameraMotorSerial.Write("v1");
+                cameraMotorSerial.Write("x1");
+            }
         }
     }
 

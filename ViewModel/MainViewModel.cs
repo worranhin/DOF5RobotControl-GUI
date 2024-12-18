@@ -40,5 +40,19 @@ namespace DOF5RobotControl_GUI.ViewModel
             get => _targetState;
             set => SetProperty(ref _targetState, value);
         }
+
+        private string _selectedCameraMotorPort = "";
+        public string SelectedCameraMotorPort
+        {
+            get => _selectedCameraMotorPort;
+            set => SetProperty(ref _selectedCameraMotorPort, value);
+        }
+
+        private bool _cameraMotorConnected = false;
+        public bool CameraMotorConnected
+        {
+            get => _cameraMotorConnected;
+            set => SetProperty(ref _cameraMotorConnected, value);
+        }
     }
 }

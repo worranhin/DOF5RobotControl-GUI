@@ -8,7 +8,7 @@
         xmlns:vm="clr-namespace:DOF5RobotControl_GUI.ViewModel"
         d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
         mc:Ignorable="d"
-        Title="MainWindow" Height="600" Width="800"
+        Title="MainWindow" Height="700" Width="800"
         FontSize="16">
     <Window.Resources>
         <Style x:Key="JointControlTextBlock" TargetType="TextBlock">
@@ -180,7 +180,48 @@
             <Button Grid.Row="0" Grid.Column="2" Click="BtnStop_Click">停止</Button>
             <Button Grid.Row="1" Grid.ColumnSpan="3" Click="BtnOpenManualControl_Click">启动手动控制</Button>
         </Grid>
-        <Button Content="连接服务器" Click="BtnConnectServer_Click"/>
-        <Button Content="断开服务器" Click="BtnDisconnectServer_Click"/>
+        <GroupBox Header="OPC 服务器控制">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="连接服务器" Click="BtnConnectServer_Click"/>
+                <Button Grid.Column="1" Content="断开服务器" Click="BtnDisconnectServer_Click"/>
+            </Grid>
+        </GroupBox>
+        <GroupBox Header="相机位置控制">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" Grid.Column="0" Margin="8">
+                        <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">端口</TextBlock>
+                        <ComboBox ItemsSource="{Binding PortsAvailable}" SelectedItem="{Binding SelectedCameraMotorPort}" IsEnabled="{Binding CameraMotorConnected, Converter={StaticResource BoolInverseConverter}}"/>
+                        <Button Click="PortRefresh_Click" Margin="5,0,0,0">刷新</Button>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Grid.Column="1" Margin="8">
+                        <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">波特率</TextBlock>
+                        <ComboBox SelectedIndex="0" ToolTip="该功能未实现，默认 115200">
+                            <ComboBoxItem>9600</ComboBoxItem>
+                        </ComboBox>
+                        <Button Click="BtnCameraMotorConnect_Click" Margin="5,0,0,0" Content="{Binding CameraMotorConnected, Converter={StaticResource ConnectBtnConverter}}"/>
+                    </StackPanel>
+                </Grid>
+                <Button Grid.Row="1" Grid.Column="0" Click="BtnCameraGoToGripper_Click">前往钳口库位置</Button>
+                <Button Grid.Row="1" Grid.Column="1">前往零件库位置</Button>
+            </Grid>
+        </GroupBox>
+
     </StackPanel>
 </Window>
