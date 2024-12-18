@@ -1,6 +1,8 @@
 ﻿using DOF5RobotControl_GUI;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
@@ -39,29 +41,51 @@ namespace DOF5RobotControl_GUI.Model
             OK = 0,
             SystemError = 100,
             CreateInstanceError = 101,
+            DestroyInstanceError_nullptr,
             SerialError = 200,
             SerialInitError = 201,
             SerialCloseError = 202,
             SerialSendError = 203,
             SerialReceiveError,
+            SerialReceiveError_LessThanExpected,
+            SerialClearBufferError,
             NatorError = 300,
             NatorInitError = 301,
+            NatorSetError,
+            NatorGetError,
+            NatorMoveError,
             RMDError = 400,
             RMDInitError = 401,
-            RMDGetPIError = 402
+            RMDGetPIError = 402,
+            RMDFormatError,
+            RMDChecksumError,
+            RMDMoveError,
+            D5RError = 500,
+            D5RMoveError,
+            D5RNatorNotInitialized,
+            D5RRMDMotorNotInitialized,
+            D5RCameraNotInitialized,
+            CameraError = 600,
+            CameraInitError,
+            CameraReadError,
+            VisialError = 700
         };
 
         //[LibraryImport("D5RobotDll.dll")]
         //public static partial ErrorCode CreateD5RobotInstance(out IntPtr instance, [MarshalAs(UnmanagedType.LPStr)]string serialPort, [MarshalAs(UnmanagedType.LPStr)]string natorID, int topRMDId, int bottomRMDId);
         [LibraryImport("Dll/D5RobotDll.dll")]
-        public static partial IntPtr CreateD5RobotInstance([MarshalAs(UnmanagedType.LPStr)]string serialPort,
-                                [MarshalAs(UnmanagedType.LPStr)]string natorID, byte topRMDID,
+        public static partial IntPtr CreateD5RobotInstance([MarshalAs(UnmanagedType.LPStr)] string serialPort,
+                                [MarshalAs(UnmanagedType.LPStr)] string natorID, byte topRMDID,
                                 byte bottomRMDID);
         [LibraryImport("Dll/D5RobotDll.dll")]
         internal static partial ErrorCode DestroyD5RobotInstance(IntPtr instance);
         [LibraryImport("Dll/D5RobotDll.dll")]
-        [return: MarshalAs(UnmanagedType.I1)]
-        internal static partial bool CallIsInit(IntPtr instance);
+        internal static partial ErrorCode CallInitTopCamera(IntPtr instance);
+        [LibraryImport("Dll/D5RobotDll.dll")]
+        internal static partial ErrorCode CallInitBotCamera(IntPtr instance);
+        //[LibraryImport("Dll/D5RobotDll.dll")]
+        //[return: MarshalAs(UnmanagedType.I1)]
+        //internal static partial bool CallIsInit(IntPtr instance);
         [LibraryImport("Dll/D5RobotDll.dll")]
         internal static partial ErrorCode CallSetZero(IntPtr instance);
         [LibraryImport("Dll/D5RobotDll.dll")]
@@ -70,6 +94,10 @@ namespace DOF5RobotControl_GUI.Model
         internal static partial ErrorCode CallJointsMoveAbsolute(IntPtr instance, Joints j);
         [LibraryImport("Dll/D5RobotDll.dll")]
         internal static partial ErrorCode CallJointsMoveRelative(IntPtr instance, Joints j);
+        [LibraryImport("Dll/D5RobotDll.dll")]
+        internal static partial ErrorCode CallGetTopCameraImg(IntPtr instance, ref byte data, out int size);
+        [LibraryImport("Dll/D5RobotDll.dll")]
+        internal static partial ErrorCode CallGetBottomCameraImg(IntPtr instance, ref byte data, out int size);
 
         private readonly IntPtr _robotPtr;
         private bool disposedValue;
@@ -83,11 +111,6 @@ namespace DOF5RobotControl_GUI.Model
             }
         }
 
-        //~D5Robot()
-        //{
-        //    DestroyD5RobotInstance(_robotPtr);
-        //}
-
         // 仅当“Dispose(bool disposing)”拥有用于释放未托管资源的代码时才替代终结器
         ~D5Robot()
         {
@@ -95,10 +118,20 @@ namespace DOF5RobotControl_GUI.Model
             Dispose(disposing: false);
         }
 
-        public bool IsInit()
+        public ErrorCode InitTopCamera()
         {
-            return CallIsInit(_robotPtr);
+            return CallInitBotCamera(_robotPtr);
         }
+
+        public ErrorCode InitBottomCamera()
+        {
+            return CallInitBotCamera(_robotPtr);
+        }
+
+        //public bool IsInit()
+        //{
+        //    return CallIsInit(_robotPtr);
+        //}
 
         public ErrorCode SetZero()
         {
@@ -119,6 +152,32 @@ namespace DOF5RobotControl_GUI.Model
         {
             return CallJointsMoveRelative(_robotPtr, j);
         }
+
+        public Image GetTopCameraImg()
+        {
+            byte[] pData = new byte[2592 * 2048 * 3];
+            int size = new int();
+            ErrorCode code;
+            code = CallGetTopCameraImg(_robotPtr, ref pData[0], out size);
+            if (code == ErrorCode.OK)
+                return Image.FromStream(new MemoryStream(pData, 0, size));
+            else
+                throw new Exception("Error get top camera img: " + code.ToString());
+        }
+
+        public Image GetBottomCameraImg()
+        {
+            byte[] pData = new byte[2592 * 2048 * 3];
+            int size = new int();
+            ErrorCode code;
+            code = CallGetBottomCameraImg(_robotPtr, ref pData[0], out size);
+            if (code == ErrorCode.OK)
+                return Image.FromStream(new MemoryStream(pData, 0, size));
+            else
+                throw new Exception("Error get top camera img: " + code.ToString());
+        }
+
+
 
         protected virtual void Dispose(bool disposing)
         {

@@ -32,11 +32,11 @@ namespace DOF5RobotControl_GUI
     /// </summary>
     public partial class ManualControlWindow : System.Windows.Window
     {
-        private readonly ManualControlViewModel viewModel = new();
         private readonly static SoundPlayer lowPlayer = new("res/Low.wav");
         private readonly static SoundPlayer mediumPlayer = new("res/Medium.wav");
         private readonly static SoundPlayer highPlayer = new("res/High.wav");
         private readonly static int controlPeriod = 20;  // ms
+        private readonly ManualControlViewModel viewModel = new();
         private readonly CancellationTokenSource captureCancelSource;
         private readonly VideoCapture capture;
         private readonly Mat frame;

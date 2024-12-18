@@ -462,29 +462,41 @@ namespace DOF5RobotControl_GUI
 
         private void BtnCameraMotorConnect_Click(object sender, RoutedEventArgs e)
         {
-            if (!viewModel.CameraMotorConnected)  // 如果目前系统未连接
+            if (!viewModel.CameraMotorConnected)  // 如果目前串口未连接，则打开串口
             {
-                string portName;
-                if (viewModel.SelectedCameraMotorPort.Length > 4)
-                {
-                    portName = "\\\\.\\" + viewModel.SelectedCameraMotorPort;
-                }
-                else
-                {
-                    portName = viewModel.SelectedCameraMotorPort;
-                    viewModel.CameraMotorConnected = true;
-                }
+                string portName = viewModel.SelectedCameraMotorPort;
+                //if (viewModel.SelectedCameraMotorPort.Length > 4) // 这个在 C# 中不需要，只有 C++ 的 <Windows.h> API 才需要
+                //{
+                //    portName = "\\\\.\\" + viewModel.SelectedCameraMotorPort;
+                //}
+                //else
+                //{
+                //    portName = viewModel.SelectedCameraMotorPort;
+                //}
 
                 try
                 {
                     cameraMotorSerial = new SerialPort(portName, 9600);
-                }
-                catch (IOException err)
+                    cameraMotorSerial.DataReceived += new SerialDataReceivedEventHandler(DataReceivedHandler);
+                    cameraMotorSerial.Open();
+                    Debug.WriteLine("Serial open successfully!");
+                    viewModel.CameraMotorConnected = true;
+                } catch (System.ArgumentException exc)
                 {
-                    MessageBox.Show("Error when open camera motor serial: " + err.Message);
+                    MessageBox.Show("打开串口错误：" + exc.Message);
+                    cameraMotorSerial = null;
+                    viewModel.CameraMotorConnected = false;
                 }
+                //try
+                //{
+                //}
+                //catch (IOException err)
+                //{
+                //    MessageBox.Show("Error when open camera motor serial: " + err.Message);
+                //    throw;
+                //}
             }
-            else  // 系统已连接
+            else  // 串口已连接，则关闭串口
             {
                 try
                 {
@@ -506,9 +518,20 @@ namespace DOF5RobotControl_GUI
             }
             else
             {
-                cameraMotorSerial.Write("v1");
-                cameraMotorSerial.Write("x1");
+                //byte[] buffer = new byte[20];
+                //cameraMotorSerial.Write("v1\n");
+                cameraMotorSerial.WriteLine("x1");
+                Debug.WriteLine("data sent.");
+                //cameraMotorSerial.Write("x1\n");
+
             }
+        }
+
+        private static void DataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
+        {
+            SerialPort sp = (SerialPort)sender;
+            string data = sp.ReadExisting(); // 读取接收到的数据
+            Debug.WriteLine("接收到的数据: " + data);
         }
     }
 
