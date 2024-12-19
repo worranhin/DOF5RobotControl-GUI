@@ -50,7 +50,7 @@
             </StackPanel>
         </Grid>
         <GroupBox Header="预存点位" Margin="0,8,0,0">
-            <UniformGrid>
+            <UniformGrid Columns="5">
                 <Button Click="BtnZeroPos_Click">零点位</Button>
                 <Button Click="BtnIdlePos_Click">待机位</Button>
                 <Button Click="BtnPreChangeJawPos_Click">换夹钳预备位</Button>
@@ -58,6 +58,7 @@
                 <Button Click="BtnPreFetchRingPos_Click">取零件环预备位</Button>
                 <Button Click="BtnFetchRingPos_Click">取零件环位</Button>
                 <Button Click="BtnAssemblePos1_Click">装配位1</Button>
+                <Button Click="BtnPreAssemblePos2_Click">装配位2前置位</Button>
                 <Button Click="BtnAssemblePos2_Click">装配位2</Button>
                 <Button Click="BtnAssemblePos3_Click">装配位3</Button>
             </UniformGrid>
