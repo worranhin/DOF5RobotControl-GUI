@@ -1,4 +1,5 @@
 ﻿using DOF5RobotControl_GUI;
+using Opc.Ua.Export;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -53,33 +54,37 @@ namespace DOF5RobotControl_GUI.Model
 
         //[LibraryImport("D5RobotDll.dll")]
         //public static partial ErrorCode CreateD5RobotInstance(out IntPtr instance, [MarshalAs(UnmanagedType.LPStr)]string serialPort, [MarshalAs(UnmanagedType.LPStr)]string natorID, int topRMDId, int bottomRMDId);
-        [LibraryImport("Dll/D5RobotDll.dll")]
-        public static partial IntPtr CreateD5RobotInstance([MarshalAs(UnmanagedType.LPStr)]string serialPort,
-                                [MarshalAs(UnmanagedType.LPStr)]string natorID, byte topRMDID,
-                                byte bottomRMDID);
-        [LibraryImport("Dll/D5RobotDll.dll")]
+        [LibraryImport("Dll/D5RAPI.dll")]
+        public static partial ErrorCode CreateD5RobotInstance(out IntPtr instance,
+                                        [MarshalAs(UnmanagedType.LPStr)]string serialPort);
+        [LibraryImport("Dll/D5RAPI.dll")]
         internal static partial ErrorCode DestroyD5RobotInstance(IntPtr instance);
-        [LibraryImport("Dll/D5RobotDll.dll")]
+        [LibraryImport("Dll/D5RAPI.dll")]
         [return: MarshalAs(UnmanagedType.I1)]
         internal static partial bool CallIsInit(IntPtr instance);
-        [LibraryImport("Dll/D5RobotDll.dll")]
+        [LibraryImport("Dll/D5RAPI.dll")]
         internal static partial ErrorCode CallSetZero(IntPtr instance);
-        [LibraryImport("Dll/D5RobotDll.dll")]
+        [LibraryImport("Dll/D5RAPI.dll")]
         internal static partial ErrorCode CallStop(IntPtr instance);
-        [LibraryImport("Dll/D5RobotDll.dll")]
+        [LibraryImport("Dll/D5RAPI.dll")]
         internal static partial ErrorCode CallJointsMoveAbsolute(IntPtr instance, Joints j);
-        [LibraryImport("Dll/D5RobotDll.dll")]
+        [LibraryImport("Dll/D5RAPI.dll")]
         internal static partial ErrorCode CallJointsMoveRelative(IntPtr instance, Joints j);
+        [LibraryImport("Dll/D5RAPI.dll")]
+        internal static partial ErrorCode D5R_GetLastError();
+        [LibraryImport("Dll/D5RAPI.dll")]
+        [return: MarshalAs(UnmanagedType.BStr)]
+        internal static partial string D5R_GetVersion();
 
         private readonly IntPtr _robotPtr;
         private bool disposedValue;
 
-        public D5Robot(string serialPort, string natorID, byte topRMDId, byte bottomRMDId)
+        public D5Robot(string serialPort)
         {
-            _robotPtr = CreateD5RobotInstance(serialPort, natorID, topRMDId, bottomRMDId);
-            if (_robotPtr == 0)
+            ErrorCode eCode = CreateD5RobotInstance(out _robotPtr , serialPort);
+            if (eCode != ErrorCode.OK)
             {
-                throw new Exception($"CreateD5RobotInstance error.");
+                throw new Exception($"CreateD5RobotInstance error: {eCode}");
             }
         }
 

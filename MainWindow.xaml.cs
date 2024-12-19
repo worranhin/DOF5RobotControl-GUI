@@ -56,7 +56,7 @@ namespace DOF5RobotControl_GUI
 
         readonly int natorJogResolution = 100000;
         readonly int RMDJogResolution = 20;
-        readonly string natorId = "usb:id:7547982319";
+        //readonly string natorId = "usb:id:7547982319";
         static private readonly MainViewModel viewModel = new();
         static private D5Robot? robot;
         static private JogHandler? jogHandler;
@@ -74,6 +74,8 @@ namespace DOF5RobotControl_GUI
             DataContext = viewModel;
 
             joints100 = new double[5] { viewModel.TargetState.JointSpace.R1, viewModel.TargetState.JointSpace.P2, viewModel.TargetState.JointSpace.P3, viewModel.TargetState.JointSpace.P4, viewModel.TargetState.JointSpace.R5 };
+
+            Debug.WriteLine("D5R Dll version is " + D5Robot.D5R_GetVersion());
         }
 
         private void PortRefresh_Click(object sender, RoutedEventArgs e)
@@ -104,7 +106,7 @@ namespace DOF5RobotControl_GUI
 
                 try
                 {
-                    robot = new D5Robot(portName, natorId, 1, 2);
+                    robot = new D5Robot(portName);
                     jogHandler = new JogHandler(robot);
                     viewModel.SystemConnected = true;
                 }
@@ -459,7 +461,7 @@ namespace DOF5RobotControl_GUI
     }
 
 
-    public class dof5robotNodeManager : OpcNodeManager
+    public class dof5robotNodeManager : Opc.UaFx.Server.OpcNodeManager
     {
         private OpcDataVariableNode<double> r1_Node;
         private OpcDataVariableNode<double> p2_Node;

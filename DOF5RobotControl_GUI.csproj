@@ -51,16 +51,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Dll\D5RobotDll.dll">
+    <None Update="Dll\D5RAPI.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Dll\D5RobotDll.exp">
+    <None Update="Dll\D5RAPI.exp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Dll\D5RobotDll.lib">
+    <None Update="Dll\D5RAPI.lib">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Dll\D5RobotDll.pdb">
+    <None Update="Dll\D5RAPI.pdb">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="libDOF5RobotControl.dll">
