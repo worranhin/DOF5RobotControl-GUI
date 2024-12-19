@@ -36,13 +36,13 @@ namespace DOF5RobotControl_GUI
     {
         readonly Joints ZeroPos = new(0, 0, 0, 0, 0);
         readonly Joints IdlePos = new(0, 0, -14000000, -10000000, 0);
-        readonly Joints ChangeJawPos = new(0, -72195, 5174842, -6912012, 0);
+        readonly Joints ChangeJawPos = new(0, -1500000, 8000000, 5000000, 0); // 0, -1.5, 8, 5, 0
         readonly Joints PreChangeJawPos = new(0, 5000000, -5000000, -15184980, 0);
-        readonly Joints FetchRingPos = new(0, 8673000, 4000000, -10000000, 0);
+        readonly Joints FetchRingPos = new(0, 10000000, 10000000, 0, 0); // 0, 10, 10, 0, 0
         readonly Joints PreFetchRingPos = new(0, 8673000, -15000000, -10000000, 0);
-        readonly Joints AssemblePos1 = new(9000, 15686500, -16819200, -5759600, -10);
-        readonly Joints AssemblePos2 = new(6000, -8027000, -15911400, 1783100, 0);
-        readonly Joints AssemblePos3 = new(0, 0, 7004200, 15275000, 0);
+        readonly Joints AssemblePos1 = new(0, -600000, 900000, 9000000, 0); // 0, -0.6, 0.9, 9, 0
+        readonly Joints AssemblePos2 = new(9000, 14000000, -12000000, 5000000, 0); // 90, 0, 0, 0, 0 -> 90, 14, -12, 5, 0 
+        readonly Joints AssemblePos3 = new(0, -2500000, 4000000, 7000000, 0); // 0, -2.5, 4, 7, 0
 
         //private readonly JointsPosition ZeroPos = new(0, 0, 0, 0, 0);
         //private readonly JointsPosition IdlePos = new(0, 0, -15000000, -10000000, 0);
@@ -54,9 +54,10 @@ namespace DOF5RobotControl_GUI
         //private readonly JointsPosition AssemblePos2 = new(6000, -8027000, -15911400, 1783100, 0);
         //private readonly JointsPosition AssemblePos3 = new(0, 0, 7004200, 15275000, 0);
 
-        readonly int natorJogResolution = 100000;
+        readonly int natorJogResolution = 30000;
         readonly int RMDJogResolution = 20;
-        readonly string natorId = "usb:id:7547982319";
+        //readonly string natorId = "usb:id:7547982319";
+        readonly string natorId = "usb:id:2250716012";
         static private readonly MainViewModel viewModel = new();
         static private D5Robot? robot;
         static private JogHandler? jogHandler;
