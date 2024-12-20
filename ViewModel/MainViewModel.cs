@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Documents;
 using CommunityToolkit.Mvvm;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DOF5RobotControl_GUI.Model;
@@ -39,6 +40,13 @@ namespace DOF5RobotControl_GUI.ViewModel
         {
             get => _targetState;
             set => SetProperty(ref _targetState, value);
+        }
+
+        private bool _opcConnected = false;
+        public bool OpcConnected
+        {
+            get => _opcConnected;
+            set => SetProperty(ref _opcConnected, value);
         }
     }
 }
