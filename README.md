@@ -1,6 +1,11 @@
 ﻿## 依赖项
 
 - Nator 电机控制 Dll
+- Galaxy GxIAPINET.dll
+
+### 配置大恒相机 DLL
+
+右键项目依赖项 -> 添加项目引用 -> 浏览 -> 找到大恒安装目录下的 APIDLL\Win64\.NET6.0\GxIAPINET.dll -> 打上勾
 
 ## TODO
 

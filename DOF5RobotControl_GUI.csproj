@@ -8,6 +8,7 @@
     <UseWPF>true</UseWPF>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <BaseOutputPath></BaseOutputPath>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
@@ -74,6 +75,12 @@
 
   <ItemGroup>
     <Folder Include="View\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="GxIAPINET">
+      <HintPath>C:\Program Files\Daheng Imaging\GalaxySDK\APIDll\Win64\.NET6.0\GxIAPINET.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>
