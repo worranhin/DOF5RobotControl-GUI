@@ -39,14 +39,14 @@
             </Grid.ColumnDefinitions>
             <GroupBox Header="Camera 1" Grid.Column="0">
                 <Grid>
+                    <TextBlock Text="Camera 1 disconnected!"  VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     <Image x:Name="FrameImage" Source="{Binding TopImageSource}"></Image>
-                    <TextBlock Text="Camera 1 disconnected!" Visibility="Visible" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                 </Grid>
             </GroupBox>
             <GroupBox Header="Camera 2" Grid.Column="1">
                 <Grid>
-                    <Image x:Name="FrameImage2" Source="{Binding BottomImageSource}"></Image>
                     <TextBlock Text="Camera 2 disconnected!" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <Image x:Name="FrameImage2" Source="{Binding BottomImageSource}"></Image>
                 </Grid>
             </GroupBox>
         </Grid>

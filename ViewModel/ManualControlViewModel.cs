@@ -19,9 +19,13 @@ namespace DOF5RobotControl_GUI.ViewModel
         private bool _gamepadConnected = false;
 
         [ObservableProperty]
+        private bool _topCameraConnected = false;
+        [ObservableProperty]
         private ImageSource? _topImageSource;
         public readonly Mutex TopImgSrcMutex = new();
 
+        [ObservableProperty]
+        private bool _bottomCameraConnected = false;
         [ObservableProperty]
         private ImageSource? _bottomImageSource;
         public readonly Mutex BottomImgSrcMutex = new();
