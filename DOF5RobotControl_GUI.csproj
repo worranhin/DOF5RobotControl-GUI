@@ -79,7 +79,7 @@
 
   <ItemGroup>
     <Reference Include="GxIAPINET">
-      <HintPath>C:\Program Files\Daheng Imaging\GalaxySDK\APIDll\Win64\.NET6.0\GxIAPINET.dll</HintPath>
+      <HintPath>Dll\GxIAPINET.dll</HintPath>
     </Reference>
   </ItemGroup>
 
