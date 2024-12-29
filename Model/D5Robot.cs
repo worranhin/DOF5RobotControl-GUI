@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.Marshalling;
+//using System.Runtime.InteropServices.Marshalling;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -23,13 +23,15 @@ namespace DOF5RobotControl_GUI.Model
 {
     public partial class D5Robot : IDisposable
     {
-        public struct Joints(int r1, int p2, int p3, int p4, int r5)
+        public struct Joints
         {
-            public int R1 = r1;
-            public int P2 = p2;
-            public int P3 = p3;
-            public int P4 = p4;
-            public int R5 = r5;
+            public int R1;
+            public int P2;
+            public int P3;
+            public int P4;
+            public int R5;
+
+            public Joints(int r1, int p2, int p3, int p4, int r5) => (R1, P2, P3, P4, R5) = (r1, p2, p3, p4, r5);
         };
 
         public enum ErrorCode
@@ -49,31 +51,35 @@ namespace DOF5RobotControl_GUI.Model
             RMDGetPIError = 402
         };
 
-        [LibraryImport("libD5Robot.dll")]
-        internal static partial ErrorCode CreateD5RobotInstance(out IntPtr instance, [MarshalAs(UnmanagedType.LPStr)]string serialPort, [MarshalAs(UnmanagedType.LPStr)]string natorID, int topRMDId, int bottomRMDId);
-        [LibraryImport("libD5Robot.dll")]
-        internal static partial ErrorCode DestroyD5RobotInstance(IntPtr instance);
-        [LibraryImport("libD5Robot.dll")]
+        //[LibraryImport("D5RobotDll.dll")]
+        //public static partial ErrorCode CreateD5RobotInstance(out IntPtr instance, [MarshalAs(UnmanagedType.LPStr)]string serialPort, [MarshalAs(UnmanagedType.LPStr)]string natorID, int topRMDId, int bottomRMDId);
+        [DllImport("Dll/D5RobotDll.dll")]
+        public static extern IntPtr CreateD5RobotInstance([MarshalAs(UnmanagedType.LPStr)]string serialPort,
+                                [MarshalAs(UnmanagedType.LPStr)]string natorID, byte topRMDID,
+                                byte bottomRMDID);
+        [DllImport("Dll/D5RobotDll.dll")]
+        internal static extern ErrorCode DestroyD5RobotInstance(IntPtr instance);
+        [DllImport("Dll/D5RobotDll.dll")]
         [return: MarshalAs(UnmanagedType.I1)]
-        internal static partial bool CallIsInit(IntPtr instance);
-        [LibraryImport("libD5Robot.dll")]
-        internal static partial ErrorCode CallSetZero(IntPtr instance);
-        [LibraryImport("libD5Robot.dll")]
-        internal static partial ErrorCode CallStop(IntPtr instance);
-        [LibraryImport("libD5Robot.dll")]
-        internal static partial ErrorCode CallJointsMoveAbsolute(IntPtr instance, Joints j);
-        [LibraryImport("libD5Robot.dll")]
-        internal static partial ErrorCode CallJointsMoveRelative(IntPtr instance, Joints j);
+        internal static extern bool CallIsInit(IntPtr instance);
+        [DllImport("Dll/D5RobotDll.dll")]
+        internal static extern ErrorCode CallSetZero(IntPtr instance);
+        [DllImport("Dll/D5RobotDll.dll")]
+        internal static extern ErrorCode CallStop(IntPtr instance);
+        [DllImport("Dll/D5RobotDll.dll")]
+        internal static extern ErrorCode CallJointsMoveAbsolute(IntPtr instance, Joints j);
+        [DllImport("Dll/D5RobotDll.dll")]
+        internal static extern ErrorCode CallJointsMoveRelative(IntPtr instance, Joints j);
 
         private readonly IntPtr _robotPtr;
         private bool disposedValue;
 
-        public D5Robot(string serialPort, string natorID, int topRMDId, int bottomRMDId)
+        public D5Robot(string serialPort, string natorID, byte topRMDId, byte bottomRMDId)
         {
-            var result = CreateD5RobotInstance(out _robotPtr, serialPort, natorID, topRMDId, bottomRMDId);
-            if (result != ErrorCode.OK)
+            _robotPtr = CreateD5RobotInstance(serialPort, natorID, topRMDId, bottomRMDId);
+            if (_robotPtr == IntPtr.Zero)
             {
-                throw new Exception($"CreateD5RobotInstance error: {result}");
+                throw new Exception($"CreateD5RobotInstance error.");
             }
         }
 
@@ -130,11 +136,12 @@ namespace DOF5RobotControl_GUI.Model
                     if (res != ErrorCode.OK)
                     {
                         MessageBox.Show($"Error Destroying Instance: {res}");
+                        //throw 
                     }
                 }
                 catch (SEHException e)
                 {
-                    MessageBox.Show($"Error while destroying robot instance: {e.Message}");
+                    MessageBox.Show($"Error while destroying robot instance:\n{e.Message}");
                 }
                 catch (Exception e)
                 {

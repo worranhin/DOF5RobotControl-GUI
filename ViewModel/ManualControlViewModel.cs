@@ -6,23 +6,28 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media;
 
 namespace DOF5RobotControl_GUI.ViewModel
 {
-    internal class ManualControlViewModel : ObservableObject
+    internal partial class ManualControlViewModel : ObservableObject
     {
+        [ObservableProperty]
         private int _speedMode;
-        public int SpeedMode
-        {
-            get => _speedMode;
-            set => SetProperty(ref _speedMode, value);
-        }
 
+        [ObservableProperty]
         private bool _gamepadConnected = false;
-        public bool GamepadConnected
-        {
-            get => _gamepadConnected;
-            set => SetProperty(ref _gamepadConnected, value);
-        }
+
+        [ObservableProperty]
+        private bool _topCameraConnected = false;
+        [ObservableProperty]
+        private ImageSource? _topImageSource;
+        public readonly Mutex TopImgSrcMutex = new();
+
+        [ObservableProperty]
+        private bool _bottomCameraConnected = false;
+        [ObservableProperty]
+        private ImageSource? _bottomImageSource;
+        public readonly Mutex BottomImgSrcMutex = new();
     }
 }
