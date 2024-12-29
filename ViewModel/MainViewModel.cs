@@ -7,11 +7,12 @@ using System.Text;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using DOF5RobotControl_GUI.Model;
 
 namespace DOF5RobotControl_GUI.ViewModel
 {
-    class MainViewModel : ObservableObject
+    partial class MainViewModel : ObservableObject
     {
         private bool _systemConnected = false;
         public bool SystemConnected
@@ -39,6 +40,15 @@ namespace DOF5RobotControl_GUI.ViewModel
         {
             get => _targetState;
             set => SetProperty(ref _targetState, value);
+        }
+
+        [ObservableProperty]
+        private RoboticState _currentState = new(0, 0, 0, 0, 0);
+
+        [RelayCommand]
+        private void SetTargetJoints(D5Robot.Joints joints)
+        {
+            TargetState.SetFromD5RJoints(joints);
         }
     }
 }

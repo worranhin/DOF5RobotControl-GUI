@@ -34,16 +34,16 @@ namespace DOF5RobotControl_GUI
 
     public partial class MainWindow : Window
     {
-        readonly Joints ZeroPos = new(0, 0, 0, 0, 0);
-        readonly Joints IdlePos = new(0, 0, -10000000, 0, 0);
-        readonly Joints ChangeJawPos = new(0, -1500000, 8000000, 5000000, 0); // 0, -1.5, 8, 5, 0
-        readonly Joints PreChangeJawPos = new(0, -1500000, 0, 0, 0);
-        readonly Joints FetchRingPos = new(0, 10000000, 10000000, 0, 0); // 0, 10, 10, 0, 0
-        readonly Joints PreFetchRingPos = new(0, 8673000, -15000000, -10000000, 0);
-        readonly Joints AssemblePos1 = new(0, -600000, 900000, 9000000, 0); // 0, -0.6, 0.9, 9, 0
-        readonly Joints PreAssemblePos2 = new(9000, 0, 0, 0, 0); // 90, 0, 0, 0, 0 -> 90, 14, -12, 5, 0 
-        readonly Joints AssemblePos2 = new(9000, 14000000, -12000000, 5000000, 0); // 90, 0, 0, 0, 0 -> 90, 14, -12, 5, 0 
-        readonly Joints AssemblePos3 = new(0, -2500000, 4000000, 7000000, 0); // 0, -2.5, 4, 7, 0
+        public static readonly Joints ZeroPos = new(0, 0, 0, 0, 0);
+        public static readonly Joints IdlePos = new(0, 0, -10000000, 0, 0);
+        public static readonly Joints ChangeJawPos = new(0, -1500000, 8000000, 5000000, 0); // 0, -1.5, 8, 5, 0
+        public static readonly Joints PreChangeJawPos = new(0, -1500000, 0, 0, 0);
+        public static readonly Joints FetchRingPos = new(0, 10000000, 10000000, 0, 0); // 0, 10, 10, 0, 0
+        public static readonly Joints PreFetchRingPos = new(0, 8673000, -15000000, -10000000, 0);
+        public static readonly Joints AssemblePos1 = new(0, -600000, 900000, 9000000, 0); // 0, -0.6, 0.9, 9, 0
+        public static readonly Joints PreAssemblePos2 = new(9000, 0, 0, 0, 0); // 90, 0, 0, 0, 0 -> 90, 14, -12, 5, 0 
+        public static readonly Joints AssemblePos2 = new(9000, 14000000, -12000000, 5000000, 0); // 90, 0, 0, 0, 0 -> 90, 14, -12, 5, 0 
+        public static readonly Joints AssemblePos3 = new(0, -2500000, 4000000, 7000000, 0); // 0, -2.5, 4, 7, 0
 
         //private readonly JointsPosition ZeroPos = new(0, 0, 0, 0, 0);
         //private readonly JointsPosition IdlePos = new(0, 0, -15000000, -10000000, 0);
@@ -65,6 +65,8 @@ namespace DOF5RobotControl_GUI
         Thread serverThread;
         CancellationTokenSource opcTaskCancelSource;
         CancellationToken opcTaskCancelToken;
+        CancellationTokenSource? updateStateTaskCancelSource;
+        CancellationToken updateStateTaskCancelToken;
         //static public double[] joints100;
 
         public MainWindow()
@@ -94,6 +96,20 @@ namespace DOF5RobotControl_GUI
         {
             Debug.WriteLine("Window closed");
             opcTaskCancelSource.Cancel();
+            updateStateTaskCancelSource?.Cancel();
+        }
+
+        private void UpdateCurrentStateTask()
+        {
+            while (robot != null && !updateStateTaskCancelToken.IsCancellationRequested)
+            {
+                Joints joints = robot.GetCurrentJoint();
+                Dispatcher.Invoke(() =>
+                {
+                    viewModel.CurrentState.SetFromD5RJoints(joints);
+                });
+                Thread.Sleep(1000);
+            }
         }
 
         private void ServerRunTask()
@@ -126,19 +142,38 @@ namespace DOF5RobotControl_GUI
             {
                 case 1: PortRefresh_Click(this, args); break;
                 case 2: BtnConnect_Click(this, args); break;
-                case 3: BtnZeroPos_Click(this, args); break;
-                case 4: BtnIdlePos_Click(this, args); break;
-                case 5: BtnPreChangeJawPos_Click(this, args); break;
-                case 6: BtnChangeJawPos_Click(this, args); break;
-                case 7: BtnAssemblePos1_Click(this, args); break;
-                case 8: BtnAssemblePos2_Click(this, args); break;
-                case 9: BtnAssemblePos3_Click(this, args); break;
-                case 10: BtnPreFetchRingPos_Click(this, args); break;
-                case 11: BtnFetchRingPos_Click(this, args); break;
+                case 3: viewModel.SetTargetJointsCommand.Execute(ZeroPos); break;
+                case 4: viewModel.SetTargetJointsCommand.Execute(IdlePos); break;
+                case 5: viewModel.SetTargetJointsCommand.Execute(PreChangeJawPos); break;
+                case 6: viewModel.SetTargetJointsCommand.Execute(ChangeJawPos); break;
+                case 7: viewModel.SetTargetJointsCommand.Execute(AssemblePos1); break;
+                case 8: viewModel.SetTargetJointsCommand.Execute(AssemblePos2); break;
+                case 9: viewModel.SetTargetJointsCommand.Execute(AssemblePos3); break;
+                case 10: viewModel.SetTargetJointsCommand.Execute(PreFetchRingPos); break;
+                case 11: viewModel.SetTargetJointsCommand.Execute(FetchRingPos); break;
                 case 12: BtnRun_Click(this, args); break;
                 case 13: BtnStop_Click(this, args); break;
                 case 14: BtnSetZero_Click(this, args); break;
             }
+
+            // 备份，对照
+            //switch (method)
+            //{
+            //    case 1: PortRefresh_Click(this, args); break;
+            //    case 2: BtnConnect_Click(this, args); break;
+            //    case 3: BtnZeroPos_Click(this. args); break;
+            //    case 4: BtnIdlePos_Click(this, args); break;
+            //    case 5: BtnPreChangeJawPos_Click(this, args); break;
+            //    case 6: BtnChangeJawPos_Click(this, args); break;
+            //    case 7: BtnAssemblePos1_Click(this, args); break;
+            //    case 8: BtnAssemblePos2_Click(this, args); break;
+            //    case 9: BtnAssemblePos3_Click(this, args); break;
+            //    case 10: BtnPreFetchRingPos_Click(this, args); break;
+            //    case 11: BtnFetchRingPos_Click(this, args); break;
+            //    case 12: BtnRun_Click(this, args); break;
+            //    case 13: BtnStop_Click(this, args); break;
+            //    case 14: BtnSetZero_Click(this, args); break;
+            //}
         }
 
         private void BtnDisconnectServer_Click(object sender, RoutedEventArgs e)
@@ -169,6 +204,8 @@ namespace DOF5RobotControl_GUI
                 robot = null;
                 jogHandler = null;
                 viewModel.SystemConnected = false;
+                updateStateTaskCancelSource?.Cancel();
+                updateStateTaskCancelSource = null;
             }
             else  // 系统未连接
             {
@@ -187,6 +224,9 @@ namespace DOF5RobotControl_GUI
                     robot = new D5Robot(portName, natorId, 1, 2);
                     jogHandler = new JogHandler(robot);
                     viewModel.SystemConnected = true;
+                    updateStateTaskCancelSource = new();
+                    updateStateTaskCancelToken = updateStateTaskCancelSource.Token;
+                    Task.Run(UpdateCurrentStateTask, updateStateTaskCancelToken);
                 }
                 catch (Exception err)
                 {
@@ -200,16 +240,6 @@ namespace DOF5RobotControl_GUI
         }
 
         // 预设位姿按键 //
-
-        private void BtnZeroPos_Click(object sender, RoutedEventArgs e)
-        {
-            viewModel.TargetState.SetFromD5RJoints(ZeroPos);
-        }
-
-        private void BtnIdlePos_Click(object sender, RoutedEventArgs e)
-        {
-            viewModel.TargetState.SetFromD5RJoints(IdlePos);
-        }
 
         private void BtnPreChangeJawPos_Click(object sender, RoutedEventArgs e)
         {

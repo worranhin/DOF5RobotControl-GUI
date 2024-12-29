@@ -53,23 +53,26 @@ namespace DOF5RobotControl_GUI.Model
 
         //[LibraryImport("D5RobotDll.dll")]
         //public static partial ErrorCode CreateD5RobotInstance(out IntPtr instance, [MarshalAs(UnmanagedType.LPStr)]string serialPort, [MarshalAs(UnmanagedType.LPStr)]string natorID, int topRMDId, int bottomRMDId);
-        [DllImport("Dll/D5RobotDll.dll")]
+        [DllImport("Dll/D5RobotDll.dll", CallingConvention = CallingConvention.StdCall)]
         public static extern IntPtr CreateD5RobotInstance([MarshalAs(UnmanagedType.LPStr)]string serialPort,
                                 [MarshalAs(UnmanagedType.LPStr)]string natorID, byte topRMDID,
                                 byte bottomRMDID);
-        [DllImport("Dll/D5RobotDll.dll")]
+        [DllImport("Dll/D5RobotDll.dll", CallingConvention = CallingConvention.StdCall)]
         internal static extern ErrorCode DestroyD5RobotInstance(IntPtr instance);
-        [DllImport("Dll/D5RobotDll.dll")]
+        [DllImport("Dll/D5RobotDll.dll", CallingConvention = CallingConvention.StdCall)]
         [return: MarshalAs(UnmanagedType.I1)]
         internal static extern bool CallIsInit(IntPtr instance);
-        [DllImport("Dll/D5RobotDll.dll")]
+        [DllImport("Dll/D5RobotDll.dll", CallingConvention = CallingConvention.StdCall)]
         internal static extern ErrorCode CallSetZero(IntPtr instance);
-        [DllImport("Dll/D5RobotDll.dll")]
+        [DllImport("Dll/D5RobotDll.dll", CallingConvention = CallingConvention.StdCall)]
         internal static extern ErrorCode CallStop(IntPtr instance);
-        [DllImport("Dll/D5RobotDll.dll")]
+        [DllImport("Dll/D5RobotDll.dll", CallingConvention = CallingConvention.StdCall)]
         internal static extern ErrorCode CallJointsMoveAbsolute(IntPtr instance, Joints j);
-        [DllImport("Dll/D5RobotDll.dll")]
+        [DllImport("Dll/D5RobotDll.dll", CallingConvention = CallingConvention.StdCall)]
         internal static extern ErrorCode CallJointsMoveRelative(IntPtr instance, Joints j);
+        [DllImport("Dll/D5RobotDll.dll", CallingConvention = CallingConvention.StdCall)]
+        private static extern ErrorCode CallGetCurrentJoint(IntPtr instance, ref Joints j);
+
 
         private readonly IntPtr _robotPtr;
         private bool disposedValue;
@@ -118,6 +121,16 @@ namespace DOF5RobotControl_GUI.Model
         public ErrorCode JointsMoveRelative(Joints j)
         {
             return CallJointsMoveRelative(_robotPtr, j);
+        }
+
+        public Joints GetCurrentJoint()
+        {
+            Joints j = new();
+            var err = CallGetCurrentJoint(_robotPtr, ref j);
+            if (err == ErrorCode.OK)
+                return j;
+            else
+                throw new Exception("Error while getting current joint. Error code: " + err.ToString());
         }
 
         protected virtual void Dispose(bool disposing)
