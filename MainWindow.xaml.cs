@@ -239,48 +239,6 @@ namespace DOF5RobotControl_GUI
             }
         }
 
-        // 预设位姿按键 //
-
-        private void BtnPreChangeJawPos_Click(object sender, RoutedEventArgs e)
-        {
-            viewModel.TargetState.SetFromD5RJoints(PreChangeJawPos);
-        }
-
-        private void BtnChangeJawPos_Click(object sender, RoutedEventArgs e)
-        {
-            viewModel.TargetState.SetFromD5RJoints(ChangeJawPos);
-        }
-
-        private void BtnAssemblePos1_Click(object sender, RoutedEventArgs e)
-        {
-            viewModel.TargetState.SetFromD5RJoints(AssemblePos1);
-        }
-
-        private void BtnPreAssemblePos2_Click(object sender, RoutedEventArgs e)
-        {
-            viewModel.TargetState.SetFromD5RJoints(PreAssemblePos2);
-        }
-
-        private void BtnAssemblePos2_Click(object sender, RoutedEventArgs e)
-        {
-            viewModel.TargetState.SetFromD5RJoints(AssemblePos2);
-        }
-
-        private void BtnAssemblePos3_Click(object sender, RoutedEventArgs e)
-        {
-            viewModel.TargetState.SetFromD5RJoints(AssemblePos3);
-        }
-
-        private void BtnPreFetchRingPos_Click(object sender, RoutedEventArgs e)
-        {
-            viewModel.TargetState.SetFromD5RJoints(PreFetchRingPos);
-        }
-
-        private void BtnFetchRingPos_Click(object sender, RoutedEventArgs e)
-        {
-            viewModel.TargetState.SetFromD5RJoints(FetchRingPos);
-        }
-
         private void BtnRun_Click(object sender, RoutedEventArgs e)
         {
             if (robot == null)
@@ -298,24 +256,6 @@ namespace DOF5RobotControl_GUI
                 return;
             }
         }
-        //public void run2()
-        //{
-        //    if (robot == null)
-        //    {
-        //        MessageBox.Show("Robot not connected.");
-        //        return;
-        //    }
-
-        //    Joints j = viewModel.TargetState.ToD5RJoints();
-        //    D5Robot.ErrorCode err = robot.JointsMoveAbsolute(j);
-
-        //    if (err != D5Robot.ErrorCode.OK)
-        //    {
-        //        MessageBox.Show($"Error while running: {err}");
-
-        //        return;
-        //    }
-        //}
 
         private void BtnStop_Click(object sender, RoutedEventArgs e)
         {
