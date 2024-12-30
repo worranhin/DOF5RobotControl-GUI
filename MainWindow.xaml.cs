@@ -103,11 +103,20 @@ namespace DOF5RobotControl_GUI
         {
             while (robot != null && !updateStateTaskCancelToken.IsCancellationRequested)
             {
-                Joints joints = robot.GetCurrentJoint();
-                Dispatcher.Invoke(() =>
+                try
                 {
-                    viewModel.CurrentState.SetFromD5RJoints(joints);
-                });
+                    Joints joints = robot.GetCurrentJoint();
+                    Dispatcher.Invoke(() =>
+                    {
+                        viewModel.CurrentState.SetFromD5RJoints(joints);
+                    });
+                } catch (D5Robot.RobotException exc)
+                {
+                    Debug.WriteLine(exc.Message);
+                    if (exc.Code != D5Robot.ErrorCode.RMDFormatError)
+                        throw;
+                }
+                
                 Thread.Sleep(1000);
             }
         }
