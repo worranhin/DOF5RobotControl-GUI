@@ -47,10 +47,8 @@
                 <Button Click="BtnConnect_Click" Margin="5,0,0,0" Content="{Binding SystemConnected, Converter={StaticResource ConnectBtnConverter}}"/>
             </StackPanel>
             <TextBlock VerticalAlignment="Center">点动模式</TextBlock>
-            <ComboBox SelectedIndex="0" Margin="8">
-                <ComboBoxItem>单步</ComboBoxItem>
-                <ComboBoxItem>连续</ComboBoxItem>
-            </ComboBox>
+            <ComboBox Margin="8" ItemsSource="{Binding JogModes, Mode=OneWay}" SelectedItem="{Binding JogMode}"/>
+            <TextBlock Text="{Binding JogMode}"/>
             <TextBlock VerticalAlignment="Center">点动分辨率</TextBlock>
             <ComboBox SelectedIndex="0" Margin="8">
                 <ComboBoxItem>1mm / 1deg</ComboBoxItem>
@@ -190,7 +188,7 @@
                     <Button Grid.Row="0" Grid.Column="0" Click="BtnRun_Click">运行</Button>
                     <Button Grid.Row="0" Grid.Column="1" Click="BtnSetZero_Click" ToolTip="将当前的位置设为零点">置零</Button>
                     <Button Grid.Row="0" Grid.Column="2" Click="BtnStop_Click">停止</Button>
-                    <Button Grid.Row="1" Grid.ColumnSpan="3" Click="BtnOpenManualControl_Click">启动手动控制</Button>
+                    <Button Grid.Row="1" Grid.ColumnSpan="3" Click="BtnOpenManualControl_Click">启动相机</Button>
                 </Grid>
                 <Button Content="连接服务器" Click="BtnConnectServer_Click"/>
                 <Button Content="断开服务器" Click="BtnDisconnectServer_Click"/>
@@ -221,7 +219,7 @@
                 <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding CurrentState.JointSpace.P3}"/>
                 <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding CurrentState.JointSpace.P4}"/>
                 <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding CurrentState.JointSpace.R5}"/>
-                <Button Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2">设为当前值</Button>
+                <Button Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Command="{Binding SetTargetJointsFromCurrentCommand}">设为当前值</Button>
             </Grid>
         </GroupBox>
     </Grid>

@@ -45,9 +45,20 @@ namespace DOF5RobotControl_GUI.ViewModel
         [ObservableProperty]
         private RoboticState _currentState = new(0, 0, 0, 0, 0);
 
+        public IEnumerable<JogHandler.JogMode> JogModes => Enum.GetValues(typeof(JogHandler.JogMode)).Cast<JogHandler.JogMode>();
+        [ObservableProperty]
+        private JogHandler.JogMode _jogMode = JogHandler.JogMode.OneStep;
+
         [RelayCommand]
         private void SetTargetJoints(D5Robot.Joints joints)
         {
+            TargetState.SetFromD5RJoints(joints);
+        }
+
+        [RelayCommand]
+        private void SetTargetJointsFromCurrent()
+        {
+            var joints = CurrentState.ToD5RJoints();
             TargetState.SetFromD5RJoints(joints);
         }
     }

@@ -8,8 +8,21 @@ using System.Windows;
 
 namespace DOF5RobotControl_GUI.Model
 {
-    internal class JogHandler
+    public class JogHandler
     {
+        public enum JogMode
+        {
+            OneStep,
+            Continuous
+        };
+
+        enum JogResolution
+        {
+            Slow,
+            Normal,
+            Fast
+        };
+
         public bool isJogging = false;
 
         private readonly D5Robot robot;
