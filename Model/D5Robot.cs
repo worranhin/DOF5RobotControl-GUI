@@ -37,19 +37,34 @@ namespace DOF5RobotControl_GUI.Model
         public enum ErrorCode
         {
             OK = 0,
+            NotImplementException,
             SystemError = 100,
             CreateInstanceError = 101,
+            DestroyInstanceError_nullptr,
             SerialError = 200,
             SerialInitError = 201,
             SerialCloseError = 202,
             SerialSendError = 203,
             SerialReceiveError,
+            SerialReceiveError_LessThanExpected,
             NatorError = 300,
             NatorInitError = 301,
             RMDError = 400,
             RMDInitError = 401,
-            RMDGetPIError = 402
+            RMDGetPIError = 402,
+            RMDFormatError,
+            RMDChecksumError
         };
+
+        public class RobotException : Exception
+        {
+            public ErrorCode Code;
+            public RobotException(string message) : base(message) { }
+            public RobotException(string message, ErrorCode code): base(message)
+            {
+                Code = code;
+            }
+        }
 
         //[LibraryImport("D5RobotDll.dll")]
         //public static partial ErrorCode CreateD5RobotInstance(out IntPtr instance, [MarshalAs(UnmanagedType.LPStr)]string serialPort, [MarshalAs(UnmanagedType.LPStr)]string natorID, int topRMDId, int bottomRMDId);
@@ -72,6 +87,8 @@ namespace DOF5RobotControl_GUI.Model
         internal static extern ErrorCode CallJointsMoveRelative(IntPtr instance, Joints j);
         [DllImport("Dll/D5RobotDll.dll", CallingConvention = CallingConvention.StdCall)]
         private static extern ErrorCode CallGetCurrentJoint(IntPtr instance, ref Joints j);
+        [DllImport("Dll/D5RobotDll.dll", CallingConvention = CallingConvention.StdCall)]
+        private static extern ErrorCode D5R_GetLastError();
 
 
         private readonly IntPtr _robotPtr;
@@ -82,7 +99,8 @@ namespace DOF5RobotControl_GUI.Model
             _robotPtr = CreateD5RobotInstance(serialPort, natorID, topRMDId, bottomRMDId);
             if (_robotPtr == IntPtr.Zero)
             {
-                throw new Exception($"CreateD5RobotInstance error.");
+                var err = D5R_GetLastError();
+                throw new RobotException($"CreateD5RobotInstance error. " + err.ToString());
             }
         }
 
@@ -130,7 +148,7 @@ namespace DOF5RobotControl_GUI.Model
             if (err == ErrorCode.OK)
                 return j;
             else
-                throw new Exception("Error while getting current joint. Error code: " + err.ToString());
+                throw new RobotException("Error while getting current joint. Error code: " + err.ToString(), err);
         }
 
         protected virtual void Dispose(bool disposing)
