@@ -48,7 +48,6 @@
             </StackPanel>
             <TextBlock VerticalAlignment="Center">点动模式</TextBlock>
             <ComboBox Margin="8" ItemsSource="{Binding JogModes, Mode=OneWay}" SelectedItem="{Binding JogMode}"/>
-            <TextBlock Text="{Binding JogMode}"/>
             <TextBlock VerticalAlignment="Center">点动分辨率</TextBlock>
             <ComboBox SelectedIndex="0" Margin="8">
                 <ComboBoxItem>1mm / 1deg</ComboBoxItem>
