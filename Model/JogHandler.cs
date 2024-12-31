@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using D5R;
 
 namespace DOF5RobotControl_GUI.Model
 {
@@ -36,7 +37,7 @@ namespace DOF5RobotControl_GUI.Model
             cancelJoggingToken = cancelJoggingSource.Token;
         }
 
-        public void StartJogging(D5Robot.Joints joints)
+        public void StartJogging(Joints joints)
         {
             isJogging = true;
             cancelJoggingSource.Cancel();
@@ -47,16 +48,31 @@ namespace DOF5RobotControl_GUI.Model
             {
                 while (!cancelJoggingToken.IsCancellationRequested)
                 {
-                    var result = robot.JointsMoveRelative(joints);
-
-                    if (result != D5Robot.ErrorCode.OK)
+                    try
+                    {
+                        robot.JointsMoveRelative(joints);
+                    } catch (RobotException exc)
                     {
                         Application.Current.Dispatcher.Invoke(() =>
                         {
-                            MessageBox.Show($"Jog error in JogHandler: {result}");
+                            MessageBox.Show($"Jog error in JogHandler: {exc.Code}");
                         });
                         break;
                     }
+                    
+                    
+                    //robot.GetCurrentJoint();
+                    //robot.`
+                    //robot.
+
+                    //if (result != ErrorCode.OK)
+                    //{
+                    //    Application.Current.Dispatcher.Invoke(() =>
+                    //    {
+                    //        MessageBox.Show($"Jog error in JogHandler: {result}");
+                    //    });
+                    //    break;
+                    //}
 
                     Thread.Sleep(20);
                 }

@@ -23,7 +23,7 @@ using Opc.UaFx;
 using Opc.UaFx.Server;
 using Opc.UaFx.Services;
 using Window = System.Windows.Window;
-using Joints = DOF5RobotControl_GUI.Model.D5Robot.Joints;
+using D5R;
 
 namespace DOF5RobotControl_GUI
 {
@@ -105,15 +105,15 @@ namespace DOF5RobotControl_GUI
             {
                 try
                 {
-                    Joints joints = robot.GetCurrentJoint();
+                    Joints joints = (Joints)robot.GetCurrentJoint();
                     Dispatcher.Invoke(() =>
                     {
                         viewModel.CurrentState.SetFromD5RJoints(joints);
                     });
-                } catch (D5Robot.RobotException exc)
+                } catch (RobotException exc)
                 {
                     Debug.WriteLine(exc.Message);
-                    if (exc.Code != D5Robot.ErrorCode.RMDFormatError && exc.Code != D5Robot.ErrorCode.SerialSendError)
+                    if (exc.Code != ErrorCode.RMDFormatError && exc.Code != ErrorCode.SerialSendError)
                         throw;
                 }
                 
@@ -237,9 +237,9 @@ namespace DOF5RobotControl_GUI
                     updateStateTaskCancelToken = updateStateTaskCancelSource.Token;
                     Task.Run(UpdateCurrentStateTask, updateStateTaskCancelToken);
                 }
-                catch (Exception err)
+                catch (RobotException err)
                 {
-                    MessageBox.Show(err.Message);
+                    MessageBox.Show(err.Code.ToString());
                     robot?.Dispose();
                     robot = null;
                     jogHandler = null;
@@ -257,13 +257,19 @@ namespace DOF5RobotControl_GUI
             }
 
             Joints j = viewModel.TargetState.ToD5RJoints();
-            D5Robot.ErrorCode err = robot.JointsMoveAbsolute(j);
-
-            if (err != D5Robot.ErrorCode.OK)
+            try
             {
-                MessageBox.Show($"Error while running: {err}");
-                return;
+                robot.JointsMoveAbsolute(j);
+            } catch (RobotException exc)
+            {
+                MessageBox.Show($"Jog error while running: {exc.Code}");
             }
+
+            //if (err != ErrorCode.OK)
+            //{
+            //    MessageBox.Show($"Error while running: {err}");
+            //    return;
+            //}
         }
 
         private void BtnStop_Click(object sender, RoutedEventArgs e)
@@ -274,10 +280,9 @@ namespace DOF5RobotControl_GUI
                 return;
             }
 
-            var err = robot.Stop();
-            if (err != D5Robot.ErrorCode.OK)
+            if (!robot.Stop())
             {
-                MessageBox.Show($"Error while stopping: {err}");
+                MessageBox.Show($"Error while stopping.");
                 return;
             }
         }
@@ -290,10 +295,9 @@ namespace DOF5RobotControl_GUI
                 return;
             }
 
-            var err = robot.SetZero();
-            if (err != D5Robot.ErrorCode.OK)
+            if (!robot.SetZero())
             {
-                MessageBox.Show($"Error while setting zero: {err}");
+                MessageBox.Show($"Error while setting zero.");
                 return;
             }
         }

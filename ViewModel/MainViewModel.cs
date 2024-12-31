@@ -9,6 +9,7 @@ using CommunityToolkit.Mvvm;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DOF5RobotControl_GUI.Model;
+using D5R;
 
 namespace DOF5RobotControl_GUI.ViewModel
 {
@@ -50,7 +51,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         private JogHandler.JogMode _jogMode = JogHandler.JogMode.OneStep;
 
         [RelayCommand]
-        private void SetTargetJoints(D5Robot.Joints joints)
+        private void SetTargetJoints(Joints joints)
         {
             TargetState.SetFromD5RJoints(joints);
         }

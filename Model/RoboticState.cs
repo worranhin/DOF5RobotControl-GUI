@@ -9,8 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Media3D;
-using static DOF5RobotControl_GUI.Model.D5Robot;
-using Joints = DOF5RobotControl_GUI.Model.D5Robot.Joints;
+using D5R;
 
 namespace DOF5RobotControl_GUI.Model
 {
