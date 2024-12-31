@@ -113,7 +113,7 @@ namespace DOF5RobotControl_GUI
                 } catch (D5Robot.RobotException exc)
                 {
                     Debug.WriteLine(exc.Message);
-                    if (exc.Code != D5Robot.ErrorCode.RMDFormatError)
+                    if (exc.Code != D5Robot.ErrorCode.RMDFormatError && exc.Code != D5Robot.ErrorCode.SerialSendError)
                         throw;
                 }
                 

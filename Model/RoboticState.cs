@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Media3D;
+using static DOF5RobotControl_GUI.Model.D5Robot;
 using Joints = DOF5RobotControl_GUI.Model.D5Robot.Joints;
 
 namespace DOF5RobotControl_GUI.Model
@@ -73,6 +74,13 @@ namespace DOF5RobotControl_GUI.Model
         /// <param name="j"></param>
         public void SetFromD5RJoints(Joints j)
         {
+            // 将旋转电机单圈角度换算成 +/- 180
+            if (j.R1 > 18000)            
+                j.R1 = -(36000 - j.R1);            
+            if (j.R5 > 18000)            
+                j.R5 = -(36000 - j.R5);
+            
+
             JointSpace = new()
             {
                 R1 = j.R1 / 100.0,
