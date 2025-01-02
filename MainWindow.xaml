@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:DOF5RobotControl_GUI"
         xmlns:cvt="clr-namespace:DOF5RobotControl_GUI.Converter" 
         xmlns:vm="clr-namespace:DOF5RobotControl_GUI.ViewModel"
-        d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
+        d:DataContext="{d:DesignInstance Type=vm:MainViewModel, IsDesignTimeCreatable=True}"
         mc:Ignorable="d"
         Title="MainWindow" Height="600" Width="900"
         FontSize="16">
@@ -21,8 +21,9 @@
             <Setter Property="Margin" Value="2"/>
             <Setter Property="Padding" Value="2"/>
         </Style>
-        <cvt:BoolInverseConverter x:Key="BoolInverseConverter" />
-        <cvt:ConnectBtnConverter x:Key="ConnectBtnConverter" />
+        <cvt:BoolInverseConverter x:Key="BoolInverseConverter"/>
+        <cvt:ConnectBtnConverter x:Key="ConnectBtnConverter"/>
+        <cvt:VibrateBtnConverter x:Key="VibrateBtnConverter"/>
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -178,19 +179,24 @@
                     <Grid.RowDefinitions>
                         <RowDefinition/>
                         <RowDefinition/>
+                        <RowDefinition/>
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Button Grid.Row="0" Grid.Column="0" Click="BtnRun_Click">运行</Button>
-                    <Button Grid.Row="0" Grid.Column="1" Click="BtnSetZero_Click" ToolTip="将当前的位置设为零点">置零</Button>
-                    <Button Grid.Row="0" Grid.Column="2" Click="BtnStop_Click">停止</Button>
-                    <Button Grid.Row="1" Grid.ColumnSpan="3" Click="BtnOpenManualControl_Click">启动相机</Button>
+                    <Button Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Click="BtnRun_Click">运行</Button>
+                    <Button Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="2" Click="BtnSetZero_Click" ToolTip="将当前的位置设为零点">置零</Button>
+                    <Button Grid.Row="0" Grid.Column="4" Grid.ColumnSpan="2" Click="BtnStop_Click">停止</Button>
+                    <Button Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Click="BtnOpenManualControl_Click">启动相机</Button>
+                    <Button Grid.Row="1" Grid.Column="3" Grid.ColumnSpan="3" Command="{Binding ToggleVibrateCommand}" Content="{Binding IsVibrating, Converter={StaticResource VibrateBtnConverter}}"></Button>
+                    <Button Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Content="连接服务器" Click="BtnConnectServer_Click"/>
+                    <Button Grid.Row="2" Grid.Column="3" Grid.ColumnSpan="3" Content="断开服务器" Click="BtnDisconnectServer_Click"/>
                 </Grid>
-                <Button Content="连接服务器" Click="BtnConnectServer_Click"/>
-                <Button Content="断开服务器" Click="BtnDisconnectServer_Click"/>
             </StackPanel>
 
         </GroupBox>

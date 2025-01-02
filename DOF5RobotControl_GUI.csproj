@@ -55,18 +55,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Dll\D5RobotDll.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Dll\D5RobotDll.exp">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Dll\D5RobotDll.lib">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Dll\D5RobotDll.pdb">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="libDOF5RobotControl.dll">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
@@ -74,10 +62,6 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="View\" />
   </ItemGroup>
 
   <ItemGroup>

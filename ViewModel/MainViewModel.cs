@@ -10,45 +10,28 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DOF5RobotControl_GUI.Model;
 using D5R;
+using System.Windows;
 
 namespace DOF5RobotControl_GUI.ViewModel
 {
     partial class MainViewModel : ObservableObject
     {
+        [ObservableProperty]
         private bool _systemConnected = false;
-        public bool SystemConnected
-        {
-            get => _systemConnected;
-            set => SetProperty(ref _systemConnected, value);
-        }
-
+        [ObservableProperty]
         private string[] _portsAvailable = Array.Empty<string>();
-        public string[] PortsAvailable
-        {
-            get => _portsAvailable;
-            set => SetProperty(ref _portsAvailable, value);
-        }
-
+        [ObservableProperty]
         private string _selectedPort = "";
-        public string SelectedPort
-        {
-            get => _selectedPort;
-            set => SetProperty(ref _selectedPort, value);
-        }
-
+        [ObservableProperty]
         private RoboticState _targetState = new(0, 0, 0, 0, 0);
-        public RoboticState TargetState
-        {
-            get => _targetState;
-            set => SetProperty(ref _targetState, value);
-        }
-
         [ObservableProperty]
         private RoboticState _currentState = new(0, 0, 0, 0, 0);
 
+        /***** Jog 相关 *****/
         public IEnumerable<JogHandler.JogMode> JogModes => Enum.GetValues(typeof(JogHandler.JogMode)).Cast<JogHandler.JogMode>();
         [ObservableProperty]
         private JogHandler.JogMode _jogMode = JogHandler.JogMode.OneStep;
+        /***** Jog 相关结束 *****/
 
         [RelayCommand]
         private void SetTargetJoints(Joints joints)
@@ -62,5 +45,33 @@ namespace DOF5RobotControl_GUI.ViewModel
             var joints = CurrentState.ToD5RJoints();
             TargetState.SetFromD5RJoints(joints);
         }
+
+        ///// 处理振动相关 UI 逻辑 /////
+
+        internal VibrateHelper? VibrateHelper;
+        [ObservableProperty]
+        private bool _isVibrating = false;
+        [RelayCommand]
+        private void ToggleVibrate()
+        {
+            if (VibrateHelper == null)
+            {
+                MessageBox.Show("While toggle vibrate: vibrateHelper is null!");
+                return;
+            }
+
+            if (!IsVibrating)
+            {
+                VibrateHelper.Start();
+                IsVibrating = true;
+            }
+            else
+            {
+                VibrateHelper.Stop();
+                IsVibrating = false;
+            }
+        }
+
+        ///// 处理振动结束 /////
     }
 }

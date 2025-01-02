@@ -88,8 +88,6 @@ namespace DOF5RobotControl_GUI
 
             // 注册窗口关闭回调函数
             this.Closed += Window_Closed;
-
-            //joints100 = new double[5] { viewModel.TargetState.JointSpace.R1, viewModel.TargetState.JointSpace.P2, viewModel.TargetState.JointSpace.P3, viewModel.TargetState.JointSpace.P4, viewModel.TargetState.JointSpace.R5 };
         }
 
         private void Window_Closed(object? sender, EventArgs e)
@@ -119,7 +117,7 @@ namespace DOF5RobotControl_GUI
                 
                 Thread.Sleep(1000);
             }
-        }
+        }        
 
         private void ServerRunTask()
         {
@@ -233,17 +231,21 @@ namespace DOF5RobotControl_GUI
                     robot = new D5Robot(portName, natorId, 1, 2);
                     jogHandler = new JogHandler(robot);
                     viewModel.SystemConnected = true;
+                    viewModel.VibrateHelper = new VibrateHelper(robot, viewModel);
+
                     updateStateTaskCancelSource = new();
                     updateStateTaskCancelToken = updateStateTaskCancelSource.Token;
                     Task.Run(UpdateCurrentStateTask, updateStateTaskCancelToken);
                 }
                 catch (RobotException err)
                 {
-                    MessageBox.Show(err.Code.ToString());
+                    MessageBox.Show("Error while Connecting: " + err.Code.ToString());
                     robot?.Dispose();
                     robot = null;
                     jogHandler = null;
                     viewModel.SystemConnected = false;
+                    viewModel.VibrateHelper = null;
+                    throw;
                 }
             }
         }
