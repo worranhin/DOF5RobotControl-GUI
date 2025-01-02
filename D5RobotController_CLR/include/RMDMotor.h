@@ -56,9 +56,9 @@ public:
   // RMDMotor(HANDLE comHandle, uint8_t id);
   RMDMotor(D5R::SerialPort &serial, uint8_t id);
   ~RMDMotor();
-  bool Init();
+  //bool Init();
   bool isInit();
-  bool Reconnect();
+  //bool Reconnect();
   bool GetMultiAngle_s(int64_t *angle);
   uint16_t GetSingleAngle_s();
   uint8_t GetHeaderCheckSum(uint8_t *command);

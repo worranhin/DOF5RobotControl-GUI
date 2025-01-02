@@ -1,4 +1,5 @@
 #include "pch.h"
+
 #include "D5Robot.h"
 
 namespace D5R {
@@ -35,7 +36,12 @@ namespace D5R {
 			Marshal::FreeHGlobal((IntPtr)natorId_c);
 		}
 	}
-	D5Robot::~D5Robot() {}
+	D5Robot::~D5Robot() {
+		delete natorMotor; natorMotor = nullptr;
+		delete topRMDMotor;	topRMDMotor = nullptr;
+		delete botRMDMotor;	botRMDMotor = nullptr;
+		delete _port; _port = nullptr;
+	}
 
 	bool D5Robot::IsInit() { return _isInit; }
 

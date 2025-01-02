@@ -8,5 +8,19 @@
 #define PCH_H
 
 // 添加要在此处预编译的标头
+#include <Windows.h>
+#include <fileapi.h>
+#include <WinBase.h>
+#include <iostream>
+#include <cstdlib>
+#include <string>
+#include <cstdint>
+#include <mutex>
+#include <thread>
+#include <exception>
+#include <algorithm>
+#include <cmath>
+#include <limits>
+#include <numbers>
 
 #endif //PCH_H

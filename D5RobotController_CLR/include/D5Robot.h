@@ -1,9 +1,12 @@
 #pragma once
+
 #include "LogUtil.h"
 #include "NatorMotor.h"
 #include "RMDMotor.h"
 #include "RobotException.hpp"
 #include "SerialPort.h"
+
+using namespace System;
 
 namespace D5R {
 
