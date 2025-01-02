@@ -24,17 +24,43 @@ namespace DOF5RobotControl_GUI.Model
             Fast
         };
 
+        public enum JointSelect
+        {
+            R1, P2, P3, P4, R5
+        };
+
         public bool isJogging = false;
 
         private readonly D5Robot robot;
+        private RoboticState targetState;
         private CancellationTokenSource cancelJoggingSource;
         private CancellationToken cancelJoggingToken;
 
-        public JogHandler(D5Robot robot)
+        internal JogHandler(D5Robot robot, RoboticState targetState)
         {
             this.robot = robot;
+            this.targetState = targetState;
             cancelJoggingSource = new CancellationTokenSource();
             cancelJoggingToken = cancelJoggingSource.Token;
+        }
+
+        public void Start(JointSelect jointSelect)
+        {
+            switch (jointSelect)
+            {
+                case JointSelect.R1:
+                    break;
+                case JointSelect.P2:
+                    break;
+                case JointSelect.P3:
+                    break;
+                case JointSelect.P4:
+                    break;
+                case JointSelect.R5:
+                    break;
+                default:
+                    break;
+            }
         }
 
         public void StartJogging(Joints joints)
@@ -60,20 +86,6 @@ namespace DOF5RobotControl_GUI.Model
                         break;
                     }
                     
-                    
-                    //robot.GetCurrentJoint();
-                    //robot.`
-                    //robot.
-
-                    //if (result != ErrorCode.OK)
-                    //{
-                    //    Application.Current.Dispatcher.Invoke(() =>
-                    //    {
-                    //        MessageBox.Show($"Jog error in JogHandler: {result}");
-                    //    });
-                    //    break;
-                    //}
-
                     Thread.Sleep(20);
                 }
 

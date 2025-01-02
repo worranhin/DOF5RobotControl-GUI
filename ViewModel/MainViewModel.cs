@@ -31,6 +31,11 @@ namespace DOF5RobotControl_GUI.ViewModel
         public IEnumerable<JogHandler.JogMode> JogModes => Enum.GetValues(typeof(JogHandler.JogMode)).Cast<JogHandler.JogMode>();
         [ObservableProperty]
         private JogHandler.JogMode _jogMode = JogHandler.JogMode.OneStep;
+        [RelayCommand]
+        private void Jog()
+        {
+            TargetState.JointSpace.P2 += 0.1;
+        }
         /***** Jog 相关结束 *****/
 
         [RelayCommand]

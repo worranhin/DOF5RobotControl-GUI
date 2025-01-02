@@ -21,8 +21,9 @@ namespace DOF5RobotControl_GUI.Model
             get => _jointSpace;
             set
             {
-                if (SetProperty(ref _jointSpace, value))
-                    _jointSpace.PropertyChanged += (sender, e) => UpdateTaskSpace();
+                SetProperty(ref _jointSpace, value);
+
+
             }
         }
 
@@ -41,12 +42,16 @@ namespace DOF5RobotControl_GUI.Model
         {
             JointSpace = new();
             TaskSpace = new();
+
+            _jointSpace.PropertyChanged += (sender, e) => UpdateTaskSpace();
         }
 
         public RoboticState(double r1, double p2, double p3, double p4, double r5)
         {
             JointSpace = new() { R1 = r1, P2 = p2, P3 = p3, P4 = p4, R5 = r5 };
             TaskSpace = KineHelper.Forward(JointSpace);
+
+            _jointSpace.PropertyChanged += (sender, e) => UpdateTaskSpace();
         }
 
         /// <summary>
@@ -74,11 +79,11 @@ namespace DOF5RobotControl_GUI.Model
         public void SetFromD5RJoints(Joints j)
         {
             // 将旋转电机单圈角度换算成 +/- 180
-            if (j.R1 > 18000)            
-                j.R1 = -(36000 - j.R1);            
-            if (j.R5 > 18000)            
+            if (j.R1 > 18000)
+                j.R1 = -(36000 - j.R1);
+            if (j.R5 > 18000)
                 j.R5 = -(36000 - j.R5);
-            
+
 
             JointSpace = new()
             {

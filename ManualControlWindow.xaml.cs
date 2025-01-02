@@ -47,7 +47,7 @@ namespace DOF5RobotControl_GUI
         private readonly int RMDJogResolution = 20;
         private int speedLevel = 0;
 
-        public ManualControlWindow(D5Robot robot)
+        internal ManualControlWindow(D5Robot robot, RoboticState targetState)
         {
             InitializeComponent();
             this.Closed += WindowClosed;
@@ -61,7 +61,7 @@ namespace DOF5RobotControl_GUI
             gxCameraTaskCancelSource = new();
             gxCameraTaskCancelToken = gxCameraTaskCancelSource.Token;
             this.robot = robot;
-            jogHandler = new(robot);
+            jogHandler = new(robot, targetState);
             this.DataContext = this.viewModel;
 
             // 运行两个 Task

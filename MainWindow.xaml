@@ -102,7 +102,7 @@
                             <Label Grid.Column="8" Target="{Binding ElementName=JointValueR5}">r5</Label>
                             <TextBox Grid.Column="9" x:Name="JointValueR5" Text="{Binding TargetState.JointSpace.R5, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" TextChanged="JointValueR5_TextChanged"></TextBox>
                             <UniformGrid Grid.Column="1" Grid.Row="1" Rows="1">
-                                <Button PreviewMouseDown="BtnR1JogDown_N" PreviewMouseUp="BtnR1JogUp_N">Jog-</Button>
+                                <Button PreviewMouseDown="BtnR1JogDown_N" PreviewMouseUp="BtnR1JogUp_N" Command="{Binding JogCommand}">Jog-</Button>
                                 <Button PreviewMouseDown="BtnR1JogDown_P" PreviewMouseUp="BtnR1JogUp_P">Jog+</Button>
                             </UniformGrid>
                             <UniformGrid Grid.Column="3" Grid.Row="1" Rows="1">

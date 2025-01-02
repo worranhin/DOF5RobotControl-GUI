@@ -62,6 +62,8 @@ namespace DOF5RobotControl_GUI
         internal readonly MainViewModel viewModel = new();
         private D5Robot? robot;
         private JogHandler? jogHandler;
+        private RoboticState targetState = new(0, 0, 0, 0, 0);
+        private RoboticState currentState = new(0, 0, 0, 0, 0);
         Thread serverThread;
         CancellationTokenSource opcTaskCancelSource;
         CancellationToken opcTaskCancelToken;
@@ -229,7 +231,7 @@ namespace DOF5RobotControl_GUI
                 try
                 {
                     robot = new D5Robot(portName, natorId, 1, 2);
-                    jogHandler = new JogHandler(robot);
+                    jogHandler = new JogHandler(robot, targetState);
                     viewModel.SystemConnected = true;
                     viewModel.VibrateHelper = new VibrateHelper(robot, viewModel);
 
@@ -439,7 +441,7 @@ namespace DOF5RobotControl_GUI
                 return;
             }
 
-            ManualControlWindow window = new(robot);
+            ManualControlWindow window = new(robot, targetState);
             window.Show();
         }
 
