@@ -12,12 +12,12 @@ namespace DOF5RobotControl_GUI.Model
     internal class VibrateHelper
     {
         private D5Robot robot;
-        private MainViewModel viewModel;
+        private RoboticState targetState;
         private CancellationTokenSource? vibrateCancelSource;
         private CancellationToken vibrateCancelToken;
-        public VibrateHelper(D5Robot robot, MainViewModel viewModel) {  // TODO: 把 viewModel 传进来感觉还是太耦合了，日后改进一下
+        public VibrateHelper(D5Robot robot, RoboticState target) {  // TODO: 把 viewModel 传进来感觉还是太耦合了，日后改进一下
             this.robot = robot;
-            this.viewModel = viewModel;
+            targetState = target;
         }
 
         ~VibrateHelper()
@@ -48,14 +48,14 @@ namespace DOF5RobotControl_GUI.Model
                 var x = Math.Sin(2 * Math.PI * t);  // 周期为 1s，幅值为正负1
                 Debug.WriteLine($"{t}: {x}");
 
-                var joints = viewModel.TargetState.ToD5RJoints();
+                var joints = targetState.ToD5RJoints();
                 joints.P2 += (int)(x * 10000); // 0.01 mm
                 robot.JointsMoveAbsolute(joints);
 
                 Thread.Sleep(10);
             }
 
-            robot.JointsMoveAbsolute(viewModel.TargetState.ToD5RJoints());
+            robot.JointsMoveAbsolute(targetState.ToD5RJoints());
         }
     }
 }

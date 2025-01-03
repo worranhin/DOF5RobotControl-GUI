@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace DOF5RobotControl_GUI.Model
 {
-    internal class TaskSpace : ObservableObject
+    public class TaskSpace : ObservableObject
     {
         private double _px;
         public double Px { get => _px; set => SetProperty(ref _px, value); }
@@ -20,6 +20,6 @@ namespace DOF5RobotControl_GUI.Model
         private double _rz;
         public double Rz { get => _rz; set => SetProperty(ref _rz, value); }
 
-        public JointSpace ToJointSpace() => KineHelper.Inverse(this);
+        //public JointSpace ToJointSpace() => KineHelper.Inverse(this);
     }
 }

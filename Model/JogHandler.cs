@@ -9,25 +9,26 @@ using D5R;
 
 namespace DOF5RobotControl_GUI.Model
 {
+    public enum JogMode
+    {
+        OneStep,
+        Continuous
+    };
+
+    public enum JogResolution
+    {
+        Speed1mm,
+        Speed100um,
+        Speed10um
+    };
+
+    public enum JointSelect
+    {
+        R1, P2, P3, P4, R5
+    };
+
     public class JogHandler
     {
-        public enum JogMode
-        {
-            OneStep,
-            Continuous
-        };
-
-        enum JogResolution
-        {
-            Slow,
-            Normal,
-            Fast
-        };
-
-        public enum JointSelect
-        {
-            R1, P2, P3, P4, R5
-        };
 
         public bool isJogging = false;
 
@@ -36,7 +37,7 @@ namespace DOF5RobotControl_GUI.Model
         private CancellationTokenSource cancelJoggingSource;
         private CancellationToken cancelJoggingToken;
 
-        internal JogHandler(D5Robot robot, RoboticState targetState)
+        public JogHandler(D5Robot robot, RoboticState targetState)
         {
             this.robot = robot;
             this.targetState = targetState;

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using DOF5RobotControl_GUI.ViewModel;
 
 namespace DOF5RobotControl_GUI.Model
 {
@@ -17,12 +18,12 @@ namespace DOF5RobotControl_GUI.Model
         private OpcDataVariableNode<double>? p4_Node;
         private OpcDataVariableNode<double>? r5_Node;
         //private OpcMethodNode method;
-        private MainWindow _mainWindow;
+        private MainViewModel _viewModel;
 
-        public D5RobotOpcNodeManager(MainWindow mainWindow)
+        public D5RobotOpcNodeManager(MainViewModel vm)
         : base("dof5")
         {
-            _mainWindow = mainWindow;
+            _viewModel = vm;
         }
 
         //[return: OpcArgument("是否成功")]//说明参数
@@ -43,7 +44,7 @@ namespace DOF5RobotControl_GUI.Model
         {
             try
             {
-                _mainWindow.SomeOtherMethod(1);
+                _viewModel.OpcMapMethod(1);
             }
             catch //异常处理，警告窗口
             {
@@ -56,7 +57,7 @@ namespace DOF5RobotControl_GUI.Model
         {
             try
             {
-                _mainWindow.SomeOtherMethod(2);
+                _viewModel.OpcMapMethod(2);
             }
             catch //异常处理，警告窗口
             {
@@ -69,7 +70,7 @@ namespace DOF5RobotControl_GUI.Model
         {
             try
             {
-                _mainWindow.SomeOtherMethod(3);
+                _viewModel.OpcMapMethod(3);
             }
             catch //异常处理，警告窗口
             {
@@ -82,7 +83,7 @@ namespace DOF5RobotControl_GUI.Model
         {
             try
             {
-                _mainWindow.SomeOtherMethod(4);
+                _viewModel.OpcMapMethod(4);
             }
             catch //异常处理，警告窗口
             {
@@ -95,7 +96,7 @@ namespace DOF5RobotControl_GUI.Model
         {
             try
             {
-                _mainWindow.SomeOtherMethod(5);
+                _viewModel.OpcMapMethod(5);
             }
             catch //异常处理，警告窗口
             {
@@ -108,7 +109,7 @@ namespace DOF5RobotControl_GUI.Model
         {
             try
             {
-                _mainWindow.SomeOtherMethod(6);
+                _viewModel.OpcMapMethod(6);
             }
             catch //异常处理，警告窗口
             {
@@ -121,7 +122,7 @@ namespace DOF5RobotControl_GUI.Model
         {
             try
             {
-                _mainWindow.SomeOtherMethod(7);
+                _viewModel.OpcMapMethod(7);
             }
             catch //异常处理，警告窗口
             {
@@ -134,7 +135,7 @@ namespace DOF5RobotControl_GUI.Model
         {
             try
             {
-                _mainWindow.SomeOtherMethod(8);
+                _viewModel.OpcMapMethod(8);
             }
             catch //异常处理，警告窗口
             {
@@ -147,7 +148,7 @@ namespace DOF5RobotControl_GUI.Model
         {
             try
             {
-                _mainWindow.SomeOtherMethod(9);
+                _viewModel.OpcMapMethod(9);
             }
             catch //异常处理，警告窗口
             {
@@ -160,7 +161,7 @@ namespace DOF5RobotControl_GUI.Model
         {
             try
             {
-                _mainWindow.SomeOtherMethod(10);
+                _viewModel.OpcMapMethod(10);
             }
             catch //异常处理，警告窗口
             {
@@ -173,7 +174,7 @@ namespace DOF5RobotControl_GUI.Model
         {
             try
             {
-                _mainWindow.SomeOtherMethod(11);
+                _viewModel.OpcMapMethod(11);
             }
             catch //异常处理，警告窗口
             {
@@ -187,7 +188,7 @@ namespace DOF5RobotControl_GUI.Model
         {
             try
             {
-                _mainWindow.SomeOtherMethod(12);
+                _viewModel.OpcMapMethod(12);
             }
             catch //异常处理，警告窗口
             {
@@ -200,7 +201,7 @@ namespace DOF5RobotControl_GUI.Model
         {
             try
             {
-                _mainWindow.SomeOtherMethod(13);
+                _viewModel.OpcMapMethod(13);
             }
             catch //异常处理，警告窗口
             {
@@ -213,7 +214,7 @@ namespace DOF5RobotControl_GUI.Model
         {
             try
             {
-                _mainWindow.SomeOtherMethod(14);
+                _viewModel.OpcMapMethod(14);
             }
             catch //异常处理，警告窗口
             {
@@ -231,19 +232,19 @@ namespace DOF5RobotControl_GUI.Model
 
             r1_Node = new OpcDataVariableNode<double>(rootNode, "r1");
             //r1_Node.Value = MainWindow.joints100[0];
-            r1_Node.Value = _mainWindow.viewModel.TargetState.JointSpace.R1;
+            r1_Node.Value = _viewModel.TargetState.JointSpace.R1;
             p2_Node = new OpcDataVariableNode<double>(rootNode, "p2");
             //p2_Node.Value = MainWindow.joints100[1];
-            p2_Node.Value = _mainWindow.viewModel.TargetState.JointSpace.P2;
+            p2_Node.Value = _viewModel.TargetState.JointSpace.P2;
             p3_Node = new OpcDataVariableNode<double>(rootNode, "p3");
             //p3_Node.Value = MainWindow.joints100[2];
-            p3_Node.Value = _mainWindow.viewModel.TargetState.JointSpace.P3;
+            p3_Node.Value = _viewModel.TargetState.JointSpace.P3;
             p4_Node = new OpcDataVariableNode<double>(rootNode, "p4");
             //p4_Node.Value = MainWindow.joints100[3];
-            p4_Node.Value = _mainWindow.viewModel.TargetState.JointSpace.P4;
+            p4_Node.Value = _viewModel.TargetState.JointSpace.P4;
             r5_Node = new OpcDataVariableNode<double>(rootNode, "r5");
             //r5_Node.Value = MainWindow.joints100[4];
-            r5_Node.Value = _mainWindow.viewModel.TargetState.JointSpace.R5;
+            r5_Node.Value = _viewModel.TargetState.JointSpace.R5;
             r1_Node.WriteVariableValueCallback = handleWriteR1_NodeCallback;
             r1_Node.ReadVariableValueCallback = handleReadR1_NodeCallback;
             p2_Node.WriteVariableValueCallback = handleWriteP2_NodeCallback;
@@ -282,16 +283,17 @@ namespace DOF5RobotControl_GUI.Model
             double nodeValue = (double)objectValue;
             {
                 // 安全地更新标签文本
-                _mainWindow.Dispatcher.Invoke(() =>
+                _viewModel.WindowBelonged.Dispatcher.Invoke(() =>
                 {
-                    _mainWindow.JointValueR1.Text = nodeValue.ToString();
+                    //_viewModel.JointValueR1.Text = nodeValue.ToString();
+                    _viewModel.TargetState.JointSpace.R1 = nodeValue;
                 });
             }
             return value;
         }
         OpcVariableValue<object> handleReadR1_NodeCallback(OpcReadVariableValueContext context, OpcVariableValue<object> value)
         {
-            double r1_change = _mainWindow.viewModel.TargetState.JointSpace.R1;
+            double r1_change = _viewModel.TargetState.JointSpace.R1;
             OpcVariableValue<object> r = new OpcVariableValue<object>(r1_change);
             return r;
         }
@@ -300,16 +302,17 @@ namespace DOF5RobotControl_GUI.Model
             object objectValue = value.Value;
             double nodeValue = (double)objectValue;
             {
-                _mainWindow.Dispatcher.Invoke(() =>
+                _viewModel.WindowBelonged.Dispatcher.Invoke(() =>
                 {
-                    _mainWindow.JointValueP2.Text = nodeValue.ToString();
+                    //_viewModel.JointValueP2.Text = nodeValue.ToString();
+                    _viewModel.TargetState.JointSpace.P2 = nodeValue;
                 });
             }
             return value;
         }
         OpcVariableValue<object> handleReadP2_NodeCallback(OpcReadVariableValueContext context, OpcVariableValue<object> value)
         {
-            double p2_change = _mainWindow.viewModel.TargetState.JointSpace.P2;
+            double p2_change = _viewModel.TargetState.JointSpace.P2;
             OpcVariableValue<object> r = new OpcVariableValue<object>(p2_change);
             return r;
         }
@@ -318,16 +321,17 @@ namespace DOF5RobotControl_GUI.Model
             object objectValue = value.Value;
             double nodeValue = (double)objectValue;
             {
-                _mainWindow.Dispatcher.Invoke(() =>
+                _viewModel.WindowBelonged.Dispatcher.Invoke(() =>
                 {
-                    _mainWindow.JointValueP3.Text = nodeValue.ToString();
+                    //_viewModel.JointValueP3.Text = nodeValue.ToString();
+                    _viewModel.TargetState.JointSpace.P3 = nodeValue;
                 });
             }
             return value;
         }
         OpcVariableValue<object> handleReadP3_NodeCallback(OpcReadVariableValueContext context, OpcVariableValue<object> value)
         {
-            double p3_change = _mainWindow.viewModel.TargetState.JointSpace.P3;
+            double p3_change = _viewModel.TargetState.JointSpace.P3;
             OpcVariableValue<object> r = new OpcVariableValue<object>(p3_change);
             return r;
         }
@@ -336,16 +340,17 @@ namespace DOF5RobotControl_GUI.Model
             object objectValue = value.Value;
             double nodeValue = (double)objectValue;
             {
-                _mainWindow.Dispatcher.Invoke(() =>
+                _viewModel.WindowBelonged.Dispatcher.Invoke(() =>
                 {
-                    _mainWindow.JointValueP4.Text = nodeValue.ToString();
+                    //_viewModel.JointValueP4.Text = nodeValue.ToString();
+                    _viewModel.TargetState.JointSpace.P4 = nodeValue;
                 });
             }
             return value;
         }
         OpcVariableValue<object> handleReadP4_NodeCallback(OpcReadVariableValueContext context, OpcVariableValue<object> value)
         {
-            double jointValue = _mainWindow.viewModel.TargetState.JointSpace.P4;
+            double jointValue = _viewModel.TargetState.JointSpace.P4;
             OpcVariableValue<object> r = new OpcVariableValue<object>(jointValue);
             return r;
         }
@@ -354,16 +359,17 @@ namespace DOF5RobotControl_GUI.Model
             object objectValue = value.Value;
             double nodeValue = (double)objectValue;
             {
-                _mainWindow.Dispatcher.Invoke(() =>
+                _viewModel.WindowBelonged.Dispatcher.Invoke(() =>
                 {
-                    _mainWindow.JointValueR5.Text = nodeValue.ToString();
+                    //_viewModel.JointValueR5.Text = nodeValue.ToString();
+                    _viewModel.TargetState.JointSpace.R5 = nodeValue;
                 });
             }
             return value;
         }
         OpcVariableValue<object> handleReadR5_NodeCallback(OpcReadVariableValueContext context, OpcVariableValue<object> value)
         {
-            double jointValue = _mainWindow.viewModel.TargetState.JointSpace.R5;
+            double jointValue = _viewModel.TargetState.JointSpace.R5;
             OpcVariableValue<object> r = new OpcVariableValue<object>(jointValue);
             return r;
         }

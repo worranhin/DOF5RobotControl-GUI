@@ -12,9 +12,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="D5RobotController_CLR\**" />
+    <Compile Remove="Dll\**" />
     <Compile Remove="View\**" />
+    <EmbeddedResource Remove="D5RobotController_CLR\**" />
+    <EmbeddedResource Remove="Dll\**" />
     <EmbeddedResource Remove="View\**" />
+    <None Remove="D5RobotController_CLR\**" />
+    <None Remove="Dll\**" />
     <None Remove="View\**" />
+    <Page Remove="D5RobotController_CLR\**" />
+    <Page Remove="Dll\**" />
     <Page Remove="View\**" />
   </ItemGroup>
 

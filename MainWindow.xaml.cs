@@ -17,13 +17,10 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using DOF5RobotControl_GUI.Model;
 using DOF5RobotControl_GUI.ViewModel;
-using System.Threading;
-using Opc.Ua;
 using Opc.UaFx;
 using Opc.UaFx.Server;
-using Opc.UaFx.Services;
 using Window = System.Windows.Window;
-using D5R;
+using System.Timers;
 
 namespace DOF5RobotControl_GUI
 {
@@ -31,57 +28,35 @@ namespace DOF5RobotControl_GUI
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     /// 
-
     public partial class MainWindow : Window
-    {
-        public static readonly Joints ZeroPos = new(0, 0, 0, 0, 0);
-        public static readonly Joints IdlePos = new(0, 0, -10000000, 0, 0);
-        public static readonly Joints ChangeJawPos = new(0, -1500000, 8000000, 5000000, 0); // 0, -1.5, 8, 5, 0
-        public static readonly Joints PreChangeJawPos = new(0, -1500000, 0, 0, 0);
-        public static readonly Joints FetchRingPos = new(0, 10000000, 10000000, 0, 0); // 0, 10, 10, 0, 0
-        public static readonly Joints PreFetchRingPos = new(0, 8673000, -15000000, -10000000, 0);
-        public static readonly Joints AssemblePos1 = new(0, -600000, 900000, 9000000, 0); // 0, -0.6, 0.9, 9, 0
-        public static readonly Joints PreAssemblePos2 = new(9000, 0, 0, 0, 0); // 90, 0, 0, 0, 0 -> 90, 14, -12, 5, 0 
-        public static readonly Joints AssemblePos2 = new(9000, 14000000, -12000000, 5000000, 0); // 90, 0, 0, 0, 0 -> 90, 14, -12, 5, 0 
-        public static readonly Joints AssemblePos3 = new(0, -2500000, 4000000, 7000000, 0); // 0, -2.5, 4, 7, 0
-
-        //private readonly JointsPosition ZeroPos = new(0, 0, 0, 0, 0);
-        //private readonly JointsPosition IdlePos = new(0, 0, -15000000, -10000000, 0);
-        //private readonly JointsPosition ChangeJawPos = new(0, -72195, 5174842, -6912012, 0);
-        //private readonly JointsPosition PreChangeJawPos = new(0, -72195, -15000000, -6912012, 0);
-        //private readonly JointsPosition FetchRingPos = new(0, 8673000, 4000000, -10000000, 0);
-        //private readonly JointsPosition PreFetchRingPos = new(0, 8673000, -15000000, -10000000, 0);
-        //private readonly JointsPosition AssemblePos1 = new(9000, 15686500, -16819200, -5759600, -10);
-        //private readonly JointsPosition AssemblePos2 = new(6000, -8027000, -15911400, 1783100, 0);
-        //private readonly JointsPosition AssemblePos3 = new(0, 0, 7004200, 15275000, 0);
-
-        readonly int natorJogResolution = 30000;
-        readonly int RMDJogResolution = 20;
+    {     
         //readonly string natorId = "usb:id:7547982319";
-        readonly string natorId = "usb:id:2250716012";
-        internal readonly MainViewModel viewModel = new();
-        private D5Robot? robot;
-        private JogHandler? jogHandler;
-        private RoboticState targetState = new(0, 0, 0, 0, 0);
-        private RoboticState currentState = new(0, 0, 0, 0, 0);
+        
+        internal readonly MainViewModel viewModel;
+        
+        
+        //private RoboticState targetState = new(0, 0, 0, 0, 0);
+        //private RoboticState currentState = new(0, 0, 0, 0, 0);
         Thread serverThread;
         CancellationTokenSource opcTaskCancelSource;
         CancellationToken opcTaskCancelToken;
-        CancellationTokenSource? updateStateTaskCancelSource;
-        CancellationToken updateStateTaskCancelToken;
+        System.Timers.Timer? jogTimer;
+        const uint jogPeriod = 20;  // ms
+
         //static public double[] joints100;
 
         public MainWindow()
         {
             InitializeComponent();
 
+            // 初始化 ViewModel
+            viewModel = new(this);
+            DataContext = viewModel;
+
             // 初始化 Serial
             viewModel.PortsAvailable = SerialPort.GetPortNames();
             if (viewModel.PortsAvailable.Length > 0)
-                viewModel.SelectedPort = viewModel.PortsAvailable[0];
-            
-            // 初始化 ViewModel
-            DataContext = viewModel;
+                viewModel.SelectedPort = viewModel.PortsAvailable[0];            
 
             // 初始化 OPC
             opcTaskCancelSource = new();
@@ -96,34 +71,12 @@ namespace DOF5RobotControl_GUI
         {
             Debug.WriteLine("Window closed");
             opcTaskCancelSource.Cancel();
-            updateStateTaskCancelSource?.Cancel();
-        }
-
-        private void UpdateCurrentStateTask()
-        {
-            while (robot != null && !updateStateTaskCancelToken.IsCancellationRequested)
-            {
-                try
-                {
-                    Joints joints = (Joints)robot.GetCurrentJoint();
-                    Dispatcher.Invoke(() =>
-                    {
-                        viewModel.CurrentState.SetFromD5RJoints(joints);
-                    });
-                } catch (RobotException exc)
-                {
-                    Debug.WriteLine(exc.Message);
-                    if (exc.Code != ErrorCode.RMDFormatError && exc.Code != ErrorCode.SerialSendError)
-                        throw;
-                }
-                
-                Thread.Sleep(1000);
-            }
-        }        
+            
+        }     
 
         private void ServerRunTask()
         {
-            var dof5robotInstance = new D5RobotOpcNodeManager(this);
+            var dof5robotInstance = new D5RobotOpcNodeManager(viewModel);
 
             //var test = new MyNodeManager();
             using (var server = new OpcServer("opc.tcp://localhost:4840", dof5robotInstance))//server以nodeManager初始化
@@ -143,48 +96,6 @@ namespace DOF5RobotControl_GUI
             }
         }
 
-        public void SomeOtherMethod(int method)
-        {
-            // 创建一个 EventArgs 实例来传递给 ButtonClicked 方法
-            RoutedEventArgs args = new();
-            switch (method)
-            {
-                case 1: PortRefresh_Click(this, args); break;
-                case 2: BtnConnect_Click(this, args); break;
-                case 3: viewModel.SetTargetJointsCommand.Execute(ZeroPos); break;
-                case 4: viewModel.SetTargetJointsCommand.Execute(IdlePos); break;
-                case 5: viewModel.SetTargetJointsCommand.Execute(PreChangeJawPos); break;
-                case 6: viewModel.SetTargetJointsCommand.Execute(ChangeJawPos); break;
-                case 7: viewModel.SetTargetJointsCommand.Execute(AssemblePos1); break;
-                case 8: viewModel.SetTargetJointsCommand.Execute(AssemblePos2); break;
-                case 9: viewModel.SetTargetJointsCommand.Execute(AssemblePos3); break;
-                case 10: viewModel.SetTargetJointsCommand.Execute(PreFetchRingPos); break;
-                case 11: viewModel.SetTargetJointsCommand.Execute(FetchRingPos); break;
-                case 12: BtnRun_Click(this, args); break;
-                case 13: BtnStop_Click(this, args); break;
-                case 14: BtnSetZero_Click(this, args); break;
-            }
-
-            // 备份，对照
-            //switch (method)
-            //{
-            //    case 1: PortRefresh_Click(this, args); break;
-            //    case 2: BtnConnect_Click(this, args); break;
-            //    case 3: BtnZeroPos_Click(this. args); break;
-            //    case 4: BtnIdlePos_Click(this, args); break;
-            //    case 5: BtnPreChangeJawPos_Click(this, args); break;
-            //    case 6: BtnChangeJawPos_Click(this, args); break;
-            //    case 7: BtnAssemblePos1_Click(this, args); break;
-            //    case 8: BtnAssemblePos2_Click(this, args); break;
-            //    case 9: BtnAssemblePos3_Click(this, args); break;
-            //    case 10: BtnPreFetchRingPos_Click(this, args); break;
-            //    case 11: BtnFetchRingPos_Click(this, args); break;
-            //    case 12: BtnRun_Click(this, args); break;
-            //    case 13: BtnStop_Click(this, args); break;
-            //    case 14: BtnSetZero_Click(this, args); break;
-            //}
-        }
-
         private void BtnDisconnectServer_Click(object sender, RoutedEventArgs e)
         {
             opcTaskCancelSource.Cancel();
@@ -200,274 +111,253 @@ namespace DOF5RobotControl_GUI
 
         /***** UI 事件 *****/
 
-        private void PortRefresh_Click(object sender, RoutedEventArgs e)
-        {
-            viewModel.PortsAvailable = SerialPort.GetPortNames();
-        }
-
-        private void BtnConnect_Click(object sender, RoutedEventArgs e)
-        {
-            if (viewModel.SystemConnected)  // 如果目前系统已连接
-            {
-                robot?.Dispose();
-                robot = null;
-                jogHandler = null;
-                viewModel.SystemConnected = false;
-                updateStateTaskCancelSource?.Cancel();
-                updateStateTaskCancelSource = null;
-            }
-            else  // 系统未连接
-            {
-                string portName;
-                if (viewModel.SelectedPort.Length > 4)
-                {
-                    portName = "\\\\.\\" + viewModel.SelectedPort;
-                }
-                else
-                {
-                    portName = viewModel.SelectedPort;
-                }
-
-                try
-                {
-                    robot = new D5Robot(portName, natorId, 1, 2);
-                    jogHandler = new JogHandler(robot, targetState);
-                    viewModel.SystemConnected = true;
-                    viewModel.VibrateHelper = new VibrateHelper(robot, viewModel);
-
-                    updateStateTaskCancelSource = new();
-                    updateStateTaskCancelToken = updateStateTaskCancelSource.Token;
-                    Task.Run(UpdateCurrentStateTask, updateStateTaskCancelToken);
-                }
-                catch (RobotException err)
-                {
-                    MessageBox.Show("Error while Connecting: " + err.Code.ToString());
-                    robot?.Dispose();
-                    robot = null;
-                    jogHandler = null;
-                    viewModel.SystemConnected = false;
-                    viewModel.VibrateHelper = null;
-                    throw;
-                }
-            }
-        }
-
-        private void BtnRun_Click(object sender, RoutedEventArgs e)
-        {
-            if (robot == null)
-            {
-                MessageBox.Show("Robot not connected.");
-                return;
-            }
-
-            Joints j = viewModel.TargetState.ToD5RJoints();
-            try
-            {
-                robot.JointsMoveAbsolute(j);
-            } catch (RobotException exc)
-            {
-                MessageBox.Show($"Jog error while running: {exc.Code}");
-            }
-
-            //if (err != ErrorCode.OK)
-            //{
-            //    MessageBox.Show($"Error while running: {err}");
-            //    return;
-            //}
-        }
-
-        private void BtnStop_Click(object sender, RoutedEventArgs e)
-        {
-            if (robot == null)
-            {
-                MessageBox.Show("Robot not connected.");
-                return;
-            }
-
-            if (!robot.Stop())
-            {
-                MessageBox.Show($"Error while stopping.");
-                return;
-            }
-        }
-
-        private void BtnSetZero_Click(object sender, RoutedEventArgs e)
-        {
-            if (robot == null)
-            {
-                MessageBox.Show("Robot not connected.");
-                return;
-            }
-
-            if (!robot.SetZero())
-            {
-                MessageBox.Show($"Error while setting zero.");
-                return;
-            }
-        }
-
         // R1 jogging button callbacks //
+
+        private void BtnJogUp(object sender, MouseButtonEventArgs e)
+        {
+            //jogHandler?.StopJogging();
+            //jogTimer?.Stop();
+            //jogTimer = null;
+            viewModel.StopJogContinuous();
+        }
 
         private void BtnR1JogDown_N(object sender, MouseButtonEventArgs e)
         {
-            Console.WriteLine("Button was clicked!");
-            if (jogHandler == null)
-            {
-                MessageBox.Show("Robot not connected.");
-                return;
-            }
 
-            Joints joints = new(-RMDJogResolution, 0, 0, 0, 0);
-            jogHandler?.StartJogging(joints);
+            JogParams param = new()
+            {
+                Joint = JointSelect.R1,
+                IsPositive = false
+            };
+
+            viewModel.StartJogContinuous(param);
+            //Console.WriteLine("Button was clicked!");
+            //if (jogHandler == null)
+            //{
+            //    MessageBox.Show("Robot not connected.");
+            //    return;
+            //}
+            //Joints joints = new(-viewModel.RMDJogResolution, 0, 0, 0, 0);
+            //viewModel.jogHandler?.StartJogging(joints);
+
+
+            //if (viewModel.JogModeSelected == JogMode.Continuous)
+            //{
+            //JogParams param = new()
+            //{
+            //    Joint = JointSelect.R1,
+            //    IsPositive = false
+            //};
+
+            //double resolution = 0;
+            //switch (viewModel.JogResolutionSelected)
+            //{
+            //    case JogResolution.Speed1mm:
+            //        resolution = 1;
+            //        break;
+            //    case JogResolution.Speed100um:
+            //        resolution = 0.1;
+            //        break;
+            //    case JogResolution.Speed10um:
+            //        resolution = 0.01;
+            //        break;
+            //    default:
+            //        break;
+            //}
+
+            //if (!param.IsPositive)
+            //    resolution = -resolution;  // 每秒步进量
+
+            //jogTimer = new(jogPeriod);
+            //resolution = resolution * jogPeriod / 1000;  // 每次控制的步进量
+            //jogTimer.Elapsed += (source, e) =>
+            //{
+            //    viewModel.TargetState.JointSpace.R1 += resolution;
+            //    //viewModel.RobotRunCommand.Execute(null);
+            //};
+
+            //jogTimer.Start();
+
+            //}
+            //viewModel.JogCommand.Execute(param);
         }
 
         private void BtnR1JogUp_N(object sender, MouseButtonEventArgs e)
         {
-            jogHandler?.StopJogging();
+            //jogHandler?.StopJogging();
+            //jogTimer?.Stop();
+            //jogTimer = null;
+            viewModel.StopJogContinuous();
         }
 
         private void BtnR1JogDown_P(object sender, MouseButtonEventArgs e)
         {
-            Joints joints = new(RMDJogResolution, 0, 0, 0, 0);
-            jogHandler?.StartJogging(joints);
+            //Joints joints = new(RMDJogResolution, 0, 0, 0, 0);
+            //jogHandler?.StartJogging(joints);
+            JogParams param = new()
+            {
+                Joint = JointSelect.R1,
+                IsPositive = true
+            };
+
+            viewModel.StartJogContinuous(param);
         }
 
         private void BtnR1JogUp_P(object sender, MouseButtonEventArgs e)
         {
-            jogHandler?.StopJogging();
+            //jogHandler?.StopJogging();
         }
 
         // P2 jogging button callbacks //
 
         private void BtnP2JogDown_N(object sender, MouseButtonEventArgs e)
         {
-            Joints joints = new(0, -natorJogResolution, 0, 0, 0);
-            jogHandler?.StartJogging(joints);
+            //Joints joints = new(0, -natorJogResolution, 0, 0, 0);
+            //jogHandler?.StartJogging(joints);
+            JogParams param = new()
+            {
+                Joint = JointSelect.P2,
+                IsPositive = false
+            };
+
+            viewModel.StartJogContinuous(param);
         }
 
         private void BtnP2JogUp_N(object sender, MouseButtonEventArgs e)
         {
-            jogHandler?.StopJogging();
+            //jogHandler?.StopJogging();
         }
 
         private void BtnP2JogDown_P(object sender, MouseButtonEventArgs e)
         {
-            Joints joints = new(0, natorJogResolution, 0, 0, 0);
-            jogHandler?.StartJogging(joints);
+            //Joints joints = new(0, natorJogResolution, 0, 0, 0);
+            //jogHandler?.StartJogging(joints);
+            JogParams param = new()
+            {
+                Joint = JointSelect.P2,
+                IsPositive = true
+            };
+
+            viewModel.StartJogContinuous(param);
         }
 
         private void BtnP2JogUp_P(object sender, MouseButtonEventArgs e)
         {
-            jogHandler?.StopJogging();
+            //jogHandler?.StopJogging();
         }
 
         // P3 jogging button callbacks //
 
         private void BtnP3JogDown_N(object sender, MouseButtonEventArgs e)
         {
-            Joints joints = new(0, 0, -natorJogResolution, 0, 0);
-            jogHandler?.StartJogging(joints);
+            //Joints joints = new(0, 0, -natorJogResolution, 0, 0);
+            //jogHandler?.StartJogging(joints);
+            JogParams param = new()
+            {
+                Joint = JointSelect.P3,
+                IsPositive = false
+            };
+
+            viewModel.StartJogContinuous(param);
         }
 
         private void BtnP3JogUp_N(object sender, MouseButtonEventArgs e)
         {
-            jogHandler?.StopJogging();
+            //jogHandler?.StopJogging();
         }
 
         private void BtnP3JogDown_P(object sender, MouseButtonEventArgs e)
         {
-            Joints joints = new(0, 0, natorJogResolution, 0, 0);
-            jogHandler?.StartJogging(joints);
+            //Joints joints = new(0, 0, natorJogResolution, 0, 0);
+            //jogHandler?.StartJogging(joints);
+            JogParams param = new()
+            {
+                Joint = JointSelect.P3,
+                IsPositive = true
+            };
+
+            viewModel.StartJogContinuous(param);
         }
 
         private void BtnP3JogUp_P(object sender, MouseButtonEventArgs e)
         {
-            jogHandler?.StopJogging();
+            //jogHandler?.StopJogging();
         }
 
         // P4 jogging button callbacks //
 
         private void BtnP4JogDown_N(object sender, MouseButtonEventArgs e)
         {
-            Joints joints = new(0, 0, 0, -natorJogResolution, 0);
-            jogHandler?.StartJogging(joints);
+            //Joints joints = new(0, 0, 0, -natorJogResolution, 0);
+            //jogHandler?.StartJogging(joints);
+            JogParams param = new()
+            {
+                Joint = JointSelect.P4,
+                IsPositive = false
+            };
+
+            viewModel.StartJogContinuous(param);
         }
 
         private void BtnP4JogUp_N(object sender, MouseButtonEventArgs e)
         {
-            jogHandler?.StopJogging();
+            //jogHandler?.StopJogging();
         }
 
         private void BtnP4JogDown_P(object sender, MouseButtonEventArgs e)
         {
-            Joints joints = new(0, 0, 0, natorJogResolution, 0);
-            jogHandler?.StartJogging(joints);
+            //Joints joints = new(0, 0, 0, natorJogResolution, 0);
+            //jogHandler?.StartJogging(joints);
+            JogParams param = new()
+            {
+                Joint = JointSelect.P4,
+                IsPositive = true
+            };
+
+            viewModel.StartJogContinuous(param);
         }
 
         private void BtnP4JogUp_P(object sender, MouseButtonEventArgs e)
         {
-            jogHandler?.StopJogging();
+            //jogHandler?.StopJogging();
         }
 
         // R5 jogging button callbacks //
 
         private void BtnR5JogDown_N(object sender, MouseButtonEventArgs e)
         {
-            Joints joints = new(0, 0, 0, 0, -RMDJogResolution);
-            jogHandler?.StartJogging(joints);
+            //Joints joints = new(0, 0, 0, 0, -RMDJogResolution);
+            //jogHandler?.StartJogging(joints);
+            JogParams param = new()
+            {
+                Joint = JointSelect.R5,
+                IsPositive = false
+            };
+
+            viewModel.StartJogContinuous(param);
         }
 
         private void BtnR5JogUp_N(object sender, MouseButtonEventArgs e)
         {
-            jogHandler?.StopJogging();
+            //jogHandler?.StopJogging();
         }
 
         private void BtnR5JogDown_P(object sender, MouseButtonEventArgs e)
         {
-            Joints joints = new(0, 0, 0, 0, RMDJogResolution);
-            jogHandler?.StartJogging(joints);
+            //Joints joints = new(0, 0, 0, 0, RMDJogResolution);
+            //jogHandler?.StartJogging(joints);
+            JogParams param = new()
+            {
+                Joint = JointSelect.R5,
+                IsPositive = true
+            };
+
+            viewModel.StartJogContinuous(param);
         }
 
         private void BtnR5JogUp_P(object sender, MouseButtonEventArgs e)
         {
-            jogHandler?.StopJogging();
-        }
-
-        private void BtnOpenManualControl_Click(object sender, RoutedEventArgs e)
-        {
-            if (robot == null)
-            {
-                MessageBox.Show("Robot not connected.");
-                return;
-            }
-
-            ManualControlWindow window = new(robot, targetState);
-            window.Show();
-        }
-
-        private void JointValueR1_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            //joints100[0] = viewModel.TargetState.JointSpace.R1;
-        }
-
-        private void JointValueP2_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            //joints100[1] = viewModel.TargetState.JointSpace.P2;
-        }
-
-        private void JointValueP3_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            //joints100[2] = viewModel.TargetState.JointSpace.P3;
-        }
-
-        private void JointValueP4_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            //joints100[3] = viewModel.TargetState.JointSpace.P4;
-        }
-
-        private void JointValueR5_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            //joints100[4] = viewModel.TargetState.JointSpace.R5;
+            //jogHandler?.StopJogging();
         }
     }
 }

@@ -32,68 +32,90 @@ namespace DOF5RobotControl_GUI.Model
         /// <summary>
         /// 求正运动学
         /// </summary>
-        /// <param name="space">关节空间</param>
+        /// <param name="joint">关节空间</param>
         /// <returns></returns>
-        public static TaskSpace Forward(JointSpace space)
+        public static void Forward(JointSpace joint, TaskSpace task)
         {
-            var m1 = l3 + l5 + lty + space.P2;
+            var m1 = l3 + l5 + lty + joint.P2;
 
-            if(!CheckJoint(space)) {
-                throw new ArgumentOutOfRangeException(nameof(space), "关节超出限位。");
+            if (!CheckJoint(joint))
+            {
+                throw new ArgumentOutOfRangeException(nameof(joint), "关节超出限位。");
             }
 
-            TaskSpace ts = new()
-            {
-                Px = m1 * Sind(space.R1)
-                    + space.P3 * Cosd(space.R1)
-                    + ltx * Cosd(space.R1) * Cosd(space.R5)
-                    + ltz * Cosd(space.R1) * Sind(space.R5),
+            //TaskSpace ts = new()
+            //{
+            //    Px = m1 * Sind(joint.R1)
+            //        + joint.P3 * Cosd(joint.R1)
+            //        + ltx * Cosd(joint.R1) * Cosd(joint.R5)
+            //        + ltz * Cosd(joint.R1) * Sind(joint.R5),
 
-                Py = space.P3 * Sind(space.R1)
-                    - m1 * Cosd(space.R1)
-                    + ltx * Sind(space.R1) * Cosd(space.R5)
-                    + ltz * Sind(space.R1) * Sind(space.R5),
+            //    Py = joint.P3 * Sind(joint.R1)
+            //        - m1 * Cosd(joint.R1)
+            //        + ltx * Sind(joint.R1) * Cosd(joint.R5)
+            //        + ltz * Sind(joint.R1) * Sind(joint.R5),
 
-                Pz = ltx * Sind(space.R5) - ltz * Cosd(space.R5) - space.P4 - (l1 + l2 + l4),
+            //    Pz = ltx * Sind(joint.R5) - ltz * Cosd(joint.R5) - joint.P4 - (l1 + l2 + l4),
 
-                Ry = -space.R5,
-                Rz = space.R1
-            };
+            //    Ry = -joint.R5,
+            //    Rz = joint.R1
+            //};
 
-            ts.Px = Math.Round(ts.Px, 2);
-            ts.Py = Math.Round(ts.Py, 2);
-            ts.Pz = Math.Round(ts.Pz, 2);
-            ts.Ry = Math.Round(ts.Ry, 2);
-            ts.Rz = Math.Round(ts.Rz, 2);
+            task.Px = m1 * Sind(joint.R1)
+                    + joint.P3 * Cosd(joint.R1)
+                    + ltx * Cosd(joint.R1) * Cosd(joint.R5)
+                    + ltz * Cosd(joint.R1) * Sind(joint.R5);
 
-            return ts;
+            task.Py = joint.P3 * Sind(joint.R1)
+                - m1 * Cosd(joint.R1)
+                + ltx * Sind(joint.R1) * Cosd(joint.R5)
+                + ltz * Sind(joint.R1) * Sind(joint.R5);
+
+            task.Pz = ltx * Sind(joint.R5) - ltz * Cosd(joint.R5) - joint.P4 - (l1 + l2 + l4);
+
+            task.Ry = -joint.R5;
+            task.Rz = joint.R1;
+
+            task.Px = Math.Round(task.Px, 2);
+            task.Py = Math.Round(task.Py, 2);
+            task.Pz = Math.Round(task.Pz, 2);
+            task.Ry = Math.Round(task.Ry, 2);
+            task.Rz = Math.Round(task.Rz, 2);
+
+            //return task;
         }
 
         /// <summary>
         /// 求逆运动学
         /// </summary>
-        /// <param name="space">任务空间（位姿）</param>
+        /// <param name="task">任务空间（位姿）</param>
         /// <returns></returns>
-        public static JointSpace Inverse(TaskSpace space)
+        public static JointSpace Inverse(TaskSpace task, JointSpace joint)
         {
             var m1 = l3 + l5 + lty;
 
-            JointSpace js = new()
-            {
-                R1 = space.Rz,
-                R5 = -space.Ry,
-                P2 = space.Px * Sind(space.Rz) - space.Py * Cosd(space.Rz) - m1,
-                P3 = space.Px * Cosd(space.Rz) + space.Py * Sind(space.Rz) - ltx * Cosd(-space.Ry) - ltz * Sind(-space.Ry),
-                P4 = -space.Pz + ltx * Sind(-space.Ry) - ltz * Cosd(-space.Ry) - (l1 + l2 + l4)
-            };
+            //JointSpace js = new()
+            //{
+            //    R1 = task.Rz,
+            //    R5 = -task.Ry,
+            //    P2 = task.Px * Sind(task.Rz) - task.Py * Cosd(task.Rz) - m1,
+            //    P3 = task.Px * Cosd(task.Rz) + task.Py * Sind(task.Rz) - ltx * Cosd(-task.Ry) - ltz * Sind(-task.Ry),
+            //    P4 = -task.Pz + ltx * Sind(-task.Ry) - ltz * Cosd(-task.Ry) - (l1 + l2 + l4)
+            //};
 
-            js.R1 = Math.Round(js.R1, 2);
-            js.R5 = Math.Round(js.R5, 2);
-            js.P2 = Math.Round(js.P2, 2);
-            js.P3 = Math.Round(js.P3, 2);
-            js.P4 = Math.Round(js.P4, 2);
+            joint.R1 = task.Rz;
+            joint.R5 = -task.Ry;
+            joint.P2 = task.Px * Sind(task.Rz) - task.Py * Cosd(task.Rz) - m1;
+            joint.P3 = task.Px * Cosd(task.Rz) + task.Py * Sind(task.Rz) - ltx * Cosd(-task.Ry) - ltz * Sind(-task.Ry);
+            joint.P4 = -task.Pz + ltx * Sind(-task.Ry) - ltz * Cosd(-task.Ry) - (l1 + l2 + l4);
 
-            return js;
+            joint.R1 = Math.Round(joint.R1, 2);
+            joint.R5 = Math.Round(joint.R5, 2);
+            joint.P2 = Math.Round(joint.P2, 2);
+            joint.P3 = Math.Round(joint.P3, 2);
+            joint.P4 = Math.Round(joint.P4, 2);
+
+            return joint;
         }
 
         /// <summary>
@@ -112,29 +134,19 @@ namespace DOF5RobotControl_GUI.Model
             return good1 && good2 && good3 && good4 && good5;
         }
 
-        public static JointSpace ClipJoint(JointSpace js)
+        /// <summary>
+        /// 将关节空间限制在合理范围
+        /// </summary>
+        /// <param name="js"></param>
+        public static void ClipJoint(JointSpace js)
         {
-            if (CheckJoint(js))
+            if (!CheckJoint(js))
             {
-                return new JointSpace()
-                {
-                    R1 = js.R1,
-                    P2 = js.P2,
-                    P3 = js.P3,
-                    P4 = js.P4,
-                    R5 = js.R5
-                };
-            }
-            else
-            {
-                return new JointSpace()
-                {
-                    R1 = js.R1 > _R1max ? _R1max : js.R1 < _R1min ? _R1min : js.R1,
-                    P2 = js.P2 > _P2max ? _P2max : js.P2 < _P2min ? _P2min : js.P2,
-                    P3 = js.P3 > _P3max ? _P3max : js.P3 < _P3min ? _P3min : js.P3,
-                    P4 = js.P4 > _P4max ? _P4max : js.P4 < _P4min ? _P4min : js.P4,
-                    R5 = js.R5 > _R5max ? _R5max : js.R5 < _R5min ? _R5min : js.R5
-                };
+                js.R1 = js.R1 > _R1max ? _R1max : js.R1 < _R1min ? _R1min : js.R1;
+                js.P2 = js.P2 > _P2max ? _P2max : js.P2 < _P2min ? _P2min : js.P2;
+                js.P3 = js.P3 > _P3max ? _P3max : js.P3 < _P3min ? _P3min : js.P3;
+                js.P4 = js.P4 > _P4max ? _P4max : js.P4 < _P4min ? _P4min : js.P4;
+                js.R5 = js.R5 > _R5max ? _R5max : js.R5 < _R5min ? _R5min : js.R5;
             }
         }
 
