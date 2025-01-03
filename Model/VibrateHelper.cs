@@ -49,7 +49,7 @@ namespace DOF5RobotControl_GUI.Model
                 Debug.WriteLine($"{t}: {x}");
 
                 var joints = targetState.ToD5RJoints();
-                joints.P2 += (int)(x * 10000); // 0.01 mm
+                joints.P2 += (int)(x * 100000); // 0.1 mm
                 robot.JointsMoveAbsolute(joints);
 
                 Thread.Sleep(10);
