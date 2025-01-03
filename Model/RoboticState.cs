@@ -100,7 +100,7 @@ namespace DOF5RobotControl_GUI.Model
 
         private void UpdateJointSpace(object? sender, PropertyChangedEventArgs e)
         {
-            JointSpace.PropertyChanged -= UpdateJointSpace;
+            JointSpace.PropertyChanged -= UpdateTaskSpace;
             KineHelper.Inverse(TaskSpace, JointSpace);
             if (!KineHelper.CheckJoint(JointSpace))
             {
@@ -108,7 +108,7 @@ namespace DOF5RobotControl_GUI.Model
                 KineHelper.ClipJoint(JointSpace);
                 KineHelper.Forward(JointSpace, TaskSpace);
             }
-            JointSpace.PropertyChanged += UpdateJointSpace;
+            JointSpace.PropertyChanged += UpdateTaskSpace;
         }
     }
 }

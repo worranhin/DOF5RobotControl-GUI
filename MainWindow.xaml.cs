@@ -40,7 +40,6 @@ namespace DOF5RobotControl_GUI
         Thread serverThread;
         CancellationTokenSource opcTaskCancelSource;
         CancellationToken opcTaskCancelToken;
-        System.Timers.Timer? jogTimer;
         const uint jogPeriod = 20;  // ms
 
         //static public double[] joints100;
