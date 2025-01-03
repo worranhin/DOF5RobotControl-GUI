@@ -12,7 +12,7 @@ namespace DOF5RobotControl_GUI.Converter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return (bool)value ? "Disconnect" : "Connect";
+            return (bool)value ? "断开连接" : "建立连接";
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

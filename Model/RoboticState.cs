@@ -15,6 +15,9 @@ namespace DOF5RobotControl_GUI.Model
 {
     public partial class RoboticState : ObservableObject
     {
+        private readonly PropertyChangedEventHandler jointChangedHandler;
+        private readonly PropertyChangedEventHandler taskChangedHandler;
+
         [ObservableProperty]
         private JointSpace _jointSpace = new();
         [ObservableProperty]
@@ -22,17 +25,26 @@ namespace DOF5RobotControl_GUI.Model
 
         public RoboticState()
         {
-            JointSpace.PropertyChanged += UpdateTaskSpace;
-            TaskSpace.PropertyChanged += UpdateJointSpace;
+            jointChangedHandler = (sender, e) => UpdateTaskSpace();
+            taskChangedHandler = (sender, e) => UpdateJointSpace();
+            JointSpace.PropertyChanged += jointChangedHandler;
+            TaskSpace.PropertyChanged += taskChangedHandler;
         }
 
         public RoboticState(double r1, double p2, double p3, double p4, double r5)
         {
-            JointSpace = new() { R1 = r1, P2 = p2, P3 = p3, P4 = p4, R5 = r5 };
+            //JointSpace = new() { R1 = r1, P2 = p2, P3 = p3, P4 = p4, R5 = r5 };
+            JointSpace.R1 = r1;
+            JointSpace.P2 = p2;
+            JointSpace.P3 = p3;
+            JointSpace.P4 = p4;
+            JointSpace.R5 = r5;
             KineHelper.Forward(JointSpace, TaskSpace);
 
-            JointSpace.PropertyChanged += UpdateTaskSpace;
-            TaskSpace.PropertyChanged += UpdateJointSpace;
+            jointChangedHandler = (sender, e) => UpdateTaskSpace();
+            taskChangedHandler = (sender, e) => UpdateJointSpace();
+            JointSpace.PropertyChanged += jointChangedHandler;
+            TaskSpace.PropertyChanged += taskChangedHandler;
         }
 
         /// <summary>
@@ -59,7 +71,7 @@ namespace DOF5RobotControl_GUI.Model
         /// <param name="j"></param>
         public void SetFromD5RJoints(Joints j)
         {
-            // 将旋转电机单圈角度换算成 +/- 180
+            // 将旋转电机单圈角度 0~360 换算成 +/-180
             if (j.R1 > 18000)
                 j.R1 = -(36000 - j.R1);
             if (j.R5 > 18000)
@@ -75,11 +87,14 @@ namespace DOF5RobotControl_GUI.Model
             //    R5 = j.R5 / 100.0
             //};
 
+            JointSpace.PropertyChanged -= jointChangedHandler;
             JointSpace.R1 = j.R1 / 100.0;
             JointSpace.P2 = j.P2 / 1000000.0;
             JointSpace.P3 = j.P3 / 1000000.0;
             JointSpace.P4 = j.P4 / 1000000.0;
             JointSpace.R5 = j.R5 / 100.0;
+            UpdateTaskSpace();
+            JointSpace.PropertyChanged += jointChangedHandler;
 
 
 
@@ -90,25 +105,29 @@ namespace DOF5RobotControl_GUI.Model
         /// <summary>
         /// 就地更新
         /// </summary>
-        private void UpdateTaskSpace(object? sender, PropertyChangedEventArgs e)
+        private void UpdateTaskSpace()
         {
-            TaskSpace.PropertyChanged -= UpdateJointSpace;
+            TaskSpace.PropertyChanged -= taskChangedHandler;
+            JointSpace.PropertyChanged -= jointChangedHandler;
             KineHelper.ClipJoint(JointSpace);
             KineHelper.Forward(JointSpace, TaskSpace);
-            TaskSpace.PropertyChanged += UpdateJointSpace;
+            JointSpace.PropertyChanged += jointChangedHandler;
+            TaskSpace.PropertyChanged += taskChangedHandler;
         }
 
-        private void UpdateJointSpace(object? sender, PropertyChangedEventArgs e)
+        private void UpdateJointSpace()
         {
-            JointSpace.PropertyChanged -= UpdateTaskSpace;
+            JointSpace.PropertyChanged -= jointChangedHandler;
+            TaskSpace.PropertyChanged -= taskChangedHandler;
             KineHelper.Inverse(TaskSpace, JointSpace);
             if (!KineHelper.CheckJoint(JointSpace))
             {
-                MessageBox.Show("Joint out of range.");
                 KineHelper.ClipJoint(JointSpace);
                 KineHelper.Forward(JointSpace, TaskSpace);
+                MessageBox.Show("Joint out of range.");
             }
-            JointSpace.PropertyChanged += UpdateTaskSpace;
+            JointSpace.PropertyChanged += jointChangedHandler;
+            TaskSpace.PropertyChanged += taskChangedHandler;
         }
     }
 }

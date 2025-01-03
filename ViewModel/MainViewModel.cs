@@ -45,7 +45,6 @@ namespace DOF5RobotControl_GUI.ViewModel
         readonly string natorId = "usb:id:2250716012";
 
         private D5Robot? robot;
-        private JogHandler? jogHandler;
         CancellationTokenSource? updateStateTaskCancelSource;
         CancellationToken updateStateTaskCancelToken;
 
@@ -263,16 +262,15 @@ namespace DOF5RobotControl_GUI.ViewModel
         [RelayCommand]
         private void ToggleConnect()
         {
-            if (SystemConnected)  // 如果目前系统已连接
+            if (SystemConnected)  // 如果目前系统已连接，则断开连接
             {
                 robot?.Dispose();
                 robot = null;
-                jogHandler = null;
                 SystemConnected = false;
                 updateStateTaskCancelSource?.Cancel();
                 updateStateTaskCancelSource = null;
             }
-            else  // 系统未连接
+            else  // 系统未连接，则建立连接
             {
                 string portName;
                 if (SelectedPort.Length > 4)
@@ -287,7 +285,6 @@ namespace DOF5RobotControl_GUI.ViewModel
                 try
                 {
                     robot = new D5Robot(portName, natorId, 1, 2);
-                    jogHandler = new JogHandler(robot, TargetState);
                     SystemConnected = true;
                     VibrateHelper = new VibrateHelper(robot, TargetState);
 
@@ -300,7 +297,6 @@ namespace DOF5RobotControl_GUI.ViewModel
                     MessageBox.Show("Error while Connecting: " + err.Code.ToString());
                     robot?.Dispose();
                     robot = null;
-                    jogHandler = null;
                     SystemConnected = false;
                     VibrateHelper = null;
                     throw;
