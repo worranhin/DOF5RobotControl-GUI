@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace DOF5RobotControl_GUI.Model
 {
-    internal class JointSpace : ObservableObject
+    public class JointSpace : ObservableObject
     {
         private double _r1 = 0.0;
         public double R1 { get => _r1; set => SetProperty(ref _r1, value); }
@@ -21,6 +21,6 @@ namespace DOF5RobotControl_GUI.Model
         private double _r5 = 0.0;
         public double R5 { get => _r5; set => SetProperty(ref _r5, value); }
 
-        public TaskSpace ToTaskSpace() => KineHelper.Forward(this);
+        //public TaskSpace ToTaskSpace() => KineHelper.Forward(this);
     }
 }

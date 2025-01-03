@@ -7,11 +7,11 @@ using System.Diagnostics;
 using System.Media;
 using System.Windows;
 using System.Windows.Input;
-using Joints = DOF5RobotControl_GUI.Model.D5Robot.Joints;
 using GxIAPINET;
 using System.Threading;
 using System.Linq.Expressions;
 using System.Windows.Media;
+using D5R;
 
 namespace DOF5RobotControl_GUI
 {
@@ -47,7 +47,7 @@ namespace DOF5RobotControl_GUI
         private readonly int RMDJogResolution = 20;
         private int speedLevel = 0;
 
-        public ManualControlWindow(D5Robot robot)
+        internal ManualControlWindow(D5Robot robot, RoboticState targetState)
         {
             InitializeComponent();
             this.Closed += WindowClosed;
@@ -61,7 +61,7 @@ namespace DOF5RobotControl_GUI
             gxCameraTaskCancelSource = new();
             gxCameraTaskCancelToken = gxCameraTaskCancelSource.Token;
             this.robot = robot;
-            jogHandler = new(robot);
+            jogHandler = new(robot, targetState);
             this.DataContext = this.viewModel;
 
             // 运行两个 Task
@@ -240,14 +240,22 @@ namespace DOF5RobotControl_GUI
                     if (joints.R1 != 0 || joints.P2 != 0 || joints.P3 != 0 || joints.P4 != 0 || joints.R5 != 0)
                     {
                         Debug.WriteLine($"R1:{joints.R1}, P2:{joints.P2}, P3:{joints.P3}, P4:{joints.P4}, R5:{joints.R5}");
-                        var result = robot.JointsMoveRelative(joints);
-                        if (result != D5Robot.ErrorCode.OK)
+                        try
                         {
-                            Dispatcher.Invoke(() => MessageBox.Show($"JointsMoveRelative error in xInputControlTask: {result}"));
+                            robot.JointsMoveRelative(joints);
+                        } catch (RobotException exc)
+                        {
+                            Dispatcher.Invoke(() => MessageBox.Show($"JointsMoveRelative error in xInputControlTask: {exc.Code}"));
                             viewModel.GamepadConnected = false;
-                            //break;
                             return;
                         }
+                        //if (result != D5Robot.ErrorCode.OK)
+                        //{
+                        //    Dispatcher.Invoke(() => MessageBox.Show($"JointsMoveRelative error in xInputControlTask: {result}"));
+                        //    viewModel.GamepadConnected = false;
+                        //    //break;
+                        //    return;
+                        //}
                     }
                 }
 

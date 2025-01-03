@@ -12,14 +12,23 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="D5RobotController_CLR\**" />
+    <Compile Remove="Dll\**" />
     <Compile Remove="View\**" />
+    <EmbeddedResource Remove="D5RobotController_CLR\**" />
+    <EmbeddedResource Remove="Dll\**" />
     <EmbeddedResource Remove="View\**" />
+    <None Remove="D5RobotController_CLR\**" />
+    <None Remove="Dll\**" />
     <None Remove="View\**" />
+    <Page Remove="D5RobotController_CLR\**" />
+    <Page Remove="Dll\**" />
     <Page Remove="View\**" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Remove="Model\D5RControl.cs" />
+    <Compile Remove="Model\D5Robot.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -54,18 +63,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Dll\D5RobotDll.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Dll\D5RobotDll.exp">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Dll\D5RobotDll.lib">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Dll\D5RobotDll.pdb">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="libDOF5RobotControl.dll">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
@@ -76,7 +73,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="View\" />
+    <ProjectReference Include="D5RobotController_CLR\D5RobotController_CLR.vcxproj" />
   </ItemGroup>
 
   <ItemGroup>
