@@ -39,11 +39,12 @@ namespace DOF5RobotControl_GUI
         readonly Joints ChangeJawPos = new(0, -1500000, 8000000, 5000000, 0); // 0, -1.5, 8, 5, 0
         readonly Joints PreChangeJawPos = new(0, -1500000, 0, 0, 0);
         readonly Joints FetchRingPos = new(0, 10000000, 10000000, 0, 0); // 0, 10, 10, 0, 0
-        readonly Joints PreFetchRingPos = new(0, 8673000, -15000000, -10000000, 0);
+        readonly Joints PreFetchRingPos = new(0, 10000000, 10000000, -5000000, 0);
         readonly Joints AssemblePos1 = new(0, -600000, 900000, 9000000, 0); // 0, -0.6, 0.9, 9, 0
         readonly Joints PreAssemblePos2 = new(9000, 0, 0, 0, 0); // 90, 0, 0, 0, 0 -> 90, 14, -12, 5, 0 
         readonly Joints AssemblePos2 = new(9000, 14000000, -12000000, 5000000, 0); // 90, 0, 0, 0, 0 -> 90, 14, -12, 5, 0 
-        readonly Joints AssemblePos3 = new(0, -2500000, 4000000, 7000000, 0); // 0, -2.5, 4, 7, 0
+        readonly Joints PreAssemblePos3 = new(0, 0, 0, 7000000, 0);
+        readonly Joints AssemblePos3 = new(0, -2000000, 2000000, 7000000, 0); // 0, -2, 2, 7, 0
 
         //private readonly JointsPosition ZeroPos = new(0, 0, 0, 0, 0);
         //private readonly JointsPosition IdlePos = new(0, 0, -15000000, -10000000, 0);
