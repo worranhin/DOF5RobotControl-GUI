@@ -5,24 +5,66 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using D5R;
 
-namespace DOF5RobotControl_GUI
+namespace DOF5RobotControl_GUI.Model
 {
-    internal class JogHandler
+    public enum JogMode
     {
+        OneStep,
+        Continuous
+    };
+
+    public enum JogResolution
+    {
+        Speed1mm,
+        Speed100um,
+        Speed10um
+    };
+
+    public enum JointSelect
+    {
+        R1, P2, P3, P4, R5
+    };
+
+    public class JogHandler
+    {
+
         public bool isJogging = false;
-        
+
+        private readonly D5Robot robot;
+        private RoboticState targetState;
         private CancellationTokenSource cancelJoggingSource;
         private CancellationToken cancelJoggingToken;
 
-
-        public JogHandler()
+        public JogHandler(D5Robot robot, RoboticState targetState)
         {
+            this.robot = robot;
+            this.targetState = targetState;
             cancelJoggingSource = new CancellationTokenSource();
             cancelJoggingToken = cancelJoggingSource.Token;
         }
 
-        public void StartJogging(D5RControl.Joints joints)
+        public void Start(JointSelect jointSelect)
+        {
+            switch (jointSelect)
+            {
+                case JointSelect.R1:
+                    break;
+                case JointSelect.P2:
+                    break;
+                case JointSelect.P3:
+                    break;
+                case JointSelect.P4:
+                    break;
+                case JointSelect.R5:
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        public void StartJogging(Joints joints)
         {
             isJogging = true;
             cancelJoggingSource.Cancel();
@@ -33,17 +75,18 @@ namespace DOF5RobotControl_GUI
             {
                 while (!cancelJoggingToken.IsCancellationRequested)
                 {
-                    int result = D5RControl.JointsMoveRelative(joints);
-
-                    if (result != 0)
+                    try
+                    {
+                        robot.JointsMoveRelative(joints);
+                    } catch (RobotException exc)
                     {
                         Application.Current.Dispatcher.Invoke(() =>
                         {
-                            MessageBox.Show("Jog error in JogHandler.");
+                            MessageBox.Show($"Jog error in JogHandler: {exc.Code}");
                         });
                         break;
                     }
-
+                    
                     Thread.Sleep(20);
                 }
 
