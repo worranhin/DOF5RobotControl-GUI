@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "DOF5RobotControl_GUI": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}
