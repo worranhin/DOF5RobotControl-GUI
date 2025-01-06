@@ -48,7 +48,12 @@
             <StackPanel>
                 <GroupBox Header="预存点位" Margin="0,8,0,0">
                     <UniformGrid Columns="5">
-                        <Button Width="auto" Command="{Binding SetTargetJointsCommand}" CommandParameter="{x:Static vm:MainViewModel.ZeroPos}">零点位</Button>
+                        <UniformGrid.Resources>
+                            <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}" x:Key="customButton">
+                                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                            </Style>
+                        </UniformGrid.Resources>
+                        <ui:Button Style="{StaticResource customButton}" Command="{Binding SetTargetJointsCommand}" CommandParameter="{x:Static vm:MainViewModel.ZeroPos}">零点位</ui:Button>
                         <Button Command="{Binding SetTargetJointsCommand}" CommandParameter="{x:Static vm:MainViewModel.IdlePos}">待机位</Button>
                         <Button Command="{Binding SetTargetJointsCommand}" CommandParameter="{x:Static vm:MainViewModel.PreChangeJawPos}">换夹钳预备位</Button>
                         <Button Command="{Binding SetTargetJointsCommand}" CommandParameter="{x:Static vm:MainViewModel.ChangeJawPos}">换夹钳位</Button>
