@@ -12,19 +12,30 @@
         Title="MainWindow" Height="600" Width="900"
         FontSize="16">
     <Window.Resources>
+        <SolidColorBrush Color="#FFFFFF" x:Key="PrimaryColorBrush"/>
+        <SolidColorBrush Color="#FFC95E" x:Key="HighLightColorBrush"/>
         <Style x:Key="JointControlTextBlock" TargetType="TextBlock">
             <Setter Property="Margin" Value="2"/>
         </Style>
         <Style TargetType="GroupBox">
             <Setter Property="Padding" Value="2"/>
         </Style>
-        <Style TargetType="Button">
+        <Style TargetType="Button" x:Key="BaseBtn">
             <Setter Property="Margin" Value="2"/>
-            <Setter Property="Padding" Value="2"/>
+            <Setter Property="Padding" Value="4"/>
+            <Setter Property="Background" Value="{StaticResource PrimaryColorBrush}"/>
+            <Setter Property="BorderThickness" Value="0.5"/>
+        </Style>
+        <Style TargetType="Button" BasedOn="{StaticResource BaseBtn}" x:Key="HighLightBtn">
+            <Setter Property="Background" Value="{StaticResource HighLightColorBrush}"/>
+        </Style>
+        <Style TargetType="Button" BasedOn="{StaticResource BaseBtn}"></Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Background" Value="{StaticResource PrimaryColorBrush}"/>
         </Style>
         <cvt:BoolInverseConverter x:Key="BoolInverseConverter"/>
         <cvt:ConnectBtnConverter x:Key="ConnectBtnConverter"/>
-        <cvt:VibrateBtnConverter x:Key="VibrateBtnConverter"/>        
+        <cvt:VibrateBtnConverter x:Key="VibrateBtnConverter"/>
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -38,12 +49,12 @@
         <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="8">
             <StackPanel Orientation="Horizontal" Grid.Column="0" Margin="8">
                 <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">端口</TextBlock>
-                <ComboBox ItemsSource="{Binding PortsAvailable}" SelectedItem="{Binding SelectedPort}" IsEnabled="{Binding SystemConnected, Converter={StaticResource BoolInverseConverter}}"/>
+                <ComboBox ItemsSource="{Binding PortsAvailable}" SelectedItem="{Binding SelectedPort}" IsEnabled="{Binding SystemConnected, Converter={StaticResource BoolInverseConverter}}" BorderBrush="#FFAB5C5C"/>
                 <Button Margin="5,0,0,0" Command="{Binding PortRefreshCommand}">刷新</Button>
             </StackPanel>
             <StackPanel Orientation="Horizontal" Grid.Column="1" Margin="8">
                 <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">波特率</TextBlock>
-                <ComboBox SelectedIndex="0" ToolTip="该功能未实现，默认 115200">
+                <ComboBox SelectedIndex="0" ToolTip="该功能未实现，默认 115200" Background="White" BorderBrush="#FF753C3C">
                     <ComboBoxItem>115200</ComboBoxItem>
                 </ComboBox>
                 <Button Margin="5,0,0,0" Command="{Binding ToggleConnectCommand}" Content="{Binding SystemConnected, Converter={StaticResource ConnectBtnConverter}}"/>
@@ -228,7 +239,7 @@
                     </Grid.ColumnDefinitions>
                     <Button Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Command="{Binding RobotRunCommand}">运行</Button>
                     <Button Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="2" Command="{Binding RobotSetZeroCommand}" ToolTip="将当前的位置设为零点">置零</Button>
-                    <Button Grid.Row="0" Grid.Column="4" Grid.ColumnSpan="2" Command="{Binding RobotStopCommand}">停止</Button>
+                    <Button Grid.Row="0" Grid.Column="4" Grid.ColumnSpan="2" Command="{Binding RobotStopCommand}" Style="{StaticResource HighLightBtn}">停止</Button>
                     <Button Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Command="{Binding OpenCameraCommand}">启动相机</Button>
                     <Button Grid.Row="1" Grid.Column="3" Grid.ColumnSpan="3" Command="{Binding ToggleVibrateCommand}" Content="{Binding IsVibrating, Converter={StaticResource VibrateBtnConverter}}"></Button>
                     <Button Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Content="连接服务器" Click="BtnConnectServer_Click"/>

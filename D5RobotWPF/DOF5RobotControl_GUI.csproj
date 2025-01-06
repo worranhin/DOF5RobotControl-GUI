@@ -38,6 +38,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Opc.UaFx.Advanced" Version="2.11.0" />
     <PackageReference Include="OpenCvSharp4.Extensions" Version="4.10.0.20240616" />
     <PackageReference Include="OpenCvSharp4.Windows" Version="4.10.0.20240616" />
@@ -63,6 +64,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\D5RobotController_CLR\D5RobotController_CLR.vcxproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="libDOF5RobotControl.dll">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
@@ -70,10 +75,6 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="D5RobotController_CLR\D5RobotController_CLR.vcxproj" />
   </ItemGroup>
 
   <ItemGroup>
