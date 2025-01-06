@@ -28,7 +28,7 @@ namespace D5R {
 
 			_isInit = natorMotor->IsInit() && topRMDMotor->isInit() && botRMDMotor->isInit();
 			if (!_isInit) {
-				throw gcnew RobotException(ErrorCode::CreateInstanceError);
+	 			throw gcnew RobotException(ErrorCode::CreateInstanceError);
 			}
 		}
 		finally {

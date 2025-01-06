@@ -299,7 +299,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                     robot = null;
                     SystemConnected = false;
                     VibrateHelper = null;
-                    throw;
+                    //throw;
                 }
             }
         }
