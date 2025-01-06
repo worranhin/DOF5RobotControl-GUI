@@ -21,6 +21,7 @@ using Opc.UaFx;
 using Opc.UaFx.Server;
 using Window = System.Windows.Window;
 using System.Timers;
+using MahApps.Metro.Controls;
 
 namespace DOF5RobotControl_GUI
 {
@@ -28,7 +29,7 @@ namespace DOF5RobotControl_GUI
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     /// 
-    public partial class MainWindow : Window
+    public partial class MainWindow : MetroWindow
     {     
         //readonly string natorId = "usb:id:7547982319";
         
