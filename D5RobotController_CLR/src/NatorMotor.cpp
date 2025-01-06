@@ -46,6 +46,24 @@ bool NatorMotor::Init() {
               << std::endl;
     return false;
   }
+  res = NT_SetAccumulateRelativePositions_S(_handle, NTU_AXIS_X, NT_NO_ACCUMULATE_RELATIVE_POSITIONS);
+  if (res != NT_OK) {
+      std::cerr << "Failed to set relative move accumulation, error status: " << res
+          << std::endl;
+      return false;
+  }
+  res = NT_SetAccumulateRelativePositions_S(_handle, NTU_AXIS_Y, NT_NO_ACCUMULATE_RELATIVE_POSITIONS);
+  if (res != NT_OK) {
+      std::cerr << "Failed to set relative move accumulation, error status: " << res
+          << std::endl;
+      return false;
+  }
+  res = NT_SetAccumulateRelativePositions_S(_handle, NTU_AXIS_Z, NT_NO_ACCUMULATE_RELATIVE_POSITIONS);
+  if (res != NT_OK) {
+      std::cerr << "Failed to set relative move accumulation, error status: " << res
+          << std::endl;
+      return false;
+  }
   _isInit = true;
   return true;
 }
