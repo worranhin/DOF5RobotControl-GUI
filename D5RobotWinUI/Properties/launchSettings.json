@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "D5RobotWinUI (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "D5RobotWinUI (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
