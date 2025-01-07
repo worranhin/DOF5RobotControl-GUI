@@ -70,8 +70,7 @@ namespace DOF5RobotControl_GUI
         private void Window_Closed(object? sender, EventArgs e)
         {
             Debug.WriteLine("Window closed");
-            opcTaskCancelSource.Cancel();
-            
+            opcTaskCancelSource.Cancel();            
         }     
 
         private void ServerRunTask()
@@ -358,6 +357,16 @@ namespace DOF5RobotControl_GUI
         private void BtnR5JogUp_P(object sender, MouseButtonEventArgs e)
         {
             //jogHandler?.StopJogging();
+        }
+
+        private void TextBoxSelectAll(object sender, RoutedEventArgs e)
+        {
+            var textbox = sender as TextBox;
+            Debug.WriteLine(textbox);
+            if (textbox != null)
+                textbox.SelectAll();
+            else
+                Debug.WriteLine("no textbox");
         }
     }
 }

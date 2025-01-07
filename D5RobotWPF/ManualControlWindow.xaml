@@ -17,10 +17,10 @@
         <cvt:GamepadStatusConverter x:Key="GamepadStatusConverter"/>
     </Window.Resources>
     <DockPanel Margin="8">
-        <StatusBar DockPanel.Dock="Bottom">
+        <StatusBar DockPanel.Dock="Bottom" Style="{StaticResource MahApps.Styles.StatusBar}">
             <StatusBarItem>
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock>手柄连接状态：</TextBlock>
+                    <TextBlock Style="{DynamicResource MahApps.Styles.TextBlock}">手柄连接状态：</TextBlock>
                     <TextBlock Text="{Binding GamepadConnected, Converter={StaticResource GamepadStatusConverter}}"/>
                 </StackPanel>
             </StatusBarItem>

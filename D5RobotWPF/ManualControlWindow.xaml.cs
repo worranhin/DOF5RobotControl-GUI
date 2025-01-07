@@ -12,6 +12,7 @@ using System.Threading;
 using System.Linq.Expressions;
 using System.Windows.Media;
 using D5R;
+using System.Windows.Threading;
 
 namespace DOF5RobotControl_GUI
 {

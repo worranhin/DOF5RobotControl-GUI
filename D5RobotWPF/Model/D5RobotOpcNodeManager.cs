@@ -283,7 +283,7 @@ namespace DOF5RobotControl_GUI.Model
             double nodeValue = (double)objectValue;
             {
                 // 安全地更新标签文本
-                _viewModel.WindowBelonged.Dispatcher.Invoke(() =>
+                _viewModel.Dispatcher.Invoke(() =>
                 {
                     //_viewModel.JointValueR1.Text = nodeValue.ToString();
                     _viewModel.TargetState.JointSpace.R1 = nodeValue;
@@ -302,7 +302,7 @@ namespace DOF5RobotControl_GUI.Model
             object objectValue = value.Value;
             double nodeValue = (double)objectValue;
             {
-                _viewModel.WindowBelonged.Dispatcher.Invoke(() =>
+                _viewModel.Dispatcher.Invoke(() =>
                 {
                     //_viewModel.JointValueP2.Text = nodeValue.ToString();
                     _viewModel.TargetState.JointSpace.P2 = nodeValue;
@@ -321,7 +321,7 @@ namespace DOF5RobotControl_GUI.Model
             object objectValue = value.Value;
             double nodeValue = (double)objectValue;
             {
-                _viewModel.WindowBelonged.Dispatcher.Invoke(() =>
+                _viewModel.Dispatcher.Invoke(() =>
                 {
                     //_viewModel.JointValueP3.Text = nodeValue.ToString();
                     _viewModel.TargetState.JointSpace.P3 = nodeValue;
@@ -340,7 +340,7 @@ namespace DOF5RobotControl_GUI.Model
             object objectValue = value.Value;
             double nodeValue = (double)objectValue;
             {
-                _viewModel.WindowBelonged.Dispatcher.Invoke(() =>
+                _viewModel.Dispatcher.Invoke(() =>
                 {
                     //_viewModel.JointValueP4.Text = nodeValue.ToString();
                     _viewModel.TargetState.JointSpace.P4 = nodeValue;
@@ -359,7 +359,7 @@ namespace DOF5RobotControl_GUI.Model
             object objectValue = value.Value;
             double nodeValue = (double)objectValue;
             {
-                _viewModel.WindowBelonged.Dispatcher.Invoke(() =>
+                _viewModel.Dispatcher.Invoke(() =>
                 {
                     //_viewModel.JointValueR5.Text = nodeValue.ToString();
                     _viewModel.TargetState.JointSpace.R5 = nodeValue;

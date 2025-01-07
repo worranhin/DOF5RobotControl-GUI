@@ -27,6 +27,7 @@ namespace DOF5RobotControl_GUI.ViewModel
 
     partial class MainViewModel : ObservableObject
     {
+        /***** 预存点位 *****/
         public static readonly Joints ZeroPos = new(0, 0, 0, 0, 0);
         public static readonly Joints IdlePos = new(0, 0, -10000000, 0, 0);
         public static readonly Joints ChangeJawPos = new(0, -1500000, 8000000, 5000000, 0); // 0, -1.5, 8, 5, 0
@@ -37,35 +38,16 @@ namespace DOF5RobotControl_GUI.ViewModel
         public static readonly Joints PreAssemblePos2 = new(9000, 0, 0, 0, 0); // 90, 0, 0, 0, 0 -> 90, 14, -12, 5, 0 
         public static readonly Joints AssemblePos2 = new(9000, 14000000, -12000000, 5000000, 0); // 90, 0, 0, 0, 0 -> 90, 14, -12, 5, 0 
         public static readonly Joints AssemblePos3 = new(0, -2500000, 4000000, 7000000, 0); // 0, -2.5, 4, 7, 0
-        
-        public readonly int natorJogResolution = 30000;
-        public readonly int RMDJogResolution = 20;
-        public readonly MainWindow WindowBelonged;
 
-        readonly string natorId = "usb:id:2250716012";
-
-        private D5Robot? robot;
+        //public readonly MainWindow? WindowBelonged;
+        /***** 线程相关字段 *****/
+        public Dispatcher Dispatcher { get; private set; }
         CancellationTokenSource? updateStateTaskCancelSource;
         CancellationToken updateStateTaskCancelToken;
 
-        readonly uint jogPeriod = 20;  // ms
-        System.Timers.Timer? jogTimer;
-
-        //public MainViewModel()
-        //{
-
-        //}
-
-        public MainViewModel(MainWindow belong)
-        {
-            WindowBelonged = belong;
-        }
-
-        ~MainViewModel()
-        {
-            updateStateTaskCancelSource?.Cancel();
-        }
-
+        /***** 机器人系统相关 *****/
+        readonly string natorId = "usb:id:2250716012";
+        private D5Robot? robot;
         [ObservableProperty]
         private bool _systemConnected = false;
         [ObservableProperty]
@@ -77,15 +59,175 @@ namespace DOF5RobotControl_GUI.ViewModel
         [ObservableProperty]
         private RoboticState _currentState = new(0, 0, 0, 0, 0);
 
-        /***** Jog 相关 *****/
-
-        public IEnumerable<JogMode> JogModes => Enum.GetValues(typeof(JogMode)).Cast<JogMode>();
-        public IEnumerable<JogResolution> JogResolutions => Enum.GetValues(typeof(JogResolution)).Cast<JogResolution>();
+        /***** 点动相关字段/属性 *****/
+        public static IEnumerable<JogMode> JogModes => Enum.GetValues(typeof(JogMode)).Cast<JogMode>();
+        public static IEnumerable<JogResolution> JogResolutions => Enum.GetValues(typeof(JogResolution)).Cast<JogResolution>();
+        public readonly int natorJogResolution = 30000;
+        public readonly int RMDJogResolution = 20;
+        readonly uint jogPeriod = 20;  // ms
+        System.Timers.Timer? jogTimer;
         [ObservableProperty]
         private JogMode _jogModeSelected = JogMode.OneStep;
         [ObservableProperty]
         private JogResolution _jogResolutionSelected = JogResolution.Speed1mm;
-        
+
+        /***** 振动相关 *****/
+        internal VibrateHelper? VibrateHelper;
+        [ObservableProperty]
+        private bool _isVibrating = false;
+
+        public MainViewModel()
+        {
+            Dispatcher = Application.Current.Dispatcher;
+        }
+
+        public MainViewModel(MainWindow belong)
+        {
+            //WindowBelonged = belong;
+            Dispatcher = belong.Dispatcher;
+        }
+
+        ~MainViewModel()
+        {
+            updateStateTaskCancelSource?.Cancel();
+        }
+
+        /***** 机器人控制命令 *****/
+
+        [RelayCommand]
+        private void ToggleConnect()
+        {
+            if (SystemConnected)  // 如果目前系统已连接，则断开连接
+            {
+                robot?.Dispose();
+                robot = null;
+                SystemConnected = false;
+                updateStateTaskCancelSource?.Cancel();
+                updateStateTaskCancelSource = null;
+            }
+            else  // 系统未连接，则建立连接
+            {
+                string portName;
+                if (SelectedPort.Length > 4)
+                {
+                    portName = "\\\\.\\" + SelectedPort;
+                }
+                else
+                {
+                    portName = SelectedPort;
+                }
+
+                try
+                {
+                    robot = new D5Robot(portName, natorId, 1, 2);
+                    SystemConnected = true;
+                    VibrateHelper = new VibrateHelper(robot, TargetState);
+
+                    updateStateTaskCancelSource = new();
+                    updateStateTaskCancelToken = updateStateTaskCancelSource.Token;
+                    Task.Run(UpdateCurrentStateTask, updateStateTaskCancelToken);
+                }
+                catch (RobotException err)
+                {
+                    MessageBox.Show("Error while Connecting: " + err.Code.ToString());
+                    robot?.Dispose();
+                    robot = null;
+                    SystemConnected = false;
+                    VibrateHelper = null;
+                    //throw;
+                }
+            }
+        }
+
+        [RelayCommand]
+        private void PortRefresh()
+        {
+            PortsAvailable = SerialPort.GetPortNames();
+        }
+
+        [RelayCommand]
+        private void RobotRun()
+        {
+            if (robot == null)
+            {
+                MessageBox.Show("Robot not connected.");
+                return;
+            }
+
+            Joints j = TargetState.ToD5RJoints();
+            try
+            {
+                robot.JointsMoveAbsolute(j);
+            }
+            catch (RobotException exc)
+            {
+                MessageBox.Show($"Jog error while running: {exc.Code}");
+            }
+        }
+
+        [RelayCommand]
+        private void RobotStop()
+        {
+            if (robot == null)
+            {
+                MessageBox.Show("Robot not connected.");
+                return;
+            }
+
+            if (!robot.Stop())
+            {
+                MessageBox.Show($"Error while stopping.");
+                return;
+            }
+        }
+
+        [RelayCommand]
+        private void RobotSetZero()
+        {
+            if (robot == null)
+            {
+                MessageBox.Show("Robot not connected.");
+                return;
+            }
+
+            if (!robot.SetZero())
+            {
+                MessageBox.Show($"Error while setting zero.");
+                return;
+            }
+        }
+
+        [RelayCommand]
+        private void OpenCamera()
+        {
+            //if (robot == null)
+            //{
+            //    MessageBox.Show("Robot not connected.");
+            //    return;
+            //}
+
+            //ManualControlWindow window = new(robot, TargetState);
+            CameraWindow window = new();
+            window.Show();
+        }
+
+        [RelayCommand]
+        private void SetTargetJoints(Joints joints)
+        {
+            TargetState.SetFromD5RJoints(joints);
+        }
+
+        [RelayCommand]
+        private void SetTargetJointsFromCurrent()
+        {
+            var joints = CurrentState.ToD5RJoints();
+            TargetState.SetFromD5RJoints(joints);
+        }
+
+        /***** 机器人控制命令结束 *****/
+
+        /***** Jog 相关命令 *****/
+
         [RelayCommand]
         private void Jog(JogParams param)
         {
@@ -216,26 +358,10 @@ namespace DOF5RobotControl_GUI.ViewModel
             jogTimer = null;
         }
 
-        /***** Jog 相关结束 *****/
+        /***** Jog 相关结束 *****/        
 
-        [RelayCommand]
-        private void SetTargetJoints(Joints joints)
-        {
-            TargetState.SetFromD5RJoints(joints);
-        }
+        /***** 处理振动相关 UI 逻辑 *****/
 
-        [RelayCommand]
-        private void SetTargetJointsFromCurrent()
-        {
-            var joints = CurrentState.ToD5RJoints();
-            TargetState.SetFromD5RJoints(joints);
-        }
-
-        ///// 处理振动相关 UI 逻辑 /////
-
-        internal VibrateHelper? VibrateHelper;
-        [ObservableProperty]
-        private bool _isVibrating = false;
         [RelayCommand]
         private void ToggleVibrate()
         {
@@ -257,125 +383,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             }
         }
 
-        ///// 处理振动结束 /////
-
-        [RelayCommand]
-        private void ToggleConnect()
-        {
-            if (SystemConnected)  // 如果目前系统已连接，则断开连接
-            {
-                robot?.Dispose();
-                robot = null;
-                SystemConnected = false;
-                updateStateTaskCancelSource?.Cancel();
-                updateStateTaskCancelSource = null;
-            }
-            else  // 系统未连接，则建立连接
-            {
-                string portName;
-                if (SelectedPort.Length > 4)
-                {
-                    portName = "\\\\.\\" + SelectedPort;
-                }
-                else
-                {
-                    portName = SelectedPort;
-                }
-
-                try
-                {
-                    robot = new D5Robot(portName, natorId, 1, 2);
-                    SystemConnected = true;
-                    VibrateHelper = new VibrateHelper(robot, TargetState);
-
-                    updateStateTaskCancelSource = new();
-                    updateStateTaskCancelToken = updateStateTaskCancelSource.Token;
-                    Task.Run(UpdateCurrentStateTask, updateStateTaskCancelToken);
-                }
-                catch (RobotException err)
-                {
-                    MessageBox.Show("Error while Connecting: " + err.Code.ToString());
-                    robot?.Dispose();
-                    robot = null;
-                    SystemConnected = false;
-                    VibrateHelper = null;
-                    //throw;
-                }
-            }
-        }
-
-        [RelayCommand]
-        private void PortRefresh()
-        {
-            PortsAvailable = SerialPort.GetPortNames();
-        }
-
-        [RelayCommand]
-        private void RobotRun()
-        {
-            if (robot == null)
-            {
-                MessageBox.Show("Robot not connected.");
-                return;
-            }
-
-            Joints j = TargetState.ToD5RJoints();
-            try
-            {
-                robot.JointsMoveAbsolute(j);
-            }
-            catch (RobotException exc)
-            {
-                MessageBox.Show($"Jog error while running: {exc.Code}");
-            }
-        }
-
-        [RelayCommand]
-        private void RobotStop()
-        {
-            if (robot == null)
-            {
-                MessageBox.Show("Robot not connected.");
-                return;
-            }
-
-            if (!robot.Stop())
-            {
-                MessageBox.Show($"Error while stopping.");
-                return;
-            }
-        }
-
-        [RelayCommand]
-        private void RobotSetZero()
-        {
-            if (robot == null)
-            {
-                MessageBox.Show("Robot not connected.");
-                return;
-            }
-
-            if (!robot.SetZero())
-            {
-                MessageBox.Show($"Error while setting zero.");
-                return;
-            }
-        }
-
-        [RelayCommand]
-        private void OpenCamera()
-        {
-            if (robot == null)
-            {
-                MessageBox.Show("Robot not connected.");
-                return;
-            }
-
-            ManualControlWindow window = new(robot, TargetState);
-            window.Show();
-        }
-
-        /***** TODO: 将下面的函数修改为 Command 模式 结束 *****/
+        /***** 处理振动结束 *****/
 
         /***** OPC 相关代码 *****/
 
@@ -431,7 +439,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                 try
                 {
                     Joints joints = (Joints)robot.GetCurrentJoint();
-                    WindowBelonged.Dispatcher.Invoke(() =>
+                    Dispatcher.Invoke(() =>
                     {
                         CurrentState.SetFromD5RJoints(joints);
                     });
