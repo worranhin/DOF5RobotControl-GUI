@@ -75,6 +75,14 @@ namespace DOF5RobotControl_GUI.ViewModel
         internal VibrateHelper? VibrateHelper;
         [ObservableProperty]
         private bool _isVibrating = false;
+        [ObservableProperty]
+        private bool _isVibrateHorizontal = false;
+        [ObservableProperty]
+        private bool _isVibrateVertical = false;
+        [ObservableProperty]
+        private double _vibrateAmplitude = 1.0;
+        [ObservableProperty]
+        private double _vibrateFrequency = 1.0;
 
         public MainViewModel()
         {
@@ -367,13 +375,13 @@ namespace DOF5RobotControl_GUI.ViewModel
         {
             if (VibrateHelper == null)
             {
-                MessageBox.Show("While toggle vibrate: vibrateHelper is null!");
+                MessageBox.Show("VibrateHelper is null! Please Connect to robot first.", "Error while toggle vibration");
                 return;
             }
 
             if (!IsVibrating)
             {
-                VibrateHelper.Start();
+                VibrateHelper.Start(IsVibrateHorizontal, IsVibrateVertical, VibrateAmplitude, VibrateFrequency);
                 IsVibrating = true;
             }
             else

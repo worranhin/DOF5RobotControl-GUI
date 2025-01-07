@@ -15,7 +15,8 @@ namespace DOF5RobotControl_GUI.Model
         private RoboticState targetState;
         private CancellationTokenSource? vibrateCancelSource;
         private CancellationToken vibrateCancelToken;
-        public VibrateHelper(D5Robot robot, RoboticState target) {  // TODO: 把 viewModel 传进来感觉还是太耦合了，日后改进一下
+
+        public VibrateHelper(D5Robot robot, RoboticState target) {
             this.robot = robot;
             targetState = target;
         }
@@ -25,11 +26,23 @@ namespace DOF5RobotControl_GUI.Model
             vibrateCancelSource?.Cancel();
         }
 
+        // TODO: 删除这个旧函数
         public void Start()
         {
+            vibrateCancelSource?.Dispose();
             vibrateCancelSource = new();
             vibrateCancelToken = vibrateCancelSource.Token;
             Task.Run(VibrateTask, vibrateCancelToken);
+        }
+
+        public void Start(bool vibrateHorizontal, bool vibrateVertical, double amplitude, double frequency)
+        {
+            if (vibrateHorizontal == false && vibrateVertical == false)
+                throw new ArgumentException("At least one of vibrateHorizontal and vibrateVertical should be true.", nameof(vibrateVertical));
+            vibrateCancelSource?.Dispose();
+            vibrateCancelSource = new();
+            vibrateCancelToken = vibrateCancelSource.Token;
+            Task.Run(() => VibrateTask(vibrateHorizontal, vibrateVertical, amplitude, frequency), vibrateCancelToken);
         }
 
         public void Stop()
@@ -37,6 +50,7 @@ namespace DOF5RobotControl_GUI.Model
             vibrateCancelSource?.Cancel();
         }
 
+        // TODO: 删除这个旧函数
         private void VibrateTask()
         {
             var startTime = DateTime.Now;
@@ -51,6 +65,40 @@ namespace DOF5RobotControl_GUI.Model
                 var joints = targetState.ToD5RJoints();
                 joints.P2 += (int)(x * 100000); // 0.1 mm
                 robot.JointsMoveAbsolute(joints);
+
+                Thread.Sleep(10);
+            }
+
+            robot.JointsMoveAbsolute(targetState.ToD5RJoints());
+        }
+
+        /// <summary>
+        /// 振动任务
+        /// </summary>
+        /// <param name="vibrateHorizontal"></param>
+        /// <param name="vibrateVertical"></param>
+        /// <param name="amplitude">振动的单向幅值，单位 mm</param>
+        /// <param name="frequency">振动的频率</param>
+        private void VibrateTask(bool vibrateHorizontal, bool vibrateVertical, double amplitude, double frequency)
+        { 
+            var startTime = DateTime.Now;
+            while (!vibrateCancelToken.IsCancellationRequested)
+            {
+                var currentTime = DateTime.Now;
+                var deltaTime = currentTime - startTime;
+                var t = deltaTime.TotalSeconds;
+                var x = amplitude * Math.Sin(2 * Math.PI * frequency * t);  // 正弦函数，频率为 frequency，幅值为正负 amplitude 单位 mm
+                Debug.WriteLine($"{t}: {x}");
+
+                Joints joints = new();
+                if (vibrateHorizontal)
+                    joints.P2 += (int)(x * 1000000); // 1 mm
+                if (vibrateVertical)
+                    joints.P4 += (int)(x * 1000000);
+
+                robot.JointsMoveAbsolute(joints);
+
+                vibrateCancelToken.ThrowIfCancellationRequested();
 
                 Thread.Sleep(10);
             }
