@@ -20,8 +20,17 @@
         <Style TargetType="TextBlock" BasedOn="{StaticResource centerTextBlock}" x:Key="leftAlignTextBlock">
             <Setter Property="HorizontalAlignment" Value="Left"/>
         </Style>
+        <Style TargetType="TextBlock" BasedOn="{StaticResource centerTextBlock}"/>
         <Style TargetType="ComboBox" BasedOn="{StaticResource MahApps.Styles.ComboBox}" x:Key="userComboBox">
             <Setter Property="FontSize" Value="16"/>
+        </Style>
+        <Style TargetType="TextBox" BasedOn="{StaticResource MahApps.Styles.TextBox}">
+            <Setter Property="Margin" Value="2 2"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+        <Style TargetType="CheckBox" BasedOn="{StaticResource MahApps.Styles.CheckBox}">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontFamily" Value="Microsoft YaHei UI"/>
         </Style>
         <Style TargetType="Button" BasedOn="{StaticResource MahApps.Styles.Button}" x:Key="userButton">
             <Setter Property="Padding" Value="2"/>
@@ -32,22 +41,12 @@
             <Setter Property="FontSize" Value="16"/>
         </Style>
         <Style TargetType="Button" BasedOn="{StaticResource userButton}"/>
-        <Style TargetType="CheckBox" BasedOn="{StaticResource MahApps.Styles.CheckBox}">
-            <Setter Property="FontSize" Value="16"/>
-            <Setter Property="FontFamily" Value="Microsoft YaHei UI"/>
-        </Style>
         <cvt:BoolInverseConverter x:Key="BoolInverseConverter"/>
         <cvt:ConnectBtnConverter x:Key="ConnectBtnConverter"/>
         <cvt:VibrateBtnConverter x:Key="VibrateBtnConverter"/>
+        <cvt:InsertBtnConverter x:Key="InsertBtnConverter"/>
     </Window.Resources>
     <Grid Margin="10">
-        <Grid.Resources>
-            <Style TargetType="TextBlock" BasedOn="{StaticResource centerTextBlock}"/>
-            <Style TargetType="TextBox" BasedOn="{StaticResource MahApps.Styles.TextBox}">
-                <Setter Property="Margin" Value="2 2"/>
-                <Setter Property="FontSize" Value="14"/>
-            </Style>
-        </Grid.Resources>
         <Grid.RowDefinitions>
             <RowDefinition Height="auto" MinHeight="30"/>
             <RowDefinition Height="10"/>
@@ -114,17 +113,17 @@
                         <RowDefinition Height="auto"/>
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="0.25*"/>
+                        <ColumnDefinition Width="0.3*"/>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="0.25*"/>
+                        <ColumnDefinition Width="0.3*"/>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="0.25*"/>
+                        <ColumnDefinition Width="0.3*"/>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="0.25*"/>
+                        <ColumnDefinition Width="0.3*"/>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="0.25*"/>
+                        <ColumnDefinition Width="0.3*"/>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="1.2*"/>
+                        <ColumnDefinition Width="2*"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Row="0" Grid.Column="0">R1:</TextBlock>
                     <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CurrentState.JointSpace.R1}"/>
@@ -136,7 +135,7 @@
                     <TextBlock Grid.Row="0" Grid.Column="7" Text="{Binding CurrentState.JointSpace.P4}"/>
                     <TextBlock Grid.Row="0" Grid.Column="8">R5:</TextBlock>
                     <TextBlock Grid.Row="0" Grid.Column="9" Text="{Binding CurrentState.JointSpace.R5}"/>
-                    <Button Grid.Row="0" Grid.Column="10" Grid.ColumnSpan="10" Margin="5" Command="{Binding SetTargetJointsFromCurrentCommand}">设为当前值</Button>
+                    <Button Grid.Row="0" Grid.Column="10" Grid.ColumnSpan="10" Margin="0" Command="{Binding SetTargetJointsFromCurrentCommand}">设为当前值</Button>
                 </Grid>
             </mah:MetroHeader>
             <Separator/>
@@ -252,15 +251,15 @@
                         <RowDefinition Height="auto"/>
                     </Grid.RowDefinitions>
                     <Label Grid.Column="0" Target="{Binding ElementName=PosValueX}">px</Label>
-                    <TextBox Grid.Column="1" x:Name="PosValueX" Text="{Binding TargetState.TaskSpace.Px, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="TextBoxSelectAll"></TextBox>
+                    <TextBox Grid.Column="1" x:Name="PosValueX" Text="{Binding TargetState.TaskSpace.Px, Mode=TwoWay}" GotFocus="TextBoxSelectAll"></TextBox>
                     <Label Grid.Column="2" Target="{Binding ElementName=PosValueY}">py</Label>
-                    <TextBox Grid.Column="3" x:Name="PosValueY" Text="{Binding TargetState.TaskSpace.Py, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="TextBoxSelectAll"></TextBox>
+                    <TextBox Grid.Column="3" x:Name="PosValueY" Text="{Binding TargetState.TaskSpace.Py, Mode=TwoWay}" GotFocus="TextBoxSelectAll"></TextBox>
                     <Label Grid.Column="4" Target="{Binding ElementName=PosValueZ}">pz</Label>
-                    <TextBox Grid.Column="5" x:Name="PosValueZ" Text="{Binding TargetState.TaskSpace.Pz, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="TextBoxSelectAll"></TextBox>
+                    <TextBox Grid.Column="5" x:Name="PosValueZ" Text="{Binding TargetState.TaskSpace.Pz, Mode=TwoWay}" GotFocus="TextBoxSelectAll"></TextBox>
                     <Label Grid.Column="6" Target="{Binding ElementName=PosValueRy}">ry</Label>
-                    <TextBox Grid.Column="7" x:Name="PosValueRy" Text="{Binding TargetState.TaskSpace.Ry, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="TextBoxSelectAll"></TextBox>
+                    <TextBox Grid.Column="7" x:Name="PosValueRy" Text="{Binding TargetState.TaskSpace.Ry, Mode=TwoWay}" GotFocus="TextBoxSelectAll"></TextBox>
                     <Label Grid.Column="8" Target="{Binding ElementName=PosValueRz}">rz</Label>
-                    <TextBox Grid.Column="9" x:Name="PosValueRz" Text="{Binding TargetState.TaskSpace.Rz, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="TextBoxSelectAll"></TextBox>
+                    <TextBox Grid.Column="9" x:Name="PosValueRz" Text="{Binding TargetState.TaskSpace.Rz, Mode=TwoWay}" GotFocus="TextBoxSelectAll"></TextBox>
                     <UniformGrid Grid.Column="1" Grid.Row="1" Rows="1">
                         <Button>Jog-</Button>
                         <Button>Jog+</Button>
@@ -329,7 +328,8 @@
                 <Button Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Command="{Binding RobotRunCommand}">运行</Button>
                 <Button Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="2" Command="{Binding RobotSetZeroCommand}" ToolTip="将当前的位置设为零点">置零</Button>
                 <Button Grid.Row="0" Grid.Column="4" Grid.ColumnSpan="2" Command="{Binding RobotStopCommand}">停止</Button>
-                <Button Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="6" Command="{Binding OpenCameraCommand}">启动相机</Button>
+                <Button Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Command="{Binding OpenCameraCommand}">启动相机</Button>
+                <Button Grid.Row="1" Grid.Column="3" Grid.ColumnSpan="3" Content="{Binding IsInserting, Converter={StaticResource InsertBtnConverter}}" Command="{Binding ToggleInsertionCommand}"/>
                 <Button Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Content="连接服务器" Click="BtnConnectServer_Click"/>
                 <Button Grid.Row="2" Grid.Column="3" Grid.ColumnSpan="3" Content="断开服务器" Click="BtnDisconnectServer_Click"/>
             </Grid>

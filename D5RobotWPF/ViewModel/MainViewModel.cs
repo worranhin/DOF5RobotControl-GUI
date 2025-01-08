@@ -21,8 +21,8 @@ namespace DOF5RobotControl_GUI.ViewModel
 {
     public struct JogParams
     {
-        public JointSelect Joint {get; set;}
-        public bool IsPositive {get; set;}
+        public JointSelect Joint { get; set; }
+        public bool IsPositive { get; set; }
     };
 
     partial class MainViewModel : ObservableObject
@@ -58,6 +58,10 @@ namespace DOF5RobotControl_GUI.ViewModel
         private RoboticState _targetState = new(0, 0, 0, 0, 0);
         [ObservableProperty]
         private RoboticState _currentState = new(0, 0, 0, 0, 0);
+        [ObservableProperty]
+        private bool _isInserting = false;
+        private CancellationTokenSource? insertCancelSource;
+        private CancellationToken insertCancelToken;
 
         /***** 点动相关字段/属性 *****/
         public static IEnumerable<JogMode> JogModes => Enum.GetValues(typeof(JogMode)).Cast<JogMode>();
@@ -232,6 +236,31 @@ namespace DOF5RobotControl_GUI.ViewModel
             TargetState.SetFromD5RJoints(joints);
         }
 
+        [RelayCommand]
+        private void ToggleInsertion()
+        {
+            if (!IsInserting)
+            {
+                insertCancelSource = new();
+                Task.Run(() =>
+                {
+                    while (!insertCancelToken.IsCancellationRequested)
+                    {
+                        TargetState.JointSpace.P2 = CurrentState.JointSpace.P2 + 0.1;
+                        //RobotRun();
+                        Thread.Sleep(1000);
+                    }
+                }, insertCancelToken);
+                IsInserting = true;
+            } else  // if inserting, then cancel it
+            {
+                insertCancelSource?.Cancel();
+                insertCancelSource?.Dispose();
+                insertCancelSource = null;
+                IsInserting = false;
+            }
+        }
+
         /***** 机器人控制命令结束 *****/
 
         /***** Jog 相关命令 *****/
@@ -260,7 +289,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                         break;
                 }
 
-                switch(param.Joint)
+                switch (param.Joint)
                 {
                     case JointSelect.R1:
                         TargetState.JointSpace.R1 += param.IsPositive ? resolution : -resolution;
@@ -366,7 +395,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             jogTimer = null;
         }
 
-        /***** Jog 相关结束 *****/        
+        /***** Jog 相关结束 *****/
 
         /***** 处理振动相关 UI 逻辑 *****/
 
