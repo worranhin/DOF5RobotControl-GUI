@@ -10,10 +10,16 @@
         xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         d:DataContext="{d:DesignInstance Type=vm:MainViewModel, IsDesignTimeCreatable=True}"
         mc:Ignorable="d"
-        Title="五自由度机械臂控制面板" Height="680" Width="960"
+        Title="五自由度机械臂控制面板" Height="600" Width="960"
         FontFamily="Microsoft YaHei UI"
         FontSize="16">
-        <Window.Resources>
+    <Window.Resources>
+        <Style TargetType="TextBlock" BasedOn="{StaticResource MahApps.Styles.TextBlock}" x:Key="centerTextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="TextBlock" BasedOn="{StaticResource centerTextBlock}" x:Key="leftAlignTextBlock">
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+        </Style>
         <Style TargetType="ComboBox" BasedOn="{StaticResource MahApps.Styles.ComboBox}" x:Key="userComboBox">
             <Setter Property="FontSize" Value="16"/>
         </Style>
@@ -36,9 +42,6 @@
     </Window.Resources>
     <Grid Margin="10">
         <Grid.Resources>
-            <Style TargetType="TextBlock" BasedOn="{StaticResource MahApps.Styles.TextBlock}" x:Key="centerTextBlock">
-                <Setter Property="VerticalAlignment" Value="Center"/>
-            </Style>
             <Style TargetType="TextBlock" BasedOn="{StaticResource centerTextBlock}"/>
             <Style TargetType="TextBox" BasedOn="{StaticResource MahApps.Styles.TextBox}">
                 <Setter Property="Margin" Value="2 2"/>
@@ -47,6 +50,7 @@
         </Grid.Resources>
         <Grid.RowDefinitions>
             <RowDefinition Height="auto" MinHeight="30"/>
+            <RowDefinition Height="10"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -82,134 +86,62 @@
             <TextBlock>点动分辨率</TextBlock>
             <ComboBox SelectedIndex="0" ItemsSource="{Binding JogResolutions, Mode=OneTime}" SelectedItem="{Binding JogResolutionSelected}"/>
         </StackPanel>
-        <GroupBox Grid.Row="1" Grid.Column="0" Header="机器人控制面板" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
-            <StackPanel>
-                <StackPanel.Resources>
-                    <Style TargetType="Grid">
-                        <Setter Property="Margin" Value="5 0"/>
-                    </Style>
-                    <Style TargetType="Button" BasedOn="{StaticResource userButton}">
-                        <Setter Property="Margin" Value="2"/>
-                    </Style>
-                    <Style TargetType="GroupBox" BasedOn="{StaticResource MahApps.Styles.GroupBox.Clean}">
-                        <Setter Property="Padding" Value="5"/>
-                        <Setter Property="Margin" Value="2 0"/>
-                    </Style>
-                    <Style TargetType="Separator">
-                        <Setter Property="Height" Value="10"/>
-                        <Setter Property="Opacity" Value="0.3"/>
-                        <Setter Property="VerticalAlignment" Value="Center"/>
-                    </Style>
-                </StackPanel.Resources>
-                <GroupBox Header="预存点位" Margin="0 5 0 0">
-                    <UniformGrid Columns="5" Margin="5 0">
-                        <Button Command="{Binding SetTargetJointsCommand}" CommandParameter="{x:Static vm:MainViewModel.ZeroPos}">零点位</Button>
-                        <Button Command="{Binding SetTargetJointsCommand}" CommandParameter="{x:Static vm:MainViewModel.IdlePos}">待机位</Button>
-                        <Button Command="{Binding SetTargetJointsCommand}" CommandParameter="{x:Static vm:MainViewModel.PreChangeJawPos}">换夹钳预备位</Button>
-                        <Button Command="{Binding SetTargetJointsCommand}" CommandParameter="{x:Static vm:MainViewModel.ChangeJawPos}">换夹钳位</Button>
-                        <Button Command="{Binding SetTargetJointsCommand}" CommandParameter="{x:Static vm:MainViewModel.PreFetchRingPos}">取零件环预备位</Button>
-                        <Button Command="{Binding SetTargetJointsCommand}" CommandParameter="{x:Static vm:MainViewModel.FetchRingPos}">取零件环位</Button>
-                        <Button Command="{Binding SetTargetJointsCommand}" CommandParameter="{x:Static vm:MainViewModel.AssemblePos1}">装配位1</Button>
-                        <Button Command="{Binding SetTargetJointsCommand}" CommandParameter="{x:Static vm:MainViewModel.PreAssemblePos2}">装配位2前置位</Button>
-                        <Button Command="{Binding SetTargetJointsCommand}" CommandParameter="{x:Static vm:MainViewModel.AssemblePos2}">装配位2</Button>
-                        <Button Command="{Binding SetTargetJointsCommand}" CommandParameter="{x:Static vm:MainViewModel.AssemblePos3}">装配位3</Button>
-                    </UniformGrid>
-                </GroupBox>
-                <Separator/>
-                <GroupBox Header="关节控制">
-                    <StackPanel>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
-                            </Grid.RowDefinitions>
-                            <Label Grid.Column="0" Target="{Binding ElementName=JointValueR1}">r1</Label>
-                            <TextBox Grid.Column="1" x:Name="JointValueR1" Text="{Binding TargetState.JointSpace.R1, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" GotFocus="TextBoxSelectAll"/>
-                            <Label Grid.Column="2" Target="{Binding ElementName=JointValueP2}">p2</Label>
-                            <TextBox Grid.Column="3" x:Name="JointValueP2" Text="{Binding TargetState.JointSpace.P2, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" GotFocus="TextBoxSelectAll"/>
-                            <Label Grid.Column="4" Target="{Binding ElementName=JointValueP3}">p3</Label>
-                            <TextBox Grid.Column="5" x:Name="JointValueP3" Text="{Binding TargetState.JointSpace.P3, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" GotFocus="TextBoxSelectAll"/>
-                            <Label Grid.Column="6" Target="{Binding ElementName=JointValueP4}">p4</Label>
-                            <TextBox Grid.Column="7" x:Name="JointValueP4" Text="{Binding TargetState.JointSpace.P4, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" GotFocus="TextBoxSelectAll"/>
-                            <Label Grid.Column="8" Target="{Binding ElementName=JointValueR5}">r5</Label>
-                            <TextBox Grid.Column="9" x:Name="JointValueR5" Text="{Binding TargetState.JointSpace.R5, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" GotFocus="TextBoxSelectAll"/>
-                            <UniformGrid Grid.Column="1" Grid.Row="1" Rows="1">
-                                <Button PreviewMouseDown="BtnR1JogDown_N" PreviewMouseUp="BtnJogUp" Command="{Binding JogCommand}" Content="Jog-">
-                                    <Button.CommandParameter>
-                                        <vm:JogParams Joint="{x:Static md:JointSelect.R1}" IsPositive="False"/>
-                                    </Button.CommandParameter>
-                                </Button>
-                                <Button PreviewMouseDown="BtnR1JogDown_P" PreviewMouseUp="BtnJogUp" Content="Jog+" Command="{Binding JogCommand}">
-                                    <Button.CommandParameter>
-                                        <vm:JogParams Joint="R1" IsPositive="True"/>
-                                    </Button.CommandParameter>
-                                </Button>
-                            </UniformGrid>
-                            <UniformGrid Grid.Column="3" Grid.Row="1" Rows="1">
-                                <Button PreviewMouseDown="BtnP2JogDown_N" PreviewMouseUp="BtnJogUp" Content="Jog-" Command="{Binding JogCommand}">
-                                    <Button.CommandParameter>
-                                        <vm:JogParams Joint="P2" IsPositive="False"/>
-                                    </Button.CommandParameter>
-                                </Button>
-                                <Button PreviewMouseDown="BtnP2JogDown_P" PreviewMouseUp="BtnJogUp" Content="Jog+" Command="{Binding JogCommand}">
-                                    <Button.CommandParameter>
-                                        <vm:JogParams Joint="P2" IsPositive="True"/>
-                                    </Button.CommandParameter>
-                                </Button>
-                            </UniformGrid>
-                            <UniformGrid Grid.Column="5" Grid.Row="1" Rows="1">
-                                <Button PreviewMouseDown="BtnP3JogDown_N" PreviewMouseUp="BtnJogUp" Content="Jog-" Command="{Binding JogCommand}">
-                                    <Button.CommandParameter>
-                                        <vm:JogParams Joint="P3" IsPositive="False"/>
-                                    </Button.CommandParameter>
-                                </Button>
-                                <Button PreviewMouseDown="BtnP3JogDown_P" PreviewMouseUp="BtnJogUp" Content="Jog+" Command="{Binding JogCommand}">
-                                    <Button.CommandParameter>
-                                        <vm:JogParams Joint="P3" IsPositive="True"/>
-                                    </Button.CommandParameter>
-                                </Button>
-                            </UniformGrid>
-                            <UniformGrid Grid.Column="7" Grid.Row="1" Rows="1">
-                                <Button PreviewMouseDown="BtnP4JogDown_N" PreviewMouseUp="BtnJogUp" Content="Jog-" Command="{Binding JogCommand}">
-                                    <Button.CommandParameter>
-                                        <vm:JogParams Joint="P4" IsPositive="False"/>
-                                    </Button.CommandParameter>
-                                </Button>
-                                <Button PreviewMouseDown="BtnP4JogDown_P" PreviewMouseUp="BtnJogUp" Content="Jog+" Command="{Binding JogCommand}">
-                                    <Button.CommandParameter>
-                                        <vm:JogParams Joint="P4" IsPositive="True"/>
-                                    </Button.CommandParameter>
-                                </Button>
-                            </UniformGrid>
-                            <UniformGrid Grid.Column="9" Grid.Row="1" Rows="1">
-                                <Button PreviewMouseDown="BtnR5JogDown_N" PreviewMouseUp="BtnJogUp" Content="Jog-" Command="{Binding JogCommand}">
-                                    <Button.CommandParameter>
-                                        <vm:JogParams Joint="R5" IsPositive="False"/>
-                                    </Button.CommandParameter>
-                                </Button>
-                                <Button PreviewMouseDown="BtnR5JogDown_P" PreviewMouseUp="BtnJogUp" Content="Jog+" Command="{Binding JogCommand}">
-                                    <Button.CommandParameter>
-                                        <vm:JogParams Joint="R5" IsPositive="True"/>
-                                    </Button.CommandParameter>
-                                </Button>
-                            </UniformGrid>
-                        </Grid>
-                    </StackPanel>
-                </GroupBox>
-                <Separator/>
-                <GroupBox Header="位姿控制">
+        <StackPanel Grid.Row="2" Grid.Column="0">
+            <StackPanel.Resources>
+                <Style TargetType="Grid">
+                    <Setter Property="Margin" Value="5 0"/>
+                </Style>
+                <Style TargetType="Button" BasedOn="{StaticResource userButton}">
+                    <Setter Property="Margin" Value="2"/>
+                </Style>
+                <Style TargetType="GroupBox" BasedOn="{StaticResource MahApps.Styles.GroupBox.Clean}">
+                    <Setter Property="Padding" Value="5"/>
+                    <Setter Property="Margin" Value="2 0"/>
+                </Style>
+                <Style TargetType="Separator">
+                    <Setter Property="Height" Value="10"/>
+                    <Setter Property="Opacity" Value="0.3"/>
+                    <Setter Property="VerticalAlignment" Value="Center"/>
+                </Style>
+            </StackPanel.Resources>
+            <mah:MetroHeader Header="关节状态">
+                <Grid>
+                    <Grid.Resources>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource leftAlignTextBlock}"/>
+                    </Grid.Resources>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="0.25*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="0.25*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="0.25*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="0.25*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="0.25*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="1.2*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Row="0" Grid.Column="0">R1:</TextBlock>
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CurrentState.JointSpace.R1}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="2">P2:</TextBlock>
+                    <TextBlock Grid.Row="0" Grid.Column="3" Text="{Binding CurrentState.JointSpace.P2}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="4">P3:</TextBlock>
+                    <TextBlock Grid.Row="0" Grid.Column="5" Text="{Binding CurrentState.JointSpace.P3}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="6">P4:</TextBlock>
+                    <TextBlock Grid.Row="0" Grid.Column="7" Text="{Binding CurrentState.JointSpace.P4}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="8">R5:</TextBlock>
+                    <TextBlock Grid.Row="0" Grid.Column="9" Text="{Binding CurrentState.JointSpace.R5}"/>
+                    <Button Grid.Row="0" Grid.Column="10" Grid.ColumnSpan="10" Margin="5" Command="{Binding SetTargetJointsFromCurrentCommand}">设为当前值</Button>
+                </Grid>
+            </mah:MetroHeader>
+            <Separator/>
+            <mah:MetroHeader Header="关节控制">
+                <StackPanel>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="auto"/>
@@ -227,117 +159,201 @@
                             <RowDefinition Height="auto"/>
                             <RowDefinition Height="auto"/>
                         </Grid.RowDefinitions>
-                        <Label Grid.Column="0" Target="{Binding ElementName=PosValueX}">px</Label>
-                        <TextBox Grid.Column="1" x:Name="PosValueX" Text="{Binding TargetState.TaskSpace.Px, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="TextBoxSelectAll"></TextBox>
-                        <Label Grid.Column="2" Target="{Binding ElementName=PosValueY}">py</Label>
-                        <TextBox Grid.Column="3" x:Name="PosValueY" Text="{Binding TargetState.TaskSpace.Py, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="TextBoxSelectAll"></TextBox>
-                        <Label Grid.Column="4" Target="{Binding ElementName=PosValueZ}">pz</Label>
-                        <TextBox Grid.Column="5" x:Name="PosValueZ" Text="{Binding TargetState.TaskSpace.Pz, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="TextBoxSelectAll"></TextBox>
-                        <Label Grid.Column="6" Target="{Binding ElementName=PosValueRy}">ry</Label>
-                        <TextBox Grid.Column="7" x:Name="PosValueRy" Text="{Binding TargetState.TaskSpace.Ry, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="TextBoxSelectAll"></TextBox>
-                        <Label Grid.Column="8" Target="{Binding ElementName=PosValueRz}">rz</Label>
-                        <TextBox Grid.Column="9" x:Name="PosValueRz" Text="{Binding TargetState.TaskSpace.Rz, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="TextBoxSelectAll"></TextBox>
+                        <Label Grid.Column="0" Target="{Binding ElementName=JointValueR1}">r1</Label>
+                        <TextBox Grid.Column="1" x:Name="JointValueR1" Text="{Binding TargetState.JointSpace.R1, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" GotFocus="TextBoxSelectAll"/>
+                        <Label Grid.Column="2" Target="{Binding ElementName=JointValueP2}">p2</Label>
+                        <TextBox Grid.Column="3" x:Name="JointValueP2" Text="{Binding TargetState.JointSpace.P2, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" GotFocus="TextBoxSelectAll"/>
+                        <Label Grid.Column="4" Target="{Binding ElementName=JointValueP3}">p3</Label>
+                        <TextBox Grid.Column="5" x:Name="JointValueP3" Text="{Binding TargetState.JointSpace.P3, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" GotFocus="TextBoxSelectAll"/>
+                        <Label Grid.Column="6" Target="{Binding ElementName=JointValueP4}">p4</Label>
+                        <TextBox Grid.Column="7" x:Name="JointValueP4" Text="{Binding TargetState.JointSpace.P4, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" GotFocus="TextBoxSelectAll"/>
+                        <Label Grid.Column="8" Target="{Binding ElementName=JointValueR5}">r5</Label>
+                        <TextBox Grid.Column="9" x:Name="JointValueR5" Text="{Binding TargetState.JointSpace.R5, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" GotFocus="TextBoxSelectAll"/>
                         <UniformGrid Grid.Column="1" Grid.Row="1" Rows="1">
-                            <Button>Jog-</Button>
-                            <Button>Jog+</Button>
+                            <Button PreviewMouseDown="BtnR1JogDown_N" PreviewMouseUp="BtnJogUp" Command="{Binding JogCommand}" Content="Jog-">
+                                <Button.CommandParameter>
+                                    <vm:JogParams Joint="{x:Static md:JointSelect.R1}" IsPositive="False"/>
+                                </Button.CommandParameter>
+                            </Button>
+                            <Button PreviewMouseDown="BtnR1JogDown_P" PreviewMouseUp="BtnJogUp" Content="Jog+" Command="{Binding JogCommand}">
+                                <Button.CommandParameter>
+                                    <vm:JogParams Joint="R1" IsPositive="True"/>
+                                </Button.CommandParameter>
+                            </Button>
                         </UniformGrid>
                         <UniformGrid Grid.Column="3" Grid.Row="1" Rows="1">
-                            <Button>Jog-</Button>
-                            <Button>Jog+</Button>
+                            <Button PreviewMouseDown="BtnP2JogDown_N" PreviewMouseUp="BtnJogUp" Content="Jog-" Command="{Binding JogCommand}">
+                                <Button.CommandParameter>
+                                    <vm:JogParams Joint="P2" IsPositive="False"/>
+                                </Button.CommandParameter>
+                            </Button>
+                            <Button PreviewMouseDown="BtnP2JogDown_P" PreviewMouseUp="BtnJogUp" Content="Jog+" Command="{Binding JogCommand}">
+                                <Button.CommandParameter>
+                                    <vm:JogParams Joint="P2" IsPositive="True"/>
+                                </Button.CommandParameter>
+                            </Button>
                         </UniformGrid>
                         <UniformGrid Grid.Column="5" Grid.Row="1" Rows="1">
-                            <Button>Jog-</Button>
-                            <Button>Jog+</Button>
+                            <Button PreviewMouseDown="BtnP3JogDown_N" PreviewMouseUp="BtnJogUp" Content="Jog-" Command="{Binding JogCommand}">
+                                <Button.CommandParameter>
+                                    <vm:JogParams Joint="P3" IsPositive="False"/>
+                                </Button.CommandParameter>
+                            </Button>
+                            <Button PreviewMouseDown="BtnP3JogDown_P" PreviewMouseUp="BtnJogUp" Content="Jog+" Command="{Binding JogCommand}">
+                                <Button.CommandParameter>
+                                    <vm:JogParams Joint="P3" IsPositive="True"/>
+                                </Button.CommandParameter>
+                            </Button>
                         </UniformGrid>
                         <UniformGrid Grid.Column="7" Grid.Row="1" Rows="1">
-                            <Button>Jog-</Button>
-                            <Button>Jog+</Button>
+                            <Button PreviewMouseDown="BtnP4JogDown_N" PreviewMouseUp="BtnJogUp" Content="Jog-" Command="{Binding JogCommand}">
+                                <Button.CommandParameter>
+                                    <vm:JogParams Joint="P4" IsPositive="False"/>
+                                </Button.CommandParameter>
+                            </Button>
+                            <Button PreviewMouseDown="BtnP4JogDown_P" PreviewMouseUp="BtnJogUp" Content="Jog+" Command="{Binding JogCommand}">
+                                <Button.CommandParameter>
+                                    <vm:JogParams Joint="P4" IsPositive="True"/>
+                                </Button.CommandParameter>
+                            </Button>
                         </UniformGrid>
                         <UniformGrid Grid.Column="9" Grid.Row="1" Rows="1">
-                            <Button>Jog-</Button>
-                            <Button>Jog+</Button>
+                            <Button PreviewMouseDown="BtnR5JogDown_N" PreviewMouseUp="BtnJogUp" Content="Jog-" Command="{Binding JogCommand}">
+                                <Button.CommandParameter>
+                                    <vm:JogParams Joint="R5" IsPositive="False"/>
+                                </Button.CommandParameter>
+                            </Button>
+                            <Button PreviewMouseDown="BtnR5JogDown_P" PreviewMouseUp="BtnJogUp" Content="Jog+" Command="{Binding JogCommand}">
+                                <Button.CommandParameter>
+                                    <vm:JogParams Joint="R5" IsPositive="True"/>
+                                </Button.CommandParameter>
+                            </Button>
                         </UniformGrid>
                     </Grid>
-                </GroupBox>
-                <Separator/>
-                <GroupBox Header="振动控制">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="1.2*"/>
-                            <ColumnDefinition Width="1.2*"/>
-                            <ColumnDefinition Width="0.5*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="0.5*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="20"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.Resources>
-                            <Style TargetType="TextBlock" BasedOn="{StaticResource centerTextBlock}">
-                                <Setter Property="HorizontalAlignment" Value="Right"/>
-                                <Setter Property="Margin" Value="0 0 5 0"/>
-                            </Style>
-                        </Grid.Resources>
-                        <CheckBox Grid.Column="0" Content="水平横向振动" IsChecked="{Binding IsVibrateHorizontal}" IsEnabled="{Binding IsVibrating, Converter={StaticResource BoolInverseConverter}}"/>
-                        <CheckBox Grid.Column="1" HorizontalAlignment="Center" Content="竖直振动" IsChecked="{Binding IsVibrateVertical}" IsEnabled="{Binding IsVibrating, Converter={StaticResource BoolInverseConverter}}"/>
-                        <TextBlock Grid.Column="2" Text="振幅"/>
-                        <TextBox Grid.Column="3" Text="{Binding VibrateAmplitude}" IsEnabled="{Binding IsVibrating, Converter={StaticResource BoolInverseConverter}}"/>
-                        <TextBlock Grid.Column="4" Text="频率"/>
-                        <TextBox Grid.Column="5" Text="{Binding VibrateFrequency}" IsEnabled="{Binding IsVibrating, Converter={StaticResource BoolInverseConverter}}"/>
-                        <Button Grid.Column="7" Content="{Binding IsVibrating, Converter={StaticResource VibrateBtnConverter}}" Command="{Binding ToggleVibrateCommand}"/>
-                    </Grid>
-                </GroupBox>
-                <Separator/>
-                <Grid Margin="7">
-                    <Grid.RowDefinitions>
-                        <RowDefinition/>
-                        <RowDefinition/>
-                        <RowDefinition/>
-                    </Grid.RowDefinitions>
+                </StackPanel>
+            </mah:MetroHeader>
+            <Separator/>
+            <mah:MetroHeader Header="位姿控制">
+                <Grid>
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto"/>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="auto"/>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="auto"/>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="auto"/>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Button Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Command="{Binding RobotRunCommand}">运行</Button>
-                    <Button Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="2" Command="{Binding RobotSetZeroCommand}" ToolTip="将当前的位置设为零点">置零</Button>
-                    <Button Grid.Row="0" Grid.Column="4" Grid.ColumnSpan="2" Command="{Binding RobotStopCommand}">停止</Button>
-                    <Button Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="6" Command="{Binding OpenCameraCommand}">启动相机</Button>
-                    <Button Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Content="连接服务器" Click="BtnConnectServer_Click"/>
-                    <Button Grid.Row="2" Grid.Column="3" Grid.ColumnSpan="3" Content="断开服务器" Click="BtnDisconnectServer_Click"/>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                    </Grid.RowDefinitions>
+                    <Label Grid.Column="0" Target="{Binding ElementName=PosValueX}">px</Label>
+                    <TextBox Grid.Column="1" x:Name="PosValueX" Text="{Binding TargetState.TaskSpace.Px, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="TextBoxSelectAll"></TextBox>
+                    <Label Grid.Column="2" Target="{Binding ElementName=PosValueY}">py</Label>
+                    <TextBox Grid.Column="3" x:Name="PosValueY" Text="{Binding TargetState.TaskSpace.Py, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="TextBoxSelectAll"></TextBox>
+                    <Label Grid.Column="4" Target="{Binding ElementName=PosValueZ}">pz</Label>
+                    <TextBox Grid.Column="5" x:Name="PosValueZ" Text="{Binding TargetState.TaskSpace.Pz, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="TextBoxSelectAll"></TextBox>
+                    <Label Grid.Column="6" Target="{Binding ElementName=PosValueRy}">ry</Label>
+                    <TextBox Grid.Column="7" x:Name="PosValueRy" Text="{Binding TargetState.TaskSpace.Ry, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="TextBoxSelectAll"></TextBox>
+                    <Label Grid.Column="8" Target="{Binding ElementName=PosValueRz}">rz</Label>
+                    <TextBox Grid.Column="9" x:Name="PosValueRz" Text="{Binding TargetState.TaskSpace.Rz, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="TextBoxSelectAll"></TextBox>
+                    <UniformGrid Grid.Column="1" Grid.Row="1" Rows="1">
+                        <Button>Jog-</Button>
+                        <Button>Jog+</Button>
+                    </UniformGrid>
+                    <UniformGrid Grid.Column="3" Grid.Row="1" Rows="1">
+                        <Button>Jog-</Button>
+                        <Button>Jog+</Button>
+                    </UniformGrid>
+                    <UniformGrid Grid.Column="5" Grid.Row="1" Rows="1">
+                        <Button>Jog-</Button>
+                        <Button>Jog+</Button>
+                    </UniformGrid>
+                    <UniformGrid Grid.Column="7" Grid.Row="1" Rows="1">
+                        <Button>Jog-</Button>
+                        <Button>Jog+</Button>
+                    </UniformGrid>
+                    <UniformGrid Grid.Column="9" Grid.Row="1" Rows="1">
+                        <Button>Jog-</Button>
+                        <Button>Jog+</Button>
+                    </UniformGrid>
                 </Grid>
-            </StackPanel>
-        </GroupBox>
-        <GroupBox Grid.Row="1" Grid.Column="3" Header="机器人关节状态" MinWidth="150" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
-            <Grid Margin="5">
+            </mah:MetroHeader>
+            <Separator/>
+            <mah:MetroHeader Header="振动控制">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.2*"/>
+                        <ColumnDefinition Width="1.2*"/>
+                        <ColumnDefinition Width="0.5*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="0.5*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="20"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.Resources>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource centerTextBlock}">
+                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                            <Setter Property="Margin" Value="0 0 5 0"/>
+                        </Style>
+                    </Grid.Resources>
+                    <CheckBox Grid.Column="0" Content="水平横向振动" IsChecked="{Binding IsVibrateHorizontal}" IsEnabled="{Binding IsVibrating, Converter={StaticResource BoolInverseConverter}}"/>
+                    <CheckBox Grid.Column="1" HorizontalAlignment="Center" Content="竖直振动" IsChecked="{Binding IsVibrateVertical}" IsEnabled="{Binding IsVibrating, Converter={StaticResource BoolInverseConverter}}"/>
+                    <TextBlock Grid.Column="2" Text="振幅"/>
+                    <TextBox Grid.Column="3" Text="{Binding VibrateAmplitude}" IsEnabled="{Binding IsVibrating, Converter={StaticResource BoolInverseConverter}}"/>
+                    <TextBlock Grid.Column="4" Text="频率"/>
+                    <TextBox Grid.Column="5" Text="{Binding VibrateFrequency}" IsEnabled="{Binding IsVibrating, Converter={StaticResource BoolInverseConverter}}"/>
+                    <Button Grid.Column="7" Content="{Binding IsVibrating, Converter={StaticResource VibrateBtnConverter}}" Command="{Binding ToggleVibrateCommand}"/>
+                </Grid>
+            </mah:MetroHeader>
+            <Separator/>
+            <Grid Margin="7">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Row="0" Grid.Column="0">R1:</TextBlock>
-                <TextBlock Grid.Row="1" Grid.Column="0">P2:</TextBlock>
-                <TextBlock Grid.Row="2" Grid.Column="0">P3:</TextBlock>
-                <TextBlock Grid.Row="3" Grid.Column="0">P4:</TextBlock>
-                <TextBlock Grid.Row="4" Grid.Column="0">R5:</TextBlock>
-                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CurrentState.JointSpace.R1}"/>
-                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding CurrentState.JointSpace.P2}"/>
-                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding CurrentState.JointSpace.P3}"/>
-                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding CurrentState.JointSpace.P4}"/>
-                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding CurrentState.JointSpace.R5}"/>
-                <Button Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Margin="0 5" Command="{Binding SetTargetJointsFromCurrentCommand}">设为当前值</Button>
+                <Button Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Command="{Binding RobotRunCommand}">运行</Button>
+                <Button Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="2" Command="{Binding RobotSetZeroCommand}" ToolTip="将当前的位置设为零点">置零</Button>
+                <Button Grid.Row="0" Grid.Column="4" Grid.ColumnSpan="2" Command="{Binding RobotStopCommand}">停止</Button>
+                <Button Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="6" Command="{Binding OpenCameraCommand}">启动相机</Button>
+                <Button Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Content="连接服务器" Click="BtnConnectServer_Click"/>
+                <Button Grid.Row="2" Grid.Column="3" Grid.ColumnSpan="3" Content="断开服务器" Click="BtnDisconnectServer_Click"/>
             </Grid>
-        </GroupBox>
-        <GridSplitter VerticalAlignment="Stretch" HorizontalAlignment="Center" Grid.Row="1" Grid.Column="1" Width="8" />
+        </StackPanel>
+        <mah:MetroHeader Grid.Row="2" Grid.Column="3" Header="预存点位" MinWidth="150">
+            <StackPanel>
+                <StackPanel.Resources>
+                    <Style TargetType="Button" BasedOn="{StaticResource userButton}">
+                        <Setter Property="Margin" Value="0 5"/>
+                    </Style>
+                </StackPanel.Resources>
+                <Button Command="{Binding SetTargetJointsCommand}" CommandParameter="{x:Static vm:MainViewModel.ZeroPos}">零点位</Button>
+                <Button Command="{Binding SetTargetJointsCommand}" CommandParameter="{x:Static vm:MainViewModel.IdlePos}">待机位</Button>
+                <Button Command="{Binding SetTargetJointsCommand}" CommandParameter="{x:Static vm:MainViewModel.PreChangeJawPos}">换夹钳预备位</Button>
+                <Button Command="{Binding SetTargetJointsCommand}" CommandParameter="{x:Static vm:MainViewModel.ChangeJawPos}">换夹钳位</Button>
+                <Button Command="{Binding SetTargetJointsCommand}" CommandParameter="{x:Static vm:MainViewModel.PreFetchRingPos}">取零件环预备位</Button>
+                <Button Command="{Binding SetTargetJointsCommand}" CommandParameter="{x:Static vm:MainViewModel.FetchRingPos}">取零件环位</Button>
+                <Button Command="{Binding SetTargetJointsCommand}" CommandParameter="{x:Static vm:MainViewModel.AssemblePos1}">装配位1</Button>
+                <Button Command="{Binding SetTargetJointsCommand}" CommandParameter="{x:Static vm:MainViewModel.PreAssemblePos2}">装配位2前置位</Button>
+                <Button Command="{Binding SetTargetJointsCommand}" CommandParameter="{x:Static vm:MainViewModel.AssemblePos2}">装配位2</Button>
+                <Button Command="{Binding SetTargetJointsCommand}" CommandParameter="{x:Static vm:MainViewModel.AssemblePos3}">装配位3</Button>
+            </StackPanel>
+        </mah:MetroHeader>
+        <GridSplitter VerticalAlignment="Stretch" HorizontalAlignment="Center" Grid.Row="2" Grid.Column="1" Width="8" />
+        <GridSplitter VerticalAlignment="Center" HorizontalAlignment="Stretch" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Height="2"/>
     </Grid>
 </mah:MetroWindow>
