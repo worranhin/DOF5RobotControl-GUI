@@ -25,7 +25,8 @@
     <Keyword>NetCoreCProj</Keyword>
     <RootNamespace>VisionLibrary</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
+    <WindowsTargetPlatformMinVersion>10.0.17763.0</WindowsTargetPlatformMinVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -144,6 +145,15 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="app.ico" />
+    <Image Include="model\botCTemplate\clamp_bot.png" />
+    <Image Include="model\clampTemplate\clamp.png" />
+    <Image Include="model\posTemplate\PosTemple_2.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="model\jawTemplate\Descriptors_Jaw.yml" />
+    <None Include="model\jawTemplate\KeyPoints_Jaw.yml" />
+    <None Include="model\jawTemplate\shm\Temp_DL.shm" />
+    <None Include="model\jawTemplate\shm\Temp_DR.shm" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

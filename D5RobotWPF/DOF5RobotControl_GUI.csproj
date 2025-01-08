@@ -66,6 +66,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\D5RobotController_CLR\D5RobotController_CLR.vcxproj" />
+    <ProjectReference Include="..\VisionLibrary\VisionLibrary.vcxproj" />
   </ItemGroup>
 
   <ItemGroup>

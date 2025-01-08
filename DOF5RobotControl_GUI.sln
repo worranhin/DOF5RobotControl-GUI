@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "D5RobotController_CLR", "D5
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DOF5RobotControl_GUI", "D5RobotWPF\DOF5RobotControl_GUI.csproj", "{C2619E88-8161-48C4-90EE-508F8AD8762E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VisionLibrary", "VisionLibrary\VisionLibrary.vcxproj", "{AA75C10A-1138-4EBC-8307-A41E08FBF18C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,6 +43,18 @@ Global
 		{C2619E88-8161-48C4-90EE-508F8AD8762E}.Release|x64.Build.0 = Release|x64
 		{C2619E88-8161-48C4-90EE-508F8AD8762E}.Release|x86.ActiveCfg = Release|Any CPU
 		{C2619E88-8161-48C4-90EE-508F8AD8762E}.Release|x86.Build.0 = Release|Any CPU
+		{AA75C10A-1138-4EBC-8307-A41E08FBF18C}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{AA75C10A-1138-4EBC-8307-A41E08FBF18C}.Debug|Any CPU.Build.0 = Debug|x64
+		{AA75C10A-1138-4EBC-8307-A41E08FBF18C}.Debug|x64.ActiveCfg = Debug|x64
+		{AA75C10A-1138-4EBC-8307-A41E08FBF18C}.Debug|x64.Build.0 = Debug|x64
+		{AA75C10A-1138-4EBC-8307-A41E08FBF18C}.Debug|x86.ActiveCfg = Debug|Win32
+		{AA75C10A-1138-4EBC-8307-A41E08FBF18C}.Debug|x86.Build.0 = Debug|Win32
+		{AA75C10A-1138-4EBC-8307-A41E08FBF18C}.Release|Any CPU.ActiveCfg = Release|x64
+		{AA75C10A-1138-4EBC-8307-A41E08FBF18C}.Release|Any CPU.Build.0 = Release|x64
+		{AA75C10A-1138-4EBC-8307-A41E08FBF18C}.Release|x64.ActiveCfg = Release|x64
+		{AA75C10A-1138-4EBC-8307-A41E08FBF18C}.Release|x64.Build.0 = Release|x64
+		{AA75C10A-1138-4EBC-8307-A41E08FBF18C}.Release|x86.ActiveCfg = Release|Win32
+		{AA75C10A-1138-4EBC-8307-A41E08FBF18C}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -8,5 +8,14 @@
 #define PCH_H
 
 // 添加要在此处预编译的标头
+#pragma managed(push, off) // OpenCV 的头文件中包含一些不受 CLR 支持的代码，所以需要关闭托管代码
+#include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/features2d.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/calib3d.hpp>
+#pragma managed(pop)
+#include "halconcpp/HalconCpp.h"
+#include <iostream>
 
 #endif //PCH_H

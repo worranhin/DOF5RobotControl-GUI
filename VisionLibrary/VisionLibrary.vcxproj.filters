@@ -51,5 +51,28 @@
     <Image Include="app.ico">
       <Filter>资源文件</Filter>
     </Image>
+    <Image Include="model\clampTemplate\clamp.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="model\posTemplate\PosTemple_2.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="model\botCTemplate\clamp_bot.png">
+      <Filter>资源文件</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="model\jawTemplate\KeyPoints_Jaw.yml">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="model\jawTemplate\Descriptors_Jaw.yml">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="model\jawTemplate\shm\Temp_DL.shm">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="model\jawTemplate\shm\Temp_DR.shm">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
 </Project>
