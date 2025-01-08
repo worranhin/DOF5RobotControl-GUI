@@ -80,7 +80,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         [ObservableProperty]
         private bool _isVibrateVertical = false;
         [ObservableProperty]
-        private double _vibrateAmplitude = 1.0;
+        private double _vibrateAmplitude = 0.1;
         [ObservableProperty]
         private double _vibrateFrequency = 1.0;
 
@@ -381,8 +381,18 @@ namespace DOF5RobotControl_GUI.ViewModel
 
             if (!IsVibrating)
             {
-                VibrateHelper.Start(IsVibrateHorizontal, IsVibrateVertical, VibrateAmplitude, VibrateFrequency);
-                IsVibrating = true;
+                try
+                {
+                    VibrateHelper.Start(IsVibrateHorizontal, IsVibrateVertical, VibrateAmplitude, VibrateFrequency);
+                    IsVibrating = true;
+                }
+                catch (ArgumentException exc)
+                {
+                    if (exc.ParamName == "vibrateVertical")
+                        MessageBox.Show(exc.Message, "Error while toggle vibration");
+                    else
+                        throw;
+                }
             }
             else
             {

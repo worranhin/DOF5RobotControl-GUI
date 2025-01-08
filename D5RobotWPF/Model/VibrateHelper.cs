@@ -90,17 +90,15 @@ namespace DOF5RobotControl_GUI.Model
                 var x = amplitude * Math.Sin(2 * Math.PI * frequency * t);  // 正弦函数，频率为 frequency，幅值为正负 amplitude 单位 mm
                 Debug.WriteLine($"{t}: {x}");
 
-                Joints joints = new();
+                Joints joints = targetState.ToD5RJoints();
                 if (vibrateHorizontal)
-                    joints.P2 += (int)(x * 1000000); // 1 mm
+                    joints.P2 += (int)(x * 1000000); // x mm
                 if (vibrateVertical)
                     joints.P4 += (int)(x * 1000000);
 
                 robot.JointsMoveAbsolute(joints);
 
-                vibrateCancelToken.ThrowIfCancellationRequested();
-
-                Thread.Sleep(10);
+                Thread.Sleep(5);
             }
 
             robot.JointsMoveAbsolute(targetState.ToD5RJoints());
