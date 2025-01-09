@@ -242,6 +242,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             if (!IsInserting)
             {
                 insertCancelSource = new();
+                insertCancelToken = insertCancelSource.Token;
                 Task.Run(() =>
                 {
                     while (!insertCancelToken.IsCancellationRequested)

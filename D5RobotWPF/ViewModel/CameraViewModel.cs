@@ -279,7 +279,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                             Debug.WriteLine("AcquisitionFrameRate not supported");
                         }
 
-                        /*** 相机配置结束 ***/
+                        /***** 相机配置结束 *****/
 
                         stream.StartGrab();  // 开启流通道
                         featControl.GetCommandFeature("AcquisitionStart").Execute();  // 发送开采命令，必须先开启流通道
