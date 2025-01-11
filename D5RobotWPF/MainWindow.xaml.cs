@@ -31,32 +31,19 @@ namespace DOF5RobotControl_GUI
     /// 
     public partial class MainWindow : MetroWindow
     {     
-        //readonly string natorId = "usb:id:7547982319";
-        
         internal readonly MainViewModel viewModel;
         
-        
-        //private RoboticState targetState = new(0, 0, 0, 0, 0);
-        //private RoboticState currentState = new(0, 0, 0, 0, 0);
         Thread serverThread;
         CancellationTokenSource opcTaskCancelSource;
         CancellationToken opcTaskCancelToken;
-        const uint jogPeriod = 20;  // ms
-
-        //static public double[] joints100;
 
         public MainWindow()
         {
             InitializeComponent();
 
             // 初始化 ViewModel
-            viewModel = new(this);
+            viewModel = new(this.Dispatcher);
             DataContext = viewModel;
-
-            // 初始化 Serial
-            viewModel.PortsAvailable = SerialPort.GetPortNames();
-            if (viewModel.PortsAvailable.Length > 0)
-                viewModel.SelectedPort = viewModel.PortsAvailable[0];            
 
             // 初始化 OPC
             opcTaskCancelSource = new();
@@ -84,10 +71,10 @@ namespace DOF5RobotControl_GUI
                 server.Configuration = OpcApplicationConfiguration.LoadServerConfig("Opc.UaFx.Server");
                 server.ApplicationName = "DOF5ROBOT";//应用名称
                 server.Start();
-                Random rd = new Random();
+                //Random rd = new Random(); 意义不明的操作，先注释掉，没问题再删
                 while (!opcTaskCancelToken.IsCancellationRequested)
                 {
-                    int i = rd.Next();
+                    //int i = rd.Next();
 
                     Thread.Sleep(1000);
                 }
@@ -114,9 +101,6 @@ namespace DOF5RobotControl_GUI
 
         private void BtnJogUp(object sender, MouseButtonEventArgs e)
         {
-            //jogHandler?.StopJogging();
-            //jogTimer?.Stop();
-            //jogTimer = null;
             viewModel.StopJogContinuous();
         }
 
@@ -130,69 +114,10 @@ namespace DOF5RobotControl_GUI
             };
 
             viewModel.StartJogContinuous(param);
-            //Console.WriteLine("Button was clicked!");
-            //if (jogHandler == null)
-            //{
-            //    MessageBox.Show("Robot not connected.");
-            //    return;
-            //}
-            //Joints joints = new(-viewModel.RMDJogResolution, 0, 0, 0, 0);
-            //viewModel.jogHandler?.StartJogging(joints);
-
-
-            //if (viewModel.JogModeSelected == JogMode.Continuous)
-            //{
-            //JogParams param = new()
-            //{
-            //    Joint = JointSelect.R1,
-            //    IsPositive = false
-            //};
-
-            //double resolution = 0;
-            //switch (viewModel.JogResolutionSelected)
-            //{
-            //    case JogResolution.Speed1mm:
-            //        resolution = 1;
-            //        break;
-            //    case JogResolution.Speed100um:
-            //        resolution = 0.1;
-            //        break;
-            //    case JogResolution.Speed10um:
-            //        resolution = 0.01;
-            //        break;
-            //    default:
-            //        break;
-            //}
-
-            //if (!param.IsPositive)
-            //    resolution = -resolution;  // 每秒步进量
-
-            //jogTimer = new(jogPeriod);
-            //resolution = resolution * jogPeriod / 1000;  // 每次控制的步进量
-            //jogTimer.Elapsed += (source, e) =>
-            //{
-            //    viewModel.TargetState.JointSpace.R1 += resolution;
-            //    //viewModel.RobotRunCommand.Execute(null);
-            //};
-
-            //jogTimer.Start();
-
-            //}
-            //viewModel.JogCommand.Execute(param);
-        }
-
-        private void BtnR1JogUp_N(object sender, MouseButtonEventArgs e)
-        {
-            //jogHandler?.StopJogging();
-            //jogTimer?.Stop();
-            //jogTimer = null;
-            viewModel.StopJogContinuous();
         }
 
         private void BtnR1JogDown_P(object sender, MouseButtonEventArgs e)
         {
-            //Joints joints = new(RMDJogResolution, 0, 0, 0, 0);
-            //jogHandler?.StartJogging(joints);
             JogParams param = new()
             {
                 Joint = JointSelect.R1,
@@ -202,17 +127,10 @@ namespace DOF5RobotControl_GUI
             viewModel.StartJogContinuous(param);
         }
 
-        private void BtnR1JogUp_P(object sender, MouseButtonEventArgs e)
-        {
-            //jogHandler?.StopJogging();
-        }
-
         // P2 jogging button callbacks //
 
         private void BtnP2JogDown_N(object sender, MouseButtonEventArgs e)
         {
-            //Joints joints = new(0, -natorJogResolution, 0, 0, 0);
-            //jogHandler?.StartJogging(joints);
             JogParams param = new()
             {
                 Joint = JointSelect.P2,
@@ -222,15 +140,8 @@ namespace DOF5RobotControl_GUI
             viewModel.StartJogContinuous(param);
         }
 
-        private void BtnP2JogUp_N(object sender, MouseButtonEventArgs e)
-        {
-            //jogHandler?.StopJogging();
-        }
-
         private void BtnP2JogDown_P(object sender, MouseButtonEventArgs e)
         {
-            //Joints joints = new(0, natorJogResolution, 0, 0, 0);
-            //jogHandler?.StartJogging(joints);
             JogParams param = new()
             {
                 Joint = JointSelect.P2,
@@ -238,19 +149,12 @@ namespace DOF5RobotControl_GUI
             };
 
             viewModel.StartJogContinuous(param);
-        }
-
-        private void BtnP2JogUp_P(object sender, MouseButtonEventArgs e)
-        {
-            //jogHandler?.StopJogging();
         }
 
         // P3 jogging button callbacks //
 
         private void BtnP3JogDown_N(object sender, MouseButtonEventArgs e)
         {
-            //Joints joints = new(0, 0, -natorJogResolution, 0, 0);
-            //jogHandler?.StartJogging(joints);
             JogParams param = new()
             {
                 Joint = JointSelect.P3,
@@ -260,15 +164,8 @@ namespace DOF5RobotControl_GUI
             viewModel.StartJogContinuous(param);
         }
 
-        private void BtnP3JogUp_N(object sender, MouseButtonEventArgs e)
-        {
-            //jogHandler?.StopJogging();
-        }
-
         private void BtnP3JogDown_P(object sender, MouseButtonEventArgs e)
         {
-            //Joints joints = new(0, 0, natorJogResolution, 0, 0);
-            //jogHandler?.StartJogging(joints);
             JogParams param = new()
             {
                 Joint = JointSelect.P3,
@@ -276,19 +173,12 @@ namespace DOF5RobotControl_GUI
             };
 
             viewModel.StartJogContinuous(param);
-        }
-
-        private void BtnP3JogUp_P(object sender, MouseButtonEventArgs e)
-        {
-            //jogHandler?.StopJogging();
         }
 
         // P4 jogging button callbacks //
 
         private void BtnP4JogDown_N(object sender, MouseButtonEventArgs e)
         {
-            //Joints joints = new(0, 0, 0, -natorJogResolution, 0);
-            //jogHandler?.StartJogging(joints);
             JogParams param = new()
             {
                 Joint = JointSelect.P4,
@@ -298,15 +188,8 @@ namespace DOF5RobotControl_GUI
             viewModel.StartJogContinuous(param);
         }
 
-        private void BtnP4JogUp_N(object sender, MouseButtonEventArgs e)
-        {
-            //jogHandler?.StopJogging();
-        }
-
         private void BtnP4JogDown_P(object sender, MouseButtonEventArgs e)
         {
-            //Joints joints = new(0, 0, 0, natorJogResolution, 0);
-            //jogHandler?.StartJogging(joints);
             JogParams param = new()
             {
                 Joint = JointSelect.P4,
@@ -314,19 +197,12 @@ namespace DOF5RobotControl_GUI
             };
 
             viewModel.StartJogContinuous(param);
-        }
-
-        private void BtnP4JogUp_P(object sender, MouseButtonEventArgs e)
-        {
-            //jogHandler?.StopJogging();
         }
 
         // R5 jogging button callbacks //
 
         private void BtnR5JogDown_N(object sender, MouseButtonEventArgs e)
         {
-            //Joints joints = new(0, 0, 0, 0, -RMDJogResolution);
-            //jogHandler?.StartJogging(joints);
             JogParams param = new()
             {
                 Joint = JointSelect.R5,
@@ -336,15 +212,8 @@ namespace DOF5RobotControl_GUI
             viewModel.StartJogContinuous(param);
         }
 
-        private void BtnR5JogUp_N(object sender, MouseButtonEventArgs e)
-        {
-            //jogHandler?.StopJogging();
-        }
-
         private void BtnR5JogDown_P(object sender, MouseButtonEventArgs e)
         {
-            //Joints joints = new(0, 0, 0, 0, RMDJogResolution);
-            //jogHandler?.StartJogging(joints);
             JogParams param = new()
             {
                 Joint = JointSelect.R5,
@@ -354,16 +223,9 @@ namespace DOF5RobotControl_GUI
             viewModel.StartJogContinuous(param);
         }
 
-        private void BtnR5JogUp_P(object sender, MouseButtonEventArgs e)
-        {
-            //jogHandler?.StopJogging();
-        }
-
         private void TextBoxSelectAll(object sender, RoutedEventArgs e)
         {
-            var textbox = sender as TextBox;
-            Debug.WriteLine(textbox);
-            if (textbox != null)
+            if (sender is TextBox textbox)
                 textbox.SelectAll();
             else
                 Debug.WriteLine("no textbox");

@@ -159,15 +159,15 @@
                             <RowDefinition Height="auto"/>
                         </Grid.RowDefinitions>
                         <Label Grid.Column="0" Target="{Binding ElementName=JointValueR1}">r1</Label>
-                        <TextBox Grid.Column="1" x:Name="JointValueR1" Text="{Binding TargetState.JointSpace.R1, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" GotFocus="TextBoxSelectAll"/>
+                        <TextBox Grid.Column="1" x:Name="JointValueR1" Text="{Binding TargetState.JointSpace.R1, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F2}" GotFocus="TextBoxSelectAll"/>
                         <Label Grid.Column="2" Target="{Binding ElementName=JointValueP2}">p2</Label>
-                        <TextBox Grid.Column="3" x:Name="JointValueP2" Text="{Binding TargetState.JointSpace.P2, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" GotFocus="TextBoxSelectAll"/>
+                        <TextBox Grid.Column="3" x:Name="JointValueP2" Text="{Binding TargetState.JointSpace.P2, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F4}" GotFocus="TextBoxSelectAll"/>
                         <Label Grid.Column="4" Target="{Binding ElementName=JointValueP3}">p3</Label>
-                        <TextBox Grid.Column="5" x:Name="JointValueP3" Text="{Binding TargetState.JointSpace.P3, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" GotFocus="TextBoxSelectAll"/>
+                        <TextBox Grid.Column="5" x:Name="JointValueP3" Text="{Binding TargetState.JointSpace.P3, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F4}" GotFocus="TextBoxSelectAll"/>
                         <Label Grid.Column="6" Target="{Binding ElementName=JointValueP4}">p4</Label>
-                        <TextBox Grid.Column="7" x:Name="JointValueP4" Text="{Binding TargetState.JointSpace.P4, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" GotFocus="TextBoxSelectAll"/>
+                        <TextBox Grid.Column="7" x:Name="JointValueP4" Text="{Binding TargetState.JointSpace.P4, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F4}" GotFocus="TextBoxSelectAll"/>
                         <Label Grid.Column="8" Target="{Binding ElementName=JointValueR5}">r5</Label>
-                        <TextBox Grid.Column="9" x:Name="JointValueR5" Text="{Binding TargetState.JointSpace.R5, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" GotFocus="TextBoxSelectAll"/>
+                        <TextBox Grid.Column="9" x:Name="JointValueR5" Text="{Binding TargetState.JointSpace.R5, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F2}" GotFocus="TextBoxSelectAll"/>
                         <UniformGrid Grid.Column="1" Grid.Row="1" Rows="1">
                             <Button PreviewMouseDown="BtnR1JogDown_N" PreviewMouseUp="BtnJogUp" Command="{Binding JogCommand}" Content="Jog-">
                                 <Button.CommandParameter>
