@@ -30,9 +30,9 @@ namespace DOF5RobotControl_GUI
     /// </summary>
     /// 
     public partial class MainWindow : MetroWindow
-    {     
+    {
         internal readonly MainViewModel viewModel;
-        
+
         Thread serverThread;
         CancellationTokenSource opcTaskCancelSource;
         CancellationToken opcTaskCancelToken;
@@ -57,8 +57,8 @@ namespace DOF5RobotControl_GUI
         private void Window_Closed(object? sender, EventArgs e)
         {
             Debug.WriteLine("Window closed");
-            opcTaskCancelSource.Cancel();            
-        }     
+            opcTaskCancelSource.Cancel();
+        }
 
         private void ServerRunTask()
         {
@@ -97,12 +97,12 @@ namespace DOF5RobotControl_GUI
 
         /***** UI 事件 *****/
 
-        // R1 jogging button callbacks //
-
         private void BtnJogUp(object sender, MouseButtonEventArgs e)
         {
             viewModel.StopJogContinuous();
         }
+
+        // R1 jogging button callbacks //
 
         private void BtnR1JogDown_N(object sender, MouseButtonEventArgs e)
         {
@@ -229,6 +229,17 @@ namespace DOF5RobotControl_GUI
                 textbox.SelectAll();
             else
                 Debug.WriteLine("no textbox");
+        }
+
+        /// <summary>
+        /// 处理输入文本框按下 Enter 的事件，使得按下 Enter 后更新 Binding 的属性
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void JointTextbox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter && sender is TextBox textBox)
+                textBox.GetBindingExpression(TextBox.TextProperty).UpdateSource();
         }
     }
 }

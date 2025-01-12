@@ -17,8 +17,8 @@ namespace DOF5RobotControl_GUI.Model
     {
         private PropertyChangedEventHandler jointChangedHandler = (sender, e) => { };
         private PropertyChangedEventHandler taskChangedHandler = (sender, e) => { };
-        private bool jointIsUpdating = false;
-        private bool taskIsUpdating = false;
+        private bool isJointUpdating = false;
+        private bool isTaskUpdating = false;
 
         [ObservableProperty]
         private JointSpace _jointSpace = new();
@@ -47,12 +47,13 @@ namespace DOF5RobotControl_GUI.Model
         {
             JointSpace.PropertyChanging += (sender, e) =>
             {
-                jointIsUpdating = true; // 指示正在更新属性
+                isJointUpdating = true; // 指示正在更新属性
             };
 
             JointSpace.PropertyChanged += (sender, e) =>
             {
-                if (!taskIsUpdating) // 如果本来就在更新属性，则不要再根据 joint 更新，避免互相递归地调用
+                Debug.WriteLine("joint property changed");
+                if (!isTaskUpdating) // 如果本来就在更新属性，则不要再根据 joint 更新，避免互相递归地调用
                 {
                     if (!JointSpace.HasErrors)
                     {
@@ -61,23 +62,23 @@ namespace DOF5RobotControl_GUI.Model
 
                 }
 
-                jointIsUpdating = false; // 指示结束更新属性
+                isJointUpdating = false; // 指示结束更新属性
             };
 
             TaskSpace.PropertyChanging += (sender, e) =>
             {
-                taskIsUpdating = true;
+                isTaskUpdating = true;
             };
 
             TaskSpace.PropertyChanged += (sender, e) =>
             {
-                if (!jointIsUpdating)
+                if (!isJointUpdating)
                 {
                     KineHelper.Inverse(TaskSpace, JointSpace);
                     //KineHelper.ClipJoint(JointSpace);  // TODO: 处理超程问题
                     //KineHelper.Forward(JointSpace, TaskSpace);
                 }
-                taskIsUpdating = false;
+                isTaskUpdating = false;
             };
         }
 
