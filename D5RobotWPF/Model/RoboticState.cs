@@ -52,7 +52,6 @@ namespace DOF5RobotControl_GUI.Model
 
             JointSpace.PropertyChanged += (sender, e) =>
             {
-                Debug.WriteLine("joint property changed");
                 if (!isTaskUpdating) // 如果本来就在更新属性，则不要再根据 joint 更新，避免互相递归地调用
                 {
                     if (!JointSpace.HasErrors)

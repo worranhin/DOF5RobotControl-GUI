@@ -448,7 +448,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             // 创建一个 EventArgs 实例来传递给 ButtonClicked 方法
             switch (method)
             {
-                case 1: PortRefresh(); break;
+                case 1: PortRefreshCommand.Execute(null); break;
                 case 2: ToggleConnectCommand.Execute(null); break;
                 case 3: SetTargetJointsCommand.Execute(ZeroPos); break;
                 case 4: SetTargetJointsCommand.Execute(IdlePos); break;
@@ -459,9 +459,9 @@ namespace DOF5RobotControl_GUI.ViewModel
                 case 9: SetTargetJointsCommand.Execute(AssemblePos3); break;
                 case 10: SetTargetJointsCommand.Execute(PreFetchRingPos); break;
                 case 11: SetTargetJointsCommand.Execute(FetchRingPos); break;
-                case 12: RobotRun(); break;
-                case 13: RobotStop(); break;
-                case 14: RobotSetZero(); break;
+                case 12: RobotRunCommand.Execute(null); break;
+                case 13: RobotStopCommand.Execute(null); break;
+                case 14: RobotSetZeroCommand.Execute(null); break;
             }
 
             // 备份，对照
