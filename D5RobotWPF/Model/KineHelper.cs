@@ -39,10 +39,10 @@ namespace DOF5RobotControl_GUI.Model
             var m1 = l3 + l5 + lty + joint.P2;
             double px, py, pz, ry, rz;
 
-            if (!CheckJoint(joint))
-            {
-                throw new ArgumentOutOfRangeException(nameof(joint), "关节超出限位。");
-            }
+            //if (!CheckJoint(joint)) // TODO: 在别的地方处理这个限位，因为 CurrentState 也会调用这个，所以在这里不合适
+            //{
+            //    throw new ArgumentOutOfRangeException(nameof(joint), "关节超出限位。");
+            //}
 
             px = m1 * Sind(joint.R1)
                     + joint.P3 * Cosd(joint.R1)

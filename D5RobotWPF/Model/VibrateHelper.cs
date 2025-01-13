@@ -26,15 +26,6 @@ namespace DOF5RobotControl_GUI.Model
             vibrateCancelSource?.Cancel();
         }
 
-        // TODO: 删除这个旧函数
-        public void Start()
-        {
-            vibrateCancelSource?.Dispose();
-            vibrateCancelSource = new();
-            vibrateCancelToken = vibrateCancelSource.Token;
-            Task.Run(VibrateTask, vibrateCancelToken);
-        }
-
         public void Start(bool vibrateHorizontal, bool vibrateVertical, double amplitude, double frequency)
         {
             if (vibrateHorizontal == false && vibrateVertical == false)
@@ -50,28 +41,6 @@ namespace DOF5RobotControl_GUI.Model
             vibrateCancelSource?.Cancel();
         }
 
-        // TODO: 删除这个旧函数
-        private void VibrateTask()
-        {
-            var startTime = DateTime.Now;
-            while (!vibrateCancelToken.IsCancellationRequested)
-            {
-                var currentTime = DateTime.Now;
-                var deltaTime = currentTime - startTime;
-                var t = deltaTime.TotalSeconds;
-                var x = Math.Sin(2 * Math.PI * t);  // 周期为 1s，幅值为正负1
-                Debug.WriteLine($"{t}: {x}");
-
-                var joints = targetState.ToD5RJoints();
-                joints.P2 += (int)(x * 100000); // 0.1 mm
-                robot.JointsMoveAbsolute(joints);
-
-                Thread.Sleep(10);
-            }
-
-            robot.JointsMoveAbsolute(targetState.ToD5RJoints());
-        }
-
         /// <summary>
         /// 振动任务
         /// </summary>
@@ -84,19 +53,28 @@ namespace DOF5RobotControl_GUI.Model
             var startTime = DateTime.Now;
             while (!vibrateCancelToken.IsCancellationRequested)
             {
+                //Debug.WriteLine("test time begin");
+
+                //DateTime testTime = DateTime.Now;
                 var currentTime = DateTime.Now;
                 var deltaTime = currentTime - startTime;
                 var t = deltaTime.TotalSeconds;
                 var x = amplitude * Math.Sin(2 * Math.PI * frequency * t);  // 正弦函数，频率为 frequency，幅值为正负 amplitude 单位 mm
-                Debug.WriteLine($"{t}: {x}");
+                //Debug.WriteLine((DateTime.Now - testTime).TotalMilliseconds);
 
+                //testTime = DateTime.Now;
                 Joints joints = targetState.ToD5RJoints();
                 if (vibrateHorizontal)
                     joints.P2 += (int)(x * 1000000); // x mm
                 if (vibrateVertical)
                     joints.P4 += (int)(x * 1000000);
+                //Debug.WriteLine((DateTime.Now - testTime).TotalMilliseconds);
 
-                robot.JointsMoveAbsolute(joints);
+                //testTime = DateTime.Now;
+                robot.JointsMoveAbsolute(joints);  // TODO: 目前的控制周期实际是 (6ms) 左右，如果输出debug信息会更久，猜测瓶颈在于 RMD 的通讯速率（115200 baud)
+                //Debug.WriteLine((DateTime.Now - testTime).TotalMilliseconds);
+
+                //Debug.WriteLine("test time end");
 
                 Thread.Sleep(5);
             }

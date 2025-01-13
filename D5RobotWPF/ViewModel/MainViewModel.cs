@@ -257,9 +257,17 @@ namespace DOF5RobotControl_GUI.ViewModel
                 {
                     while (!insertCancelToken.IsCancellationRequested)
                     {
-                        TargetState.JointSpace.P2 = CurrentState.JointSpace.P2 + 0.1;
-                        //RobotRun();
-                        Thread.Sleep(1000);
+                        try
+                        {
+                            TargetState.JointSpace.P3 = CurrentState.JointSpace.P3 + 0.1;
+                        } catch (ArgumentOutOfRangeException exc)
+                        {
+                            insertCancelSource.Cancel();
+                            MessageBox.Show(exc.Message, "Error while Insertion");
+                            insertCancelToken.ThrowIfCancellationRequested();
+                        }
+                        RobotRun();
+                        Thread.Sleep(500);
                     }
                 }, insertCancelToken);
                 IsInserting = true;
@@ -497,7 +505,14 @@ namespace DOF5RobotControl_GUI.ViewModel
                     Joints joints = (Joints)robot.GetCurrentJoint();
                     Dispatcher.Invoke(() =>
                     {
-                        CurrentState.SetFromD5RJoints(joints);
+                        try
+                        {
+                            CurrentState.SetFromD5RJoints(joints);
+                        } catch (ArgumentException exc)
+                        {
+                            if (exc.ParamName == "joint")
+                                Debug.WriteLine(exc.Message);
+                        }
                     });
                 }
                 catch (RobotException exc)
@@ -505,6 +520,10 @@ namespace DOF5RobotControl_GUI.ViewModel
                     Debug.WriteLine(exc.Message);
                     if (exc.Code != ErrorCode.RMDFormatError && exc.Code != ErrorCode.SerialSendError)
                         throw;
+                }
+                catch (ArgumentException exc)
+                {
+                    Debug.WriteLine(exc.Message);
                 }
 
                 Thread.Sleep(1000);
