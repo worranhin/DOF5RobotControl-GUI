@@ -15,7 +15,11 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/calib3d.hpp>
 #pragma managed(pop)
-#include "halconcpp/HalconCpp.h"
+
+#include <halconcpp/HalconCpp.h>
+
 #include <iostream>
+#include <format>
+#include <string>
 
 #endif //PCH_H

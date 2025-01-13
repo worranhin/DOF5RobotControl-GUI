@@ -21,17 +21,17 @@ namespace DOF5RobotControl_GUI.Model
 
         [ObservableProperty]
         [NotifyDataErrorInfo]
-        [Range(-15, 15, ErrorMessage = "Value of {0} must be between {1} and {2}.")]
+        [Range(-16, 16, ErrorMessage = "Value of {0} must be between {1} and {2}.")]
         private double _p2 = 0.0;
 
         [ObservableProperty]
         [NotifyDataErrorInfo]
-        [Range(-15, 15, ErrorMessage = "Value of {0} must be between {1} and {2}.")]
+        [Range(-16, 16, ErrorMessage = "Value of {0} must be between {1} and {2}.")]
         private double _p3 = 0.0;
 
         [ObservableProperty]
         [NotifyDataErrorInfo]
-        [Range(-15, 15, ErrorMessage = "Value of {0} must be between {1} and {2}.")]
+        [Range(-16, 16, ErrorMessage = "Value of {0} must be between {1} and {2}.")]
         private double _p4 = 0.0;
 
         [ObservableProperty]

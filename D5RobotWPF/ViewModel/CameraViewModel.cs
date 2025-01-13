@@ -1,4 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using DOF5RobotControl_GUI.Model;
 using GxIAPINET;
 using OpenCvSharp;
 using OpenCvSharp.Extensions;
@@ -7,11 +9,16 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Media.Media3D;
 using System.Windows.Threading;
+using VisionLibrary;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace DOF5RobotControl_GUI.ViewModel
 {
@@ -37,7 +44,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         [ObservableProperty]
         private ImageSource? _bottomImageSource;
         public readonly Mutex BottomImgSrcMutex = new();
-        
+
         private bool disposedValue;
         private readonly CancellationTokenSource gxCameraTaskCancelSource;
         private readonly CancellationToken gxCameraTaskCancelToken;
@@ -68,7 +75,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         }
 
         // 仅当“Dispose(bool disposing)”拥有用于释放未托管资源的代码时才替代终结器
-         ~CameraViewModel()
+        ~CameraViewModel()
         {
             // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
             Dispose(disposing: false);
@@ -79,6 +86,87 @@ namespace DOF5RobotControl_GUI.ViewModel
             // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }
+
+        [RelayCommand]
+        async Task GetError()
+        {
+            // 图像处理
+            VisionWrapper vision = new();
+            double px, py, pz, rz;
+            int width, height, stride;
+            byte[] rawBuffer;
+
+            if (TopImageSource is not BitmapSource topBitmap || BottomImageSource is not BitmapSource bottomBitmap)
+            {
+                return;
+            }
+
+            TopImgSrcMutex.WaitOne();
+            width = topBitmap.PixelWidth;
+            height = topBitmap.PixelHeight;
+            stride = width * ((topBitmap.Format.BitsPerPixel + 7) / 8); // 每行的字节数 ( + 7) / 8 是为了向上取整
+            rawBuffer = new byte[height * stride];
+            topBitmap.CopyPixels(rawBuffer, stride, 0);
+            TopImgSrcMutex.ReleaseMutex();
+            (px, py, rz) = await Task.Run(() =>
+            {
+                TaskSpaceError error = new();
+                GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
+                try
+                {
+                    IntPtr pointer = handle.AddrOfPinnedObject();
+                    error = vision.GetTaskSpaceError(pointer, width, height, stride, MatchingMode.ROUGH);
+                    Debug.WriteLine(error);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine("Error in VisionWrapper: " + ex.Message);
+                }
+                finally
+                {
+                    handle.Free();
+                }
+                return (error.Px, error.Py, error.Rz);
+            });
+
+            BottomImgSrcMutex.WaitOne();
+            width = bottomBitmap.PixelWidth;
+            height = bottomBitmap.PixelHeight;
+            stride = width * ((bottomBitmap.Format.BitsPerPixel + 7) / 8); // 每行的字节数 ( + 7) / 8 是为了向上取整
+            rawBuffer = new byte[height * stride];
+            bottomBitmap.CopyPixels(rawBuffer, stride, 0);
+            BottomImgSrcMutex.ReleaseMutex();
+            pz = await Task.Run(() =>
+            {
+                double verticalError = 0.0;
+                GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
+                try
+                {
+                    IntPtr pointer = handle.AddrOfPinnedObject();
+                    verticalError = vision.GetVerticalError(pointer, width, height, stride);
+                    Debug.WriteLine(verticalError);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine("Error in VisionWrapper: " + ex.Message);
+                }
+                finally
+                {
+                    handle.Free();
+                }
+                return verticalError;
+            });
+
+            Debug.WriteLine($"{px} {py} {pz} {rz}");
+            //if (processTopImgTask != null)
+            //{
+            //    (double x, double y, double rz) = await processTopImgTask;
+
+            //}
+            //RoboticState state = new(0, 0, 0, 0, 0);
+            //double z = await processBottomImgTask;
+            //Debug.WriteLine($"{x} {y} {z} {rz}");
         }
 
         /// <summary>
@@ -130,7 +218,8 @@ namespace DOF5RobotControl_GUI.ViewModel
                     {
                         MessageBox.Show("错误信息：" + ex.Message, "错误：找不到相机");
                     });
-                } else
+                }
+                else
                 {
                     Debug.WriteLine("Error code: " + ex.GetErrorCode().ToString());
                     Debug.WriteLine("Error message: " + ex.Message);
@@ -198,85 +287,87 @@ namespace DOF5RobotControl_GUI.ViewModel
 
                         /*** 下面是一些相机配置 ***/
 
-                        // 设置 buffer 行为（好像这个无效）
-                        if (featControl.IsImplemented("StreamBufferHandlingMode"))
                         {
-                            featControl.GetEnumFeature("StreamBufferHandlingMode").SetValue("NewestOnly");
-                            string s = featControl.GetEnumFeature("StreamBufferHandlingMode").GetValue();
-                            Debug.Assert(s == "NewestOnly");
-                        }
-                        else
-                        {
-                            Debug.WriteLine("StreamBufferHandlingMode not supported");
-                        }
-
-                        // 设置采集模式
-                        if (featControl.IsImplemented("AcquisitionMode"))
-                        {
-                            featControl.GetEnumFeature("AcquisitionMode").SetValue("Continuous");
-                            string s = featControl.GetEnumFeature("AcquisitionMode").GetValue();
-                            Debug.Assert(s == "Continuous");
-                        }
-                        else
-                        {
-                            Debug.WriteLine("AcquisitionMode not supported");
-                        }
-
-                        if (featControl.IsImplemented("TriggerSelector") && featControl.IsImplemented("TriggerMode"))
-                        {
-                            featControl.GetEnumFeature("TriggerSelector").SetValue("FrameStart"); // 这个是调试软件提供的，不清楚是否必要
-
-                            // 设置触发模式
-                            if (featControl.IsImplemented("TriggerMode"))
+                            // 设置 buffer 行为（好像这个无效）
+                            if (featControl.IsImplemented("StreamBufferHandlingMode"))
                             {
-                                featControl.GetEnumFeature("TriggerMode").SetValue("On");
-                                string s = featControl.GetEnumFeature("TriggerMode").GetValue();
+                                featControl.GetEnumFeature("StreamBufferHandlingMode").SetValue("NewestOnly");
+                                string s = featControl.GetEnumFeature("StreamBufferHandlingMode").GetValue();
+                                Debug.Assert(s == "NewestOnly");
+                            }
+                            else
+                            {
+                                Debug.WriteLine("StreamBufferHandlingMode not supported");
+                            }
+
+                            // 设置采集模式
+                            if (featControl.IsImplemented("AcquisitionMode"))
+                            {
+                                featControl.GetEnumFeature("AcquisitionMode").SetValue("Continuous");
+                                string s = featControl.GetEnumFeature("AcquisitionMode").GetValue();
+                                Debug.Assert(s == "Continuous");
+                            }
+                            else
+                            {
+                                Debug.WriteLine("AcquisitionMode not supported");
+                            }
+
+                            if (featControl.IsImplemented("TriggerSelector") && featControl.IsImplemented("TriggerMode"))
+                            {
+                                featControl.GetEnumFeature("TriggerSelector").SetValue("FrameStart"); // 这个是调试软件提供的，不清楚是否必要
+
+                                // 设置触发模式
+                                if (featControl.IsImplemented("TriggerMode"))
+                                {
+                                    featControl.GetEnumFeature("TriggerMode").SetValue("On");
+                                    string s = featControl.GetEnumFeature("TriggerMode").GetValue();
+                                    Debug.Assert(s == "On");
+                                }
+                                else
+                                {
+                                    Debug.WriteLine("TriggerMode not supported");
+                                }
+
+                                // 设置触发源
+                                if (featControl.IsImplemented("TriggerSource"))
+                                {
+                                    featControl.GetEnumFeature("TriggerSource").SetValue("Software");
+                                    string s = featControl.GetEnumFeature("TriggerSource").GetValue();
+                                    Debug.Assert(s == "Software");
+                                }
+                                else
+                                {
+                                    Debug.WriteLine("TriggerSource not supported");
+                                }
+                            }
+                            else
+                            {
+                                Debug.WriteLine("TriggerSelector not supported");
+                            }
+
+                            // 设置采集帧率调节模式：控制采集帧率是否激活
+                            if (featControl.IsImplemented("AcquisitionFrameRateMode"))
+                            {
+                                featControl.GetEnumFeature("AcquisitionFrameRateMode").SetValue("On");
+                                string s = featControl.GetEnumFeature("AcquisitionFrameRateMode").GetValue();
                                 Debug.Assert(s == "On");
                             }
                             else
                             {
-                                Debug.WriteLine("TriggerMode not supported");
+                                Debug.WriteLine("AcquisitionFrameRateMode not supported");
                             }
 
-                            // 设置触发源
-                            if (featControl.IsImplemented("TriggerSource"))
+                            // 设置采集帧率值，当采集帧率调节模式为 On 时有效
+                            if (featControl.IsImplemented("AcquisitionFrameRate"))
                             {
-                                featControl.GetEnumFeature("TriggerSource").SetValue("Software");
-                                string s = featControl.GetEnumFeature("TriggerSource").GetValue();
-                                Debug.Assert(s == "Software");
+                                featControl.GetFloatFeature("AcquisitionFrameRate").SetValue(10.0000);
+                                double d = featControl.GetFloatFeature("AcquisitionFrameRate").GetValue();
+                                Debug.Assert(d == 10.0000);
                             }
                             else
                             {
-                                Debug.WriteLine("TriggerSource not supported");
+                                Debug.WriteLine("AcquisitionFrameRate not supported");
                             }
-                        }
-                        else
-                        {
-                            Debug.WriteLine("TriggerSelector not supported");
-                        }
-
-                        // 设置采集帧率调节模式：控制采集帧率是否激活
-                        if (featControl.IsImplemented("AcquisitionFrameRateMode"))
-                        {
-                            featControl.GetEnumFeature("AcquisitionFrameRateMode").SetValue("On");
-                            string s = featControl.GetEnumFeature("AcquisitionFrameRateMode").GetValue();
-                            Debug.Assert(s == "On");
-                        }
-                        else
-                        {
-                            Debug.WriteLine("AcquisitionFrameRateMode not supported");
-                        }
-
-                        // 设置采集帧率值，当采集帧率调节模式为 On 时有效
-                        if (featControl.IsImplemented("AcquisitionFrameRate"))
-                        {
-                            featControl.GetFloatFeature("AcquisitionFrameRate").SetValue(10.0000);
-                            double d = featControl.GetFloatFeature("AcquisitionFrameRate").GetValue();
-                            Debug.Assert(d == 10.0000);
-                        }
-                        else
-                        {
-                            Debug.WriteLine("AcquisitionFrameRate not supported");
                         }
 
                         /***** 相机配置结束 *****/
@@ -289,9 +380,9 @@ namespace DOF5RobotControl_GUI.ViewModel
                         {
                             featControl.GetCommandFeature("TriggerSoftware").Execute();
                             var frameData = stream.DQBuf(timeout);  // 零拷贝采单帧，超时 500ms
-                            //var frameData = stream.GetImage(500); // 拷贝采单帧，超时 500ms
-                            // 处理图像
-                            //Debug.WriteLine(frameData.GetStatus());
+                                                                    //var frameData = stream.GetImage(500); // 拷贝采单帧，超时 500ms
+                                                                    // 处理图像
+                                                                    //Debug.WriteLine(frameData.GetStatus());
                             UInt64 width = frameData.GetWidth();
                             UInt64 height = frameData.GetHeight();
                             Debug.Assert(width == 2592);
@@ -299,13 +390,12 @@ namespace DOF5RobotControl_GUI.ViewModel
                             var pixelFormat = frameData.GetPixelFormat();
                             if (pixelFormat == GX_PIXEL_FORMAT_ENTRY.GX_PIXEL_FORMAT_MONO8)
                             {
+
                                 var pRaw8Buffer = frameData.ConvertToRaw8(GX_VALID_BIT_LIST.GX_BIT_0_7);
+
                                 var frameMat = Mat.FromPixelData((int)height, (int)width, MatType.CV_8U, pRaw8Buffer);
 
                                 // 更新 UI 图像
-                                //imgMutex.WaitOne();
-                                //imageSource = frameMat.ToBitmapSource();
-                                //imgMutex.ReleaseMutex();                                
                                 dispatcher.Invoke(() =>
                                 {
                                     switch (camSelect)
@@ -345,8 +435,6 @@ namespace DOF5RobotControl_GUI.ViewModel
             }
             catch (CGalaxyException ex)
             {
-                Debug.WriteLine("Error code: " + ex.GetErrorCode().ToString());
-                Debug.WriteLine("Error message: " + ex.Message);
 
                 if (ex.GetErrorCode() == -8)
                 {
@@ -355,8 +443,14 @@ namespace DOF5RobotControl_GUI.ViewModel
                         MessageBox.Show("打开相机失败，请确认是否被占用（可尝试重新拔出）");
                     });
                 }
+                else if (ex.GetErrorCode() == -14)
+                {
+                    Debug.WriteLine("Camera timeout: " + ex.Message);
+                }
                 else
                 {
+                    Debug.WriteLine("Error code: " + ex.GetErrorCode().ToString());
+                    Debug.WriteLine("Error message: " + ex.Message);
                     throw;
                 }
             }

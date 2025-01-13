@@ -9,22 +9,27 @@
         d:DataContext="{d:DesignInstance Type=viewmodel:CameraViewModel}"
         mc:Ignorable="d"
         Title="相机监控面板" Height="720" Width="1280" FontSize="16">
-    <Grid Margin="10">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition/>
-            <ColumnDefinition/>
-        </Grid.ColumnDefinitions>
-        <GroupBox Header="Top Camera" Grid.Column="0">
-            <Grid>
-                <TextBlock Text="Camera 1 disconnected!"  VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                <Image Source="{Binding TopImageSource}"></Image>
-            </Grid>
-        </GroupBox>
-        <GroupBox Header="Bottom Camera" Grid.Column="1">
-            <Grid>
-                <TextBlock Text="Camera 2 disconnected!" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                <Image Source="{Binding BottomImageSource}"></Image>
-            </Grid>
-        </GroupBox>
-    </Grid>
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Bottom">
+            <Button Content="获取误差" Command="{Binding GetErrorCommand}"/>
+        </StackPanel>
+        <Grid Margin="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <GroupBox Header="Top Camera" Grid.Column="0">
+                <Grid>
+                    <TextBlock Text="Camera 1 disconnected!"  VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    <Image Source="{Binding TopImageSource}"></Image>
+                </Grid>
+            </GroupBox>
+            <GroupBox Header="Bottom Camera" Grid.Column="1">
+                <Grid>
+                    <TextBlock Text="Camera 2 disconnected!" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <Image Source="{Binding BottomImageSource}"></Image>
+                </Grid>
+            </GroupBox>
+        </Grid>
+    </DockPanel>
 </mah:MetroWindow>

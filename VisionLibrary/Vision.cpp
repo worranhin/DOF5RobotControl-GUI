@@ -95,6 +95,8 @@ namespace NativeVision {
 		switch (index)
 		{
 		case 1:
+			throw gcnew System::NotImplementedException("index = 1 is not implemented, please let index = 2.");
+			break;
 		case 2:
 			cv::matchTemplate(img, _posTemplate_2, result, cv::TM_CCOEFF_NORMED);
 			cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc);
@@ -107,6 +109,8 @@ namespace NativeVision {
 			_roiPos = cv::Point2f(maxLoc.x - 300.0f, maxLoc.y + 300.0f);
 			break;
 		case 3:
+			throw gcnew System::NotImplementedException("index = 3 is not implemented, please let index = 2.");
+			break;
 		default:
 			break;
 		}
@@ -429,10 +433,10 @@ namespace NativeVision {
 					(clampAngle - jawPos.angle * 180 / CV_PI - 90) };
 			break;
 		case ROUGH:
-			res = { (clampPos[0].y - jawPos.y) * _mapParam,
-					(clampPos[0].x - GetROIPos().x - GetRoughPosPoint().x) * _mapParam,
-					 0, 0,
-					(clampAngle - jawPos.angle * 180 / CV_PI - 90) };
+			res = { (clampPos[0].y - GetROIPos().y - GetRoughPosPoint().y) * _mapParam,
+				(clampPos[0].x - jawPos.x) * _mapParam,
+				 0, 0,
+				(clampAngle - jawPos.angle * 180 / CV_PI - 90) };
 			break;
 		default:
 			break;

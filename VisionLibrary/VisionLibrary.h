@@ -1,6 +1,8 @@
 ﻿#pragma once
 
+#include "pch.h"
 #include "Vision.h"
+#include <format>
 
 using namespace System;
 
@@ -12,6 +14,10 @@ namespace VisionLibrary {
 		double Pz;
 		double Ry;
 		double Rz;
+
+		String^ ToString() override {
+			return String::Format("TaskSpaceError[ Px: {0}, Py: {1}, Pz: {2}, Ry: {3}, Rz: {4} ]", Px, Py, Pz, Ry, Rz);
+		}
 	};
 
 	public enum class MatchingMode {
@@ -27,6 +33,7 @@ namespace VisionLibrary {
 	public:
 		VisionWrapper();
 		~VisionWrapper();
-		TaskSpaceError GetTaskSpaceError(IntPtr imgBuffer, int width, int height, MatchingMode mode);
+		TaskSpaceError GetTaskSpaceError(IntPtr imgBuffer, int width, int height, int stride, MatchingMode mode);
+		double GetVerticalError(IntPtr imgBuffer, int width, int height, int stride);
 	};
 }
