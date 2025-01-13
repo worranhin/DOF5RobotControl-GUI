@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -8,18 +9,57 @@ using System.Threading.Tasks;
 
 namespace DOF5RobotControl_GUI.Model
 {
-    public class JointSpace : ObservableObject
+    public partial class JointSpace : ObservableValidator
     {
+        public bool IsUpdating { get; private set; }
+
+        [ObservableProperty]
+        [NotifyDataErrorInfo]
+        [Required]
+        [Range(-90.0, 90.0, ErrorMessage = "Value of {0} must be between {1} and {2}.")]
         private double _r1 = 0.0;
-        public double R1 { get => _r1; set => SetProperty(ref _r1, value); }
+
+        [ObservableProperty]
+        [NotifyDataErrorInfo]
+        [Range(-15, 15, ErrorMessage = "Value of {0} must be between {1} and {2}.")]
         private double _p2 = 0.0;
-        public double P2 { get => _p2; set => SetProperty(ref _p2, value); }
+
+        [ObservableProperty]
+        [NotifyDataErrorInfo]
+        [Range(-15, 15, ErrorMessage = "Value of {0} must be between {1} and {2}.")]
         private double _p3 = 0.0;
-        public double P3 { get => _p3; set => SetProperty(ref _p3, value); }
+
+        [ObservableProperty]
+        [NotifyDataErrorInfo]
+        [Range(-15, 15, ErrorMessage = "Value of {0} must be between {1} and {2}.")]
         private double _p4 = 0.0;
-        public double P4 { get => _p4; set => SetProperty(ref _p4, value); }
+
+        [ObservableProperty]
+        [NotifyDataErrorInfo]
+        [Range(-90, 90, ErrorMessage = "Value of {0} must be between {1} and {2}.")]
         private double _r5 = 0.0;
-        public double R5 { get => _r5; set => SetProperty(ref _r5, value); }
+
+        public TaskSpace? ToTaskSpace()
+        {
+            if (HasErrors)
+            {
+                Debug.WriteLine(GetErrors());
+                return null;
+            }
+            else 
+                return KineHelper.Forward(this);
+        }
+
+        public void ToTaskSpace(TaskSpace task)
+        {
+            if (HasErrors)
+            {
+                Debug.WriteLine(GetErrors());
+                return;
+            }
+            else 
+                KineHelper.Forward(this, task);
+        }
 
         //public TaskSpace ToTaskSpace() => KineHelper.Forward(this);
     }

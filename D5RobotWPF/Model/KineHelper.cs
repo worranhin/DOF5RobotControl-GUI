@@ -25,9 +25,9 @@ namespace DOF5RobotControl_GUI.Model
         // 关节限位
         const double _R1min = -90.0, _R1max = 90.0;
         const double _R5min = -45.0, _R5max = 90.0;
-        const double _P2min = -14.5, _P2max = 14.5;
-        const double _P3min = -14.5, _P3max = 14.5;
-        const double _P4min = -14.5, _P4max = 14.5;
+        const double _P2min = -15.0, _P2max = 15.0;
+        const double _P3min = -15.0, _P3max = 15.0;
+        const double _P4min = -15.0, _P4max = 15.0;
 
         /// <summary>
         /// 求正运动学
@@ -37,52 +37,40 @@ namespace DOF5RobotControl_GUI.Model
         public static void Forward(JointSpace joint, TaskSpace task)
         {
             var m1 = l3 + l5 + lty + joint.P2;
+            double px, py, pz, ry, rz;
 
             if (!CheckJoint(joint))
             {
                 throw new ArgumentOutOfRangeException(nameof(joint), "关节超出限位。");
             }
 
-            //TaskSpace ts = new()
-            //{
-            //    Px = m1 * Sind(joint.R1)
-            //        + joint.P3 * Cosd(joint.R1)
-            //        + ltx * Cosd(joint.R1) * Cosd(joint.R5)
-            //        + ltz * Cosd(joint.R1) * Sind(joint.R5),
-
-            //    Py = joint.P3 * Sind(joint.R1)
-            //        - m1 * Cosd(joint.R1)
-            //        + ltx * Sind(joint.R1) * Cosd(joint.R5)
-            //        + ltz * Sind(joint.R1) * Sind(joint.R5),
-
-            //    Pz = ltx * Sind(joint.R5) - ltz * Cosd(joint.R5) - joint.P4 - (l1 + l2 + l4),
-
-            //    Ry = -joint.R5,
-            //    Rz = joint.R1
-            //};
-
-            task.Px = m1 * Sind(joint.R1)
+            px = m1 * Sind(joint.R1)
                     + joint.P3 * Cosd(joint.R1)
                     + ltx * Cosd(joint.R1) * Cosd(joint.R5)
                     + ltz * Cosd(joint.R1) * Sind(joint.R5);
 
-            task.Py = joint.P3 * Sind(joint.R1)
+            py = joint.P3 * Sind(joint.R1)
                 - m1 * Cosd(joint.R1)
                 + ltx * Sind(joint.R1) * Cosd(joint.R5)
                 + ltz * Sind(joint.R1) * Sind(joint.R5);
 
-            task.Pz = ltx * Sind(joint.R5) - ltz * Cosd(joint.R5) - joint.P4 - (l1 + l2 + l4);
+            pz = ltx * Sind(joint.R5) - ltz * Cosd(joint.R5) - joint.P4 - (l1 + l2 + l4);
 
-            task.Ry = -joint.R5;
-            task.Rz = joint.R1;
+            ry = -joint.R5;
+            rz = joint.R1;
 
-            task.Px = Math.Round(task.Px, 2);
-            task.Py = Math.Round(task.Py, 2);
-            task.Pz = Math.Round(task.Pz, 2);
-            task.Ry = Math.Round(task.Ry, 2);
-            task.Rz = Math.Round(task.Rz, 2);
+            task.Px = Math.Round(px, 4);
+            task.Py = Math.Round(py, 4);
+            task.Pz = Math.Round(pz, 4);
+            task.Ry = Math.Round(ry, 2);
+            task.Rz = Math.Round(rz, 2);
+        }
 
-            //return task;
+        public static TaskSpace Forward(JointSpace joint)
+        {
+            TaskSpace task = new();
+            Forward(joint, task);
+            return task;
         }
 
         /// <summary>
@@ -92,28 +80,21 @@ namespace DOF5RobotControl_GUI.Model
         /// <returns></returns>
         public static JointSpace Inverse(TaskSpace task, JointSpace joint)
         {
-            var m1 = l3 + l5 + lty;
+            double m1 = l3 + l5 + lty;
+            double m2 = l1 + l2 + l4;
+            double r1, p2, p3, p4, r5;
 
-            //JointSpace js = new()
-            //{
-            //    R1 = task.Rz,
-            //    R5 = -task.Ry,
-            //    P2 = task.Px * Sind(task.Rz) - task.Py * Cosd(task.Rz) - m1,
-            //    P3 = task.Px * Cosd(task.Rz) + task.Py * Sind(task.Rz) - ltx * Cosd(-task.Ry) - ltz * Sind(-task.Ry),
-            //    P4 = -task.Pz + ltx * Sind(-task.Ry) - ltz * Cosd(-task.Ry) - (l1 + l2 + l4)
-            //};
+            r1 = task.Rz;
+            r5 = -task.Ry;
+            p2 = task.Px * Sind(task.Rz) - task.Py * Cosd(task.Rz) - m1;
+            p3 = task.Px * Cosd(task.Rz) + task.Py * Sind(task.Rz) - ltx * Cosd(-task.Ry) - ltz * Sind(-task.Ry);
+            p4 = -task.Pz + ltx * Sind(-task.Ry) - ltz * Cosd(-task.Ry) - m2;
 
-            joint.R1 = task.Rz;
-            joint.R5 = -task.Ry;
-            joint.P2 = task.Px * Sind(task.Rz) - task.Py * Cosd(task.Rz) - m1;
-            joint.P3 = task.Px * Cosd(task.Rz) + task.Py * Sind(task.Rz) - ltx * Cosd(-task.Ry) - ltz * Sind(-task.Ry);
-            joint.P4 = -task.Pz + ltx * Sind(-task.Ry) - ltz * Cosd(-task.Ry) - (l1 + l2 + l4);
-
-            joint.R1 = Math.Round(joint.R1, 2);
-            joint.R5 = Math.Round(joint.R5, 2);
-            joint.P2 = Math.Round(joint.P2, 2);
-            joint.P3 = Math.Round(joint.P3, 2);
-            joint.P4 = Math.Round(joint.P4, 2);
+            joint.R1 = Math.Round(r1, 2);
+            joint.R5 = Math.Round(r5, 2);
+            joint.P2 = Math.Round(p2, 4);
+            joint.P3 = Math.Round(p3, 4);
+            joint.P4 = Math.Round(p4, 4);
 
             return joint;
         }
@@ -174,11 +155,21 @@ namespace DOF5RobotControl_GUI.Model
             return good1 && good2 && good3 && good4 && good5;
         }
 
+        /// <summary>
+        /// 计算角度制的 cos(x) 值
+        /// </summary>
+        /// <param name="x">角度</param>
+        /// <returns></returns>
         private static double Cosd(double x)
         {
             return Math.Cos(x * Math.PI / 180.0);
         }
 
+        /// <summary>
+        /// 计算角度制的 sin(x) 值
+        /// </summary>
+        /// <param name="x">角度</param>
+        /// <returns></returns>
         private static double Sind(double x)
         {
             return Math.Sin(x * Math.PI / 180.0);

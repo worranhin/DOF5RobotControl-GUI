@@ -39,7 +39,6 @@ namespace DOF5RobotControl_GUI.ViewModel
         public static readonly Joints AssemblePos2 = new(9000, 14000000, -12000000, 5000000, 0); // 90, 0, 0, 0, 0 -> 90, 14, -12, 5, 0 
         public static readonly Joints AssemblePos3 = new(0, -2500000, 4000000, 7000000, 0); // 0, -2.5, 4, 7, 0
 
-        //public readonly MainWindow? WindowBelonged;
         /***** 线程相关字段 *****/
         public Dispatcher Dispatcher { get; private set; }
         CancellationTokenSource? updateStateTaskCancelSource;
@@ -75,7 +74,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         [ObservableProperty]
         private JogResolution _jogResolutionSelected = JogResolution.Speed1mm;
 
-        /***** 振动相关 *****/
+        /***** 振动相关字段/属性 *****/
         internal VibrateHelper? VibrateHelper;
         [ObservableProperty]
         private bool _isVibrating = false;
@@ -91,17 +90,28 @@ namespace DOF5RobotControl_GUI.ViewModel
         public MainViewModel()
         {
             Dispatcher = Application.Current.Dispatcher;
+
+            Initialize();
         }
 
-        public MainViewModel(MainWindow belong)
+        public MainViewModel(Dispatcher dispatcher)
         {
-            //WindowBelonged = belong;
-            Dispatcher = belong.Dispatcher;
+            Dispatcher = dispatcher;
+
+            Initialize();
         }
 
         ~MainViewModel()
         {
             updateStateTaskCancelSource?.Cancel();
+        }
+
+        private void Initialize()
+        {
+            // 初始化 Serial
+            PortsAvailable = SerialPort.GetPortNames();
+            if (PortsAvailable.Length > 0)
+                SelectedPort = PortsAvailable[0];
         }
 
         /***** 机器人控制命令 *****/
@@ -166,6 +176,12 @@ namespace DOF5RobotControl_GUI.ViewModel
                 return;
             }
 
+            if (TargetState.JointSpace.HasErrors)
+            {
+                MessageBox.Show("Joint out of range, adjust it first.");
+                return;
+            }
+
             Joints j = TargetState.ToD5RJoints();
             try
             {
@@ -212,12 +228,6 @@ namespace DOF5RobotControl_GUI.ViewModel
         [RelayCommand]
         private void OpenCamera()
         {
-            //if (robot == null)
-            //{
-            //    MessageBox.Show("Robot not connected.");
-            //    return;
-            //}
-
             //ManualControlWindow window = new(robot, TargetState);
             CameraWindow window = new();
             window.Show();
@@ -290,31 +300,33 @@ namespace DOF5RobotControl_GUI.ViewModel
                         break;
                 }
 
+                resolution = param.IsPositive ? resolution : -resolution;
+
                 switch (param.Joint)
                 {
                     case JointSelect.R1:
-                        TargetState.JointSpace.R1 += param.IsPositive ? resolution : -resolution;
+                        TargetState.JointSpace.R1 += resolution;
                         break;
                     case JointSelect.P2:
-                        TargetState.JointSpace.P2 += param.IsPositive ? resolution : -resolution;
+                        TargetState.JointSpace.P2 += resolution;
                         break;
                     case JointSelect.P3:
-                        TargetState.JointSpace.P3 += param.IsPositive ? resolution : -resolution;
+                        TargetState.JointSpace.P3 += resolution;
                         break;
                     case JointSelect.P4:
-                        TargetState.JointSpace.P4 += param.IsPositive ? resolution : -resolution;
+                        TargetState.JointSpace.P4 += resolution;
                         break;
                     case JointSelect.R5:
-                        TargetState.JointSpace.R5 += param.IsPositive ? resolution : -resolution;
+                        TargetState.JointSpace.R5 += resolution;
                         break;
                     default:
                         Debug.WriteLine("Invalid JointSelect");
                         break;
                 }
 
-                robot?.JointsMoveAbsolute(TargetState.ToD5RJoints());
+                if (!TargetState.JointSpace.HasErrors)
+                    robot?.JointsMoveAbsolute(TargetState.ToD5RJoints());
             }
-            //TargetState.JointSpace.P2 += 0.1;
         }
 
         public void StartJogContinuous(JogParams param)
@@ -346,46 +358,42 @@ namespace DOF5RobotControl_GUI.ViewModel
             jogTimer = new(jogPeriod);
             resolution = resolution * jogPeriod / 1000;  // 每次控制的步进量
 
+            Action updateJointAction = () => { };
             switch (param.Joint)
             {
                 case JointSelect.R1:
-                    jogTimer.Elapsed += (source, e) =>
-                    {
-                        TargetState.JointSpace.R1 += resolution;
-                        RobotRun();
-                    };
+                    updateJointAction = () => { TargetState.JointSpace.R1 += resolution; };
                     break;
                 case JointSelect.P2:
-                    jogTimer.Elapsed += (source, e) =>
-                    {
-                        TargetState.JointSpace.P2 += resolution;
-                        RobotRun();
-                    };
+                    updateJointAction = () => { TargetState.JointSpace.P2 += resolution; };
                     break;
                 case JointSelect.P3:
-                    jogTimer.Elapsed += (source, e) =>
-                    {
-                        TargetState.JointSpace.P3 += resolution;
-                        RobotRun();
-                    };
+                    updateJointAction = () => { TargetState.JointSpace.P3 += resolution; };
                     break;
                 case JointSelect.P4:
-                    jogTimer.Elapsed += (source, e) =>
-                    {
-                        TargetState.JointSpace.P4 += resolution;
-                        RobotRun();
-                    };
+                    updateJointAction = () => { TargetState.JointSpace.P4 += resolution; };
                     break;
                 case JointSelect.R5:
-                    jogTimer.Elapsed += (source, e) =>
-                    {
-                        TargetState.JointSpace.R5 += resolution;
-                        RobotRun();
-                    };
+                    updateJointAction = () => { TargetState.JointSpace.R5 += resolution; };
                     break;
                 default:
                     break;
             }
+
+            jogTimer.Elapsed += (source, e) =>
+            {
+                try
+                {
+                    updateJointAction();
+                    //RobotRun();
+                    robot?.JointsMoveAbsolute(TargetState.ToD5RJoints());
+                }
+                catch (ArgumentException exc)
+                {
+                    MessageBox.Show(exc.Message);
+                    jogTimer?.Stop();
+                }
+            };
 
             jogTimer.Start();
         }
@@ -440,7 +448,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             // 创建一个 EventArgs 实例来传递给 ButtonClicked 方法
             switch (method)
             {
-                case 1: PortRefresh(); break;
+                case 1: PortRefreshCommand.Execute(null); break;
                 case 2: ToggleConnectCommand.Execute(null); break;
                 case 3: SetTargetJointsCommand.Execute(ZeroPos); break;
                 case 4: SetTargetJointsCommand.Execute(IdlePos); break;
@@ -451,9 +459,9 @@ namespace DOF5RobotControl_GUI.ViewModel
                 case 9: SetTargetJointsCommand.Execute(AssemblePos3); break;
                 case 10: SetTargetJointsCommand.Execute(PreFetchRingPos); break;
                 case 11: SetTargetJointsCommand.Execute(FetchRingPos); break;
-                case 12: RobotRun(); break;
-                case 13: RobotStop(); break;
-                case 14: RobotSetZero(); break;
+                case 12: RobotRunCommand.Execute(null); break;
+                case 13: RobotStopCommand.Execute(null); break;
+                case 14: RobotSetZeroCommand.Execute(null); break;
             }
 
             // 备份，对照
