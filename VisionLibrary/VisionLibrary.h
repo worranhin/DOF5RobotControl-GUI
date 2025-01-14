@@ -16,7 +16,9 @@ namespace VisionLibrary {
 		double Rz;
 
 		String^ ToString() override {
-			return String::Format("TaskSpaceError[ Px: {0}, Py: {1}, Pz: {2}, Ry: {3}, Rz: {4} ]", Px, Py, Pz, Ry, Rz);
+			cli::array<double>^ args = { Px, Py, Pz, Ry, Rz };
+			String^ str = String::Format("TaskSpaceError Px:{} Py:{} Pz:{} Ry:{} Rz:{}", args);
+			return str;
 		}
 	};
 
