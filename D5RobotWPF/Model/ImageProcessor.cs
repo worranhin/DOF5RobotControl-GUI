@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Media.Imaging;
 using VisionLibrary;
 
@@ -19,24 +20,26 @@ namespace DOF5RobotControl_GUI.Model
         /// </summary>
         /// <param name="topBitmap">顶部相机的图像</param>
         /// <returns>返回一个包含 x, y, rz 误差值的元组，单位为 mm 或角度</returns>
-        public static async Task<(double px, double py, double rz)> ProcessTopImgAsync(BitmapSource topBitmap)
+        public static async Task<(double px, double py, double rz)> ProcessTopImgAsync(BitmapSource topBitmap, MatchingMode mode = MatchingMode.ROUGH)
         {
-            int width, height, stride;
-            byte[] rawBuffer;
+            int width = 0, height = 0, stride = 0;
+            byte[] rawBuffer = [];
 
-            width = topBitmap.PixelWidth;
-            height = topBitmap.PixelHeight;
-            stride = width * ((topBitmap.Format.BitsPerPixel + 7) / 8); // 每行的字节数 ( + 7) / 8 是为了向上取整
-            rawBuffer = new byte[height * stride];
-            topBitmap.CopyPixels(rawBuffer, stride, 0);
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                width = topBitmap.PixelWidth;
+                height = topBitmap.PixelHeight;
+                stride = width * ((topBitmap.Format.BitsPerPixel + 7) / 8); // 每行的字节数 ( + 7) / 8 是为了向上取整
+                rawBuffer = new byte[height * stride];
+                topBitmap.CopyPixels(rawBuffer, stride, 0);
+            });
 
             TaskSpaceError error = new();
             GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
             try
             {
                 IntPtr pointer = handle.AddrOfPinnedObject();
-                error = await Task.Run(() => vision.GetTaskSpaceError(pointer, width, height, stride, MatchingMode.ROUGH));
-                Debug.WriteLine(error);
+                error = await Task.Run(() => vision.GetTaskSpaceError(pointer, width, height, stride, mode));
             }
             catch (Exception ex)
             {
@@ -48,6 +51,7 @@ namespace DOF5RobotControl_GUI.Model
             }
 
             return (error.Px, error.Py, error.Rz);
+
         }
 
         /// <summary>
@@ -57,14 +61,18 @@ namespace DOF5RobotControl_GUI.Model
         /// <returns>距离，单位 mm</returns>
         public static async Task<double> ProcessBottomImgAsync(BitmapSource bottomBitmap)
         {
-            int width, height, stride;
-            byte[] rawBuffer;
+            int width = 0, height = 0, stride = 0;
+            byte[] rawBuffer = [];
 
-            width = bottomBitmap.PixelWidth;
-            height = bottomBitmap.PixelHeight;
-            stride = width * ((bottomBitmap.Format.BitsPerPixel + 7) / 8); // 每行的字节数 ( + 7) / 8 是为了向上取整
-            rawBuffer = new byte[height * stride];
-            bottomBitmap.CopyPixels(rawBuffer, stride, 0);
+
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                width = bottomBitmap.PixelWidth;
+                height = bottomBitmap.PixelHeight;
+                stride = width * ((bottomBitmap.Format.BitsPerPixel + 7) / 8); // 每行的字节数 ( + 7) / 8 是为了向上取整
+                rawBuffer = new byte[height * stride];
+                bottomBitmap.CopyPixels(rawBuffer, stride, 0);
+            });
 
             double verticalError = 0.0;
             GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
@@ -72,7 +80,6 @@ namespace DOF5RobotControl_GUI.Model
             {
                 IntPtr pointer = handle.AddrOfPinnedObject();
                 verticalError = await Task.Run(() => vision.GetVerticalError(pointer, width, height, stride));
-                Debug.WriteLine(verticalError);
             }
             catch (Exception ex)
             {

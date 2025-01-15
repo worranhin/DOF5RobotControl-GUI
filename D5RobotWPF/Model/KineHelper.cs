@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -97,6 +98,37 @@ namespace DOF5RobotControl_GUI.Model
             joint.P4 = Math.Round(p4, 4);
 
             return joint;
+        }
+
+        public static JointSpace InverseDifferential(TaskSpace deltaSpace, TaskSpace currentSpace)
+        {
+            JointSpace djs = new();
+
+            double dRzRad = deltaSpace.Rz * Math.PI / 180.0; // !!!计算时需要用弧度值!!!
+            double dRyRad = deltaSpace.Ry * Math.PI / 180.0;
+            double dPx = deltaSpace.Px;
+            double dPy = deltaSpace.Py;
+            double dPz = deltaSpace.Pz;
+
+            double rz = currentSpace.Rz;
+            double ry = currentSpace.Ry;
+            double px = currentSpace.Px;
+            double py = currentSpace.Py;
+            double pz = currentSpace.Pz;
+
+            djs.R1 = dRzRad * 180.0 / Math.PI;
+            djs.R5 = -dRyRad * 180.0 / Math.PI;
+            djs.P2 = Sind(rz) * dPx - Cosd(rz) * dPy + (px * Cosd(rz) + py * Sind(rz)) * dRzRad;
+            djs.P3 = Cosd(rz) * dPx + Sind(rz) * dPy + (-px * Sind(rz) + py * Cosd(rz)) * dRzRad + (ltx * Sind(ry) + ltz * Cosd(ry)) * dRyRad;
+            djs.P4 = -dPz + (ltx * Cosd(ry) - ltz * Sind(ry)) * (-dRyRad);
+
+            djs.R1 = Math.Round(djs.R1, 2);
+            djs.R5 = Math.Round(djs.R5, 2);
+            djs.P2 = Math.Round(djs.P2, 4);
+            djs.P3 = Math.Round(djs.P3, 4);
+            djs.P4 = Math.Round(djs.P4, 4);
+
+            return djs;
         }
 
         /// <summary>

@@ -90,10 +90,10 @@ namespace DOF5RobotControl_GUI.Model
             Joints j = new()
             {
                 R1 = (int)(JointSpace.R1 * 100),
-                P2 = (int)(JointSpace.P2 * 1000000),
+                P2 = -(int)(JointSpace.P2 * 1000000),
                 P3 = (int)(JointSpace.P3 * 1000000),
                 P4 = (int)(JointSpace.P4 * 1000000),
-                R5 = (int)(JointSpace.R5 * 100)
+                R5 = -(int)(JointSpace.R5 * 100)
             };
 
             return j;
@@ -113,10 +113,10 @@ namespace DOF5RobotControl_GUI.Model
 
             // TODO: 优化这段代码的性能，让它在所有属性更改后再通知 Task 进行正解
             JointSpace.R1 = j.R1 / 100.0;
-            JointSpace.P2 = j.P2 / 1000000.0;
+            JointSpace.P2 = -j.P2 / 1000000.0;
             JointSpace.P3 = j.P3 / 1000000.0;
             JointSpace.P4 = j.P4 / 1000000.0;
-            JointSpace.R5 = j.R5 / 100.0;
+            JointSpace.R5 = -j.R5 / 100.0;
         }
 
 

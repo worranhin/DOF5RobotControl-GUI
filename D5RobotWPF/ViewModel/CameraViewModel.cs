@@ -99,46 +99,10 @@ namespace DOF5RobotControl_GUI.ViewModel
             WeakReferenceMessenger.Default.UnregisterAll(this);
         }
 
-
-        //protected virtual void Dispose(bool disposing)
-        //{
-        //    if (!disposedValue)
-        //    {
-        //        if (disposing)
-        //        {
-        //            // 释放托管状态(托管对象)
-        //            WeakReferenceMessenger.Default.UnregisterAll(this);
-        //            gxCameraTaskCancelSource?.Cancel();
-        //            gxCameraTaskCancelSource.Dispose();
-        //        }
-
-        //        // 释放未托管的资源(未托管的对象)并重写终结器
-        //        // 将大型字段设置为 null
-        //        disposedValue = true;
-        //    }
-        //}
-
-        //// 仅当“Dispose(bool disposing)”拥有用于释放未托管资源的代码时才替代终结器
-        //~CameraViewModel()
-        //{
-        //    // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
-        //    Dispose(disposing: false);
-        //}
-
-        //public void Dispose()
-        //{
-        //    // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
-        //    Dispose(disposing: true);
-        //    GC.SuppressFinalize(this);
-        //}
-
         [RelayCommand]
         private async Task GetErrorAsync()
         {
             IsProcessingImg = true;
-
-            //int width, height, stride;
-            //byte[] rawBuffer;
 
             if (TopImageSource is not BitmapSource topBitmap || BottomImageSource is not BitmapSource bottomBitmap)
             {
@@ -152,83 +116,6 @@ namespace DOF5RobotControl_GUI.ViewModel
             await Task.WhenAll(topTask, bottomTask);
             (DPx, DPy, DRz) = await topTask;
             DPz = await bottomTask;
-
-
-
-            //if (TopImageSource is not BitmapSource topBitmap || BottomImageSource is not BitmapSource bottomBitmap)
-            //{
-            //    await Task.Delay(1000);
-            //    Debug.WriteLine("Sending message from camera view model...");
-            //    TaskSpace msg = new() { Px = 114.514, Py = 1.2, Pz = 3.2, Ry = 0, Rz = 12 };
-            //    WeakReferenceMessenger.Default.Send(msg);
-            //    IsProcessingImg = false;
-            //    return;
-            //}
-
-            ////TopImgSrcMutex.WaitOne();
-            //width = topBitmap.PixelWidth;
-            //height = topBitmap.PixelHeight;
-            //stride = width * ((topBitmap.Format.BitsPerPixel + 7) / 8); // 每行的字节数 ( + 7) / 8 是为了向上取整
-            //rawBuffer = new byte[height * stride];
-            //topBitmap.CopyPixels(rawBuffer, stride, 0);
-            ////TopImgSrcMutex.ReleaseMutex();
-
-            //var processTopImg = Task.Run(() =>
-            //{
-            //    TaskSpaceError error = new();
-            //    GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
-            //    try
-            //    {
-            //        IntPtr pointer = handle.AddrOfPinnedObject();
-            //        error = vision.GetTaskSpaceError(pointer, width, height, stride, MatchingMode.ROUGH);
-            //        Debug.WriteLine(error);
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        Debug.WriteLine("Error in VisionWrapper: " + ex.Message);
-            //    }
-            //    finally
-            //    {
-            //        handle.Free();
-            //    }
-            //    return (error.Px, error.Py, error.Rz);
-            //});
-
-            //BottomImgSrcMutex.WaitOne();
-            //width = bottomBitmap.PixelWidth;
-            //height = bottomBitmap.PixelHeight;
-            //stride = width * ((bottomBitmap.Format.BitsPerPixel + 7) / 8); // 每行的字节数 ( + 7) / 8 是为了向上取整
-            //rawBuffer = new byte[height * stride];
-            //bottomBitmap.CopyPixels(rawBuffer, stride, 0);
-            //BottomImgSrcMutex.ReleaseMutex();
-            //var processBottomImg = Task.Run(() =>
-            //{
-            //    double verticalError = 0.0;
-            //    GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
-            //    try
-            //    {
-            //        IntPtr pointer = handle.AddrOfPinnedObject();
-            //        verticalError = vision.GetVerticalError(pointer, width, height, stride);
-            //        Debug.WriteLine(verticalError);
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        Debug.WriteLine("Error in VisionWrapper: " + ex.Message);
-            //    }
-            //    finally
-            //    {
-            //        handle.Free();
-            //    }
-            //    return verticalError;
-            //});
-
-            //(px, py, rz) = await processTopImg;
-            //pz = await processBottomImg;
-
-            //DPx = px;
-            //DPy = py;
-            //DPz = pz;
-            //DRz = rz;
 
             IsProcessingImg = false;
         }
@@ -287,8 +174,8 @@ namespace DOF5RobotControl_GUI.ViewModel
                 }
 
                 // 开启两个相机的采集任务
-                var topCameraTask = Task.Run(() => GxCameraCaptureTask(CaptureTaskCameraSelect.TopCamera), gxCameraTaskCancelToken);
-                var bottomCameraTask = Task.Run(() => GxCameraCaptureTask(CaptureTaskCameraSelect.BottomCamera), gxCameraTaskCancelToken);
+                var topCameraTask = Task.Run(() => GxCameraCaptureAsync(CaptureTaskCameraSelect.TopCamera), gxCameraTaskCancelToken);
+                var bottomCameraTask = Task.Run(() => GxCameraCaptureAsync(CaptureTaskCameraSelect.BottomCamera), gxCameraTaskCancelToken);
 
                 //await topCameraTask;
                 //await bottomCameraTask;
@@ -321,7 +208,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         /// 相机采集任务
         /// </summary>
         /// <param name="mac">相机的 MAC 地址</param>
-        private void GxCameraCaptureTask(CaptureTaskCameraSelect camSelect)
+        private void GxCameraCaptureAsync(CaptureTaskCameraSelect camSelect)
         {
             const int timeout = 500; // TODO: 测试并改小这个值
             const int period = 100; // 刷新率为 10Hz
@@ -463,53 +350,70 @@ namespace DOF5RobotControl_GUI.ViewModel
                         bool isRunningGood = true;
                         while (!gxCameraTaskCancelToken.IsCancellationRequested && isRunningGood)
                         {
-                            featControl.GetCommandFeature("TriggerSoftware").Execute();
-                            var frameData = stream.DQBuf(timeout);  // 零拷贝采单帧，超时 500ms
-                                                                    //var frameData = stream.GetImage(500); // 拷贝采单帧，超时 500ms
-                                                                    // 处理图像
-                                                                    //Debug.WriteLine(frameData.GetStatus());
-                            ulong width = frameData.GetWidth();
-                            ulong height = frameData.GetHeight();
-                            Debug.Assert(width == 2592);
-                            Debug.Assert(height == 2048);
-                            var pixelFormat = frameData.GetPixelFormat();
-                            if (pixelFormat == GX_PIXEL_FORMAT_ENTRY.GX_PIXEL_FORMAT_MONO8)
+                            try
                             {
-
-                                var pRaw8Buffer = frameData.ConvertToRaw8(GX_VALID_BIT_LIST.GX_BIT_0_7);
-
-                                var frameMat = Mat.FromPixelData((int)height, (int)width, MatType.CV_8U, pRaw8Buffer);
-
-                                // 更新 UI 图像
-                                dispatcher.Invoke(() =>
+                                featControl.GetCommandFeature("TriggerSoftware").Execute();
+                                var frameData = stream.DQBuf(timeout);  // 零拷贝采单帧，超时 500ms
+                                                                        //var frameData = stream.GetImage(500); // 拷贝采单帧，超时 500ms
+                                                                        // 处理图像
+                                                                        //Debug.WriteLine(frameData.GetStatus());
+                                ulong width = frameData.GetWidth();
+                                ulong height = frameData.GetHeight();
+                                Debug.Assert(width == 2592);
+                                Debug.Assert(height == 2048);
+                                var pixelFormat = frameData.GetPixelFormat();
+                                if (pixelFormat == GX_PIXEL_FORMAT_ENTRY.GX_PIXEL_FORMAT_MONO8)
                                 {
-                                    switch (camSelect)
-                                    {
-                                        case CaptureTaskCameraSelect.TopCamera:
-                                            TopImgSrcMutex.WaitOne();
-                                            TopImageSource = frameMat.ToBitmapSource();
-                                            TopImgSrcMutex.ReleaseMutex();
-                                            break;
-                                        case CaptureTaskCameraSelect.BottomCamera:
-                                            BottomImgSrcMutex.WaitOne();
-                                            BottomImageSource = frameMat.ToBitmapSource();
-                                            BottomImgSrcMutex.ReleaseMutex();
-                                            break;
-                                        default:
-                                            Debug.WriteLine("Error in GxCameraCaptureTask: please use proper CaptureTaskCameraSelect enum");
-                                            isRunningGood = false;
-                                            break;
-                                    }
-                                });
-                            }
-                            else
-                            {
-                                Debug.WriteLine("Format error!");
-                            }
-                            stream.QBuf(frameData);
-                            //frameData.Destroy();
 
-                            Thread.Sleep(period);
+                                    var pRaw8Buffer = frameData.ConvertToRaw8(GX_VALID_BIT_LIST.GX_BIT_0_7);
+
+                                    var frameMat = Mat.FromPixelData((int)height, (int)width, MatType.CV_8U, pRaw8Buffer);
+
+                                    // 更新 UI 图像
+                                    dispatcher.Invoke(() =>
+                                    {
+                                        switch (camSelect)
+                                        {
+                                            case CaptureTaskCameraSelect.TopCamera:
+                                                TopImgSrcMutex.WaitOne();
+                                                TopImageSource = frameMat.ToBitmapSource();
+                                                TopImgSrcMutex.ReleaseMutex();
+                                                break;
+                                            case CaptureTaskCameraSelect.BottomCamera:
+                                                BottomImgSrcMutex.WaitOne();
+                                                BottomImageSource = frameMat.ToBitmapSource();
+                                                BottomImgSrcMutex.ReleaseMutex();
+                                                break;
+                                            default:
+                                                Debug.WriteLine("Error in GxCameraCaptureTask: please use proper CaptureTaskCameraSelect enum");
+                                                isRunningGood = false;
+                                                break;
+                                        }
+                                    });
+                                }
+                                else
+                                {
+                                    Debug.WriteLine("Format error!");
+                                }
+                                stream.QBuf(frameData);
+                                //frameData.Destroy();
+
+                                Thread.Sleep(period);
+                                //await Task.Delay(period);
+                            } catch(CGalaxyException ex) {
+                                if (ex.GetErrorCode() == -14)
+                                {
+                                    Debug.WriteLine("Camera timeout in capture loop: " + ex.Message);
+                                }
+                                else
+                                {
+                                    Debug.WriteLine("Error in camera capture loop:");
+                                    Debug.WriteLine(ex.Message);
+                                    throw;
+                                }
+                            }
+
+                            
                         }
 
                         featControl.GetCommandFeature("AcquisitionStop").Execute();  // 发送停采命令

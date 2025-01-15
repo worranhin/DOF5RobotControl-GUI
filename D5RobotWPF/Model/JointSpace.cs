@@ -4,13 +4,14 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace DOF5RobotControl_GUI.Model
 {
     public partial class JointSpace : ObservableValidator
-    {
+    {        
         public bool IsUpdating { get; private set; }
 
         [ObservableProperty]
@@ -61,6 +62,31 @@ namespace DOF5RobotControl_GUI.Model
                 KineHelper.Forward(this, task);
         }
 
-        //public TaskSpace ToTaskSpace() => KineHelper.Forward(this);
+        public override string ToString()
+        {
+            return $"R1: {R1}, P2: {P2}, P3: {P3}, P4: {P4}, R5: {R5}";
+        }
+
+        public JointSpace Add(JointSpace j)
+        {
+            R1 += j.R1;
+            P2 += j.P2;
+            P3 += j.P3;
+            P4 += j.P4;
+            R5 += j.R5;
+
+            return this;
+        }
+
+        public JointSpace Copy(JointSpace j)
+        {
+            R1 = j.R1;
+            P2 = j.P2;
+            P3 = j.P3;
+            P4 = j.P4;
+            R5 = j.R5;
+
+            return this;
+        }
     }
 }
