@@ -53,7 +53,6 @@ namespace VisionLibrary {
 		catch (HalconCpp::HTupleAccessException& ex) {
 			throw gcnew Exception(gcnew System::String(ex.ErrorMessage().Text()));
 		}
-
 	}
 
 	/// <summary>

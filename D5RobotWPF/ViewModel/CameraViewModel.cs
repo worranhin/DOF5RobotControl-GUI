@@ -140,8 +140,14 @@ namespace DOF5RobotControl_GUI.ViewModel
             //int width, height, stride;
             //byte[] rawBuffer;
 
-            var topTask = ProcessTopImgAsync();
-            var bottomTask = ProcessBottomImgAsync();
+            if (TopImageSource is not BitmapSource topBitmap || BottomImageSource is not BitmapSource bottomBitmap)
+            {
+                Debug.WriteLine("ImageSource is not right.");
+                return;
+            }
+
+            var topTask = ImageProcessor.ProcessTopImgAsync(topBitmap);
+            var bottomTask = ImageProcessor.ProcessBottomImgAsync(bottomBitmap);
 
             await Task.WhenAll(topTask, bottomTask);
             (DPx, DPy, DRz) = await topTask;
@@ -225,79 +231,6 @@ namespace DOF5RobotControl_GUI.ViewModel
             //DRz = rz;
 
             IsProcessingImg = false;
-        }
-
-        private async Task<(double px, double py, double rz)> ProcessTopImgAsync()
-        {
-            int width, height, stride;
-            byte[] rawBuffer;
-
-            if (TopImageSource is not BitmapSource topBitmap)
-            {
-                Debug.WriteLine("Top image source is not BitmapSource");
-                return (double.NaN, double.NaN, double.NaN);
-            }
-
-            width = topBitmap.PixelWidth;
-            height = topBitmap.PixelHeight;
-            stride = width * ((topBitmap.Format.BitsPerPixel + 7) / 8); // 每行的字节数 ( + 7) / 8 是为了向上取整
-            rawBuffer = new byte[height * stride];
-            topBitmap.CopyPixels(rawBuffer, stride, 0);
-
-            TaskSpaceError error = new();
-            GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
-            try
-            {
-                IntPtr pointer = handle.AddrOfPinnedObject();
-                error = await Task.Run(() => vision.GetTaskSpaceError(pointer, width, height, stride, MatchingMode.ROUGH));
-                Debug.WriteLine(error);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("Error in VisionWrapper: " + ex.Message);
-            }
-            finally
-            {
-                handle.Free();
-            }
-
-            return (error.Px, error.Py, error.Rz);
-        }
-
-        private async Task<double> ProcessBottomImgAsync()
-        {
-            int width, height, stride;
-            byte[] rawBuffer;
-
-            if (BottomImageSource is not BitmapSource bottomBitmap)
-            {
-                Debug.WriteLine("Bottom image source is not BitmapSource");
-                return double.NaN;
-            }
-
-            width = bottomBitmap.PixelWidth;
-            height = bottomBitmap.PixelHeight;
-            stride = width * ((bottomBitmap.Format.BitsPerPixel + 7) / 8); // 每行的字节数 ( + 7) / 8 是为了向上取整
-            rawBuffer = new byte[height * stride];
-            bottomBitmap.CopyPixels(rawBuffer, stride, 0);
-
-            double verticalError = 0.0;
-            GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
-            try
-            {
-                IntPtr pointer = handle.AddrOfPinnedObject();
-                verticalError = await Task.Run( () => vision.GetVerticalError(pointer, width, height, stride));
-                Debug.WriteLine(verticalError);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("Error in VisionWrapper: " + ex.Message);
-            }
-            finally
-            {
-                handle.Free();
-            }
-            return verticalError;
         }
 
         private async Task StartCaptureImage()
@@ -535,8 +468,8 @@ namespace DOF5RobotControl_GUI.ViewModel
                                                                     //var frameData = stream.GetImage(500); // 拷贝采单帧，超时 500ms
                                                                     // 处理图像
                                                                     //Debug.WriteLine(frameData.GetStatus());
-                            UInt64 width = frameData.GetWidth();
-                            UInt64 height = frameData.GetHeight();
+                            ulong width = frameData.GetWidth();
+                            ulong height = frameData.GetHeight();
                             Debug.Assert(width == 2592);
                             Debug.Assert(height == 2048);
                             var pixelFormat = frameData.GetPixelFormat();

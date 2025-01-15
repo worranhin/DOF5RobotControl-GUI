@@ -326,68 +326,75 @@ namespace DOF5RobotControl_GUI.ViewModel
 
         private async Task<TaskSpace> GetErrorAsync(BitmapSource topBitmap, BitmapSource bottomBitmap)
         {
-            double px, py, pz, rz;
-            int width, height, stride;
-            byte[] rawBuffer;
-            VisionWrapper vision = new();
+            var topTask = ImageProcessor.ProcessTopImgAsync(topBitmap);
+            var bottomTask = ImageProcessor.ProcessBottomImgAsync(bottomBitmap);
+            await Task.WhenAll(topTask, bottomTask);
+            (double px, double py, double rz) = await topTask;
+            double pz = await bottomTask;
+            return new TaskSpace() { Px = px, Py = py, Pz = pz, Ry = double.NaN, Rz = rz };
 
-            width = topBitmap.PixelWidth;
-            height = topBitmap.PixelHeight;
-            stride = width * ((topBitmap.Format.BitsPerPixel + 7) / 8); // 每行的字节数 ( + 7) / 8 是为了向上取整
-            rawBuffer = new byte[height * stride];
-            topBitmap.CopyPixels(rawBuffer, stride, 0);
+            //double px, py, pz, rz;
+            //int width, height, stride;
+            //byte[] rawBuffer;
+            //VisionWrapper vision = new();
 
-            var processTopImg = Task.Run(() =>
-            {
-                TaskSpaceError error = new();
-                GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
-                try
-                {
-                    IntPtr pointer = handle.AddrOfPinnedObject();
-                    error = vision.GetTaskSpaceError(pointer, width, height, stride, MatchingMode.ROUGH);
-                    Debug.WriteLine(error);
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine("Error in VisionWrapper: " + ex.Message);
-                }
-                finally
-                {
-                    handle.Free();
-                }
-                return (error.Px, error.Py, error.Rz);
-            });
+            //width = topBitmap.PixelWidth;
+            //height = topBitmap.PixelHeight;
+            //stride = width * ((topBitmap.Format.BitsPerPixel + 7) / 8); // 每行的字节数 ( + 7) / 8 是为了向上取整
+            //rawBuffer = new byte[height * stride];
+            //topBitmap.CopyPixels(rawBuffer, stride, 0);
 
-            width = bottomBitmap.PixelWidth;
-            height = bottomBitmap.PixelHeight;
-            stride = width * ((bottomBitmap.Format.BitsPerPixel + 7) / 8); // 每行的字节数 ( + 7) / 8 是为了向上取整
-            rawBuffer = new byte[height * stride];
-            bottomBitmap.CopyPixels(rawBuffer, stride, 0);
-            var processBottomImg = Task.Run(() =>
-            {
-                double verticalError = 0.0;
-                GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
-                try
-                {
-                    IntPtr pointer = handle.AddrOfPinnedObject();
-                    verticalError = vision.GetVerticalError(pointer, width, height, stride);
-                    Debug.WriteLine(verticalError);
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine("Error in VisionWrapper: " + ex.Message);
-                }
-                finally
-                {
-                    handle.Free();
-                }
-                return verticalError;
-            });
+            //var processTopImg = Task.Run(() =>
+            //{
+            //    TaskSpaceError error = new();
+            //    GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
+            //    try
+            //    {
+            //        IntPtr pointer = handle.AddrOfPinnedObject();
+            //        error = vision.GetTaskSpaceError(pointer, width, height, stride, MatchingMode.ROUGH);
+            //        Debug.WriteLine(error);
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        Debug.WriteLine("Error in VisionWrapper: " + ex.Message);
+            //    }
+            //    finally
+            //    {
+            //        handle.Free();
+            //    }
+            //    return (error.Px, error.Py, error.Rz);
+            //});
 
-            (px, py, rz) = await processTopImg;
-            pz = await processBottomImg;
+            //width = bottomBitmap.PixelWidth;
+            //height = bottomBitmap.PixelHeight;
+            //stride = width * ((bottomBitmap.Format.BitsPerPixel + 7) / 8); // 每行的字节数 ( + 7) / 8 是为了向上取整
+            //rawBuffer = new byte[height * stride];
+            //bottomBitmap.CopyPixels(rawBuffer, stride, 0);
+            //var processBottomImg = Task.Run(() =>
+            //{
+            //    double verticalError = 0.0;
+            //    GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
+            //    try
+            //    {
+            //        IntPtr pointer = handle.AddrOfPinnedObject();
+            //        verticalError = vision.GetVerticalError(pointer, width, height, stride);
+            //        Debug.WriteLine(verticalError);
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        Debug.WriteLine("Error in VisionWrapper: " + ex.Message);
+            //    }
+            //    finally
+            //    {
+            //        handle.Free();
+            //    }
+            //    return verticalError;
+            //});
 
-            return new TaskSpace() { Px = px, Py = py, Pz = pz, Ry = 0, Rz = rz };
+            //(px, py, rz) = await processTopImg;
+            //pz = await processBottomImg;
+
+            //return new TaskSpace() { Px = px, Py = py, Pz = pz, Ry = 0, Rz = rz };
         }
 
         /***** 机器人控制命令结束 *****/
