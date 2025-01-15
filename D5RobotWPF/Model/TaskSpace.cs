@@ -19,5 +19,11 @@ namespace DOF5RobotControl_GUI.Model
         private double _ry;
         [ObservableProperty]
         private double _rz;
+
+        public override string ToString()
+        {
+            string str = base.ToString() + $"\tPx:{Px} Py:{Py} Pz:{Pz} Ry:{Ry} Rz:{Rz}";
+            return str;
+        }
     }
 }

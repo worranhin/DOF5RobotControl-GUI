@@ -29,7 +29,8 @@ namespace DOF5RobotControl_GUI
 
             this.Closed += (sender, e) =>
             {
-                viewModel.Dispose();
+                viewModel.StopCaptureImage();
+                //viewModel.Dispose();
             };
         }
     }

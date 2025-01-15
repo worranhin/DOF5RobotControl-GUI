@@ -16,6 +16,13 @@ using System.Windows.Threading;
 using Opc.Ua;
 using System.Windows.Input;
 using System.IO.Ports;
+using CommunityToolkit.Mvvm.Messaging;
+using System.Windows.Media;
+using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics.Arm;
+using System.Windows.Media.Imaging;
+using VisionLibrary;
+using System.Drawing;
 
 namespace DOF5RobotControl_GUI.ViewModel
 {
@@ -43,6 +50,8 @@ namespace DOF5RobotControl_GUI.ViewModel
         public Dispatcher Dispatcher { get; private set; }
         CancellationTokenSource? updateStateTaskCancelSource;
         CancellationToken updateStateTaskCancelToken;
+        private CancellationTokenSource? insertCancelSource;
+        private CancellationToken insertCancelToken;
 
         /***** 机器人系统相关 *****/
         readonly string natorId = "usb:id:2250716012";
@@ -59,8 +68,6 @@ namespace DOF5RobotControl_GUI.ViewModel
         private RoboticState _currentState = new(0, 0, 0, 0, 0);
         [ObservableProperty]
         private bool _isInserting = false;
-        private CancellationTokenSource? insertCancelSource;
-        private CancellationToken insertCancelToken;
 
         /***** 点动相关字段/属性 *****/
         public static IEnumerable<JogMode> JogModes => Enum.GetValues(typeof(JogMode)).Cast<JogMode>();
@@ -168,6 +175,19 @@ namespace DOF5RobotControl_GUI.ViewModel
         }
 
         [RelayCommand]
+        private void SetTargetJoints(Joints joints)
+        {
+            TargetState.SetFromD5RJoints(joints);
+        }
+
+        [RelayCommand]
+        private void SetTargetJointsFromCurrent()
+        {
+            var joints = CurrentState.ToD5RJoints();
+            TargetState.SetFromD5RJoints(joints);
+        }
+
+        [RelayCommand]
         private void RobotRun()
         {
             if (robot == null)
@@ -196,6 +216,10 @@ namespace DOF5RobotControl_GUI.ViewModel
         [RelayCommand]
         private void RobotStop()
         {
+            insertCancelSource?.Cancel();
+            insertCancelSource?.Dispose();
+            insertCancelSource = null;
+
             if (robot == null)
             {
                 MessageBox.Show("Robot not connected.");
@@ -226,24 +250,33 @@ namespace DOF5RobotControl_GUI.ViewModel
         }
 
         [RelayCommand]
-        private void OpenCamera()
+        private static void OpenCamera()
         {
-            //ManualControlWindow window = new(robot, TargetState);
             CameraWindow window = new();
             window.Show();
         }
 
         [RelayCommand]
-        private void SetTargetJoints(Joints joints)
+        private static void GetImage()
         {
-            TargetState.SetFromD5RJoints(joints);
+            ImageSource? image = WeakReferenceMessenger.Default.Send<TopImgRequestMessage>();
+            Debug.WriteLine(image);
         }
 
         [RelayCommand]
-        private void SetTargetJointsFromCurrent()
+        private async Task GoToReadyPosition()
         {
-            var joints = CurrentState.ToD5RJoints();
-            TargetState.SetFromD5RJoints(joints);
+            ImageSource? topImage = WeakReferenceMessenger.Default.Send<TopImgRequestMessage>();
+            ImageSource? bottomImage = WeakReferenceMessenger.Default.Send<BottomImgRequestMessage>();
+
+            if (topImage is not BitmapSource topBitmap || bottomImage is not BitmapSource bottomBitmap)
+            {
+                MessageBox.Show("Failed to get image, please check the camera. (You have to start the camera first.)", "Fail to Get Image");
+                return;
+            }
+
+            var error = await GetErrorAsync(topBitmap, bottomBitmap);
+            Debug.WriteLine(error);
         }
 
         [RelayCommand]
@@ -253,31 +286,100 @@ namespace DOF5RobotControl_GUI.ViewModel
             {
                 insertCancelSource = new();
                 insertCancelToken = insertCancelSource.Token;
-                Task.Run(() =>
+                Task.Run(async () =>
                 {
                     while (!insertCancelToken.IsCancellationRequested)
                     {
                         try
                         {
                             TargetState.JointSpace.P3 = CurrentState.JointSpace.P3 + 0.1;
-                        } catch (ArgumentOutOfRangeException exc)
+                        }
+                        catch (ArgumentOutOfRangeException exc)
                         {
                             insertCancelSource.Cancel();
                             MessageBox.Show(exc.Message, "Error while Insertion");
-                            insertCancelToken.ThrowIfCancellationRequested();
+                            break;
                         }
                         RobotRun();
-                        Thread.Sleep(500);
+                        //Thread.Sleep(500);
+                        await Task.Delay(500);
                     }
                 }, insertCancelToken);
                 IsInserting = true;
-            } else  // if inserting, then cancel it
+            }
+            else  // if inserting, then cancel it
             {
                 insertCancelSource?.Cancel();
                 insertCancelSource?.Dispose();
                 insertCancelSource = null;
                 IsInserting = false;
             }
+        }
+
+        private async Task<TaskSpace> GetErrorAsync(BitmapSource topBitmap, BitmapSource bottomBitmap)
+        {
+            double px, py, pz, rz;
+            int width, height, stride;
+            byte[] rawBuffer;
+            VisionWrapper vision = new();
+
+            width = topBitmap.PixelWidth;
+            height = topBitmap.PixelHeight;
+            stride = width * ((topBitmap.Format.BitsPerPixel + 7) / 8); // 每行的字节数 ( + 7) / 8 是为了向上取整
+            rawBuffer = new byte[height * stride];
+            topBitmap.CopyPixels(rawBuffer, stride, 0);
+
+            var processTopImg = Task.Run(() =>
+            {
+                TaskSpaceError error = new();
+                GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
+                try
+                {
+                    IntPtr pointer = handle.AddrOfPinnedObject();
+                    error = vision.GetTaskSpaceError(pointer, width, height, stride, MatchingMode.ROUGH);
+                    Debug.WriteLine(error);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine("Error in VisionWrapper: " + ex.Message);
+                }
+                finally
+                {
+                    handle.Free();
+                }
+                return (error.Px, error.Py, error.Rz);
+            });
+
+            width = bottomBitmap.PixelWidth;
+            height = bottomBitmap.PixelHeight;
+            stride = width * ((bottomBitmap.Format.BitsPerPixel + 7) / 8); // 每行的字节数 ( + 7) / 8 是为了向上取整
+            rawBuffer = new byte[height * stride];
+            bottomBitmap.CopyPixels(rawBuffer, stride, 0);
+            var processBottomImg = Task.Run(() =>
+            {
+                double verticalError = 0.0;
+                GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
+                try
+                {
+                    IntPtr pointer = handle.AddrOfPinnedObject();
+                    verticalError = vision.GetVerticalError(pointer, width, height, stride);
+                    Debug.WriteLine(verticalError);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine("Error in VisionWrapper: " + ex.Message);
+                }
+                finally
+                {
+                    handle.Free();
+                }
+                return verticalError;
+            });
+
+            (px, py, rz) = await processTopImg;
+            pz = await processBottomImg;
+
+            return new TaskSpace() { Px = px, Py = py, Pz = pz, Ry = 0, Rz = rz };
         }
 
         /***** 机器人控制命令结束 *****/
@@ -508,7 +610,8 @@ namespace DOF5RobotControl_GUI.ViewModel
                         try
                         {
                             CurrentState.SetFromD5RJoints(joints);
-                        } catch (ArgumentException exc)
+                        }
+                        catch (ArgumentException exc)
                         {
                             if (exc.ParamName == "joint")
                                 Debug.WriteLine(exc.Message);

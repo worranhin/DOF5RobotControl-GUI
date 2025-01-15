@@ -13,6 +13,15 @@
                 <!-- Theme setting -->
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Themes/Light.Steel.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <Style TargetType="Button" BasedOn="{StaticResource MahApps.Styles.Button}" x:Key="userButton">
+                <Setter Property="Padding" Value="2"/>
+                <Setter Property="MinWidth" Value="50"/>
+                <Setter Property="MinHeight" Value="30"/>
+                <Setter Property="FontFamily" Value="Microsoft YaHei UI"/>
+                <Setter Property="FontWeight" Value="Regular"/>
+                <Setter Property="FontSize" Value="16"/>
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

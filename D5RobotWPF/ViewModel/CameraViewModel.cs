@@ -1,5 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using CommunityToolkit.Mvvm.Messaging.Messages;
 using DOF5RobotControl_GUI.Model;
 using GxIAPINET;
 using OpenCvSharp;
@@ -22,7 +24,11 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace DOF5RobotControl_GUI.ViewModel
 {
-    public partial class CameraViewModel : ObservableObject, IDisposable
+    internal class TopImgRequestMessage : RequestMessage<ImageSource?> { }
+
+    internal class BottomImgRequestMessage : RequestMessage<ImageSource?> { }
+
+    public partial class CameraViewModel : ObservableObject
     {
         private enum CaptureTaskCameraSelect
         {
@@ -45,60 +51,96 @@ namespace DOF5RobotControl_GUI.ViewModel
         private ImageSource? _bottomImageSource;
         public readonly Mutex BottomImgSrcMutex = new();
 
-        private bool disposedValue;
-        private readonly CancellationTokenSource gxCameraTaskCancelSource;
-        private readonly CancellationToken gxCameraTaskCancelToken;
+        //private bool disposedValue;
+        private CancellationTokenSource? gxCameraTaskCancelSource;
+        private CancellationToken gxCameraTaskCancelToken;
         private readonly Dispatcher dispatcher = Application.Current.Dispatcher;
+        Task captureTask;
+
+        // 图像处理相关
+        readonly VisionWrapper vision = new();
+        [ObservableProperty]
+        bool _isProcessingImg = false;
+        [ObservableProperty]
+        double _dPx = double.NaN;
+        [ObservableProperty]
+        double _dPy = double.NaN;
+        [ObservableProperty]
+        double _dPz = double.NaN;
+        [ObservableProperty]
+        double _dRy = double.NaN;
+        [ObservableProperty]
+        double _dRz = double.NaN;
+
 
         public CameraViewModel()
         {
-            gxCameraTaskCancelSource = new();
-            gxCameraTaskCancelToken = gxCameraTaskCancelSource.Token;
-            Task.Run(GxLibTask);
-        }
+            captureTask = StartCaptureImage();
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
+            WeakReferenceMessenger.Default.Register<CameraViewModel, TopImgRequestMessage>(this, (r, m) =>
             {
-                if (disposing)
-                {
-                    // 释放托管状态(托管对象)
-                }
-
-                // 释放未托管的资源(未托管的对象)并重写终结器
-                // 将大型字段设置为 null
-                gxCameraTaskCancelSource.Cancel();
-                gxCameraTaskCancelSource.Dispose();
-                disposedValue = true;
-            }
+                m.Reply(r.TopImageSource);
+            });
         }
 
-        // 仅当“Dispose(bool disposing)”拥有用于释放未托管资源的代码时才替代终结器
         ~CameraViewModel()
         {
-            // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
-            Dispose(disposing: false);
+            gxCameraTaskCancelSource?.Cancel();
+            gxCameraTaskCancelSource?.Dispose();
+            gxCameraTaskCancelSource = null;
+
+            WeakReferenceMessenger.Default.UnregisterAll(this);
         }
 
-        public void Dispose()
-        {
-            // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
+
+        //protected virtual void Dispose(bool disposing)
+        //{
+        //    if (!disposedValue)
+        //    {
+        //        if (disposing)
+        //        {
+        //            // 释放托管状态(托管对象)
+        //            WeakReferenceMessenger.Default.UnregisterAll(this);
+        //            gxCameraTaskCancelSource?.Cancel();
+        //            gxCameraTaskCancelSource.Dispose();
+        //        }
+
+        //        // 释放未托管的资源(未托管的对象)并重写终结器
+        //        // 将大型字段设置为 null
+        //        disposedValue = true;
+        //    }
+        //}
+
+        //// 仅当“Dispose(bool disposing)”拥有用于释放未托管资源的代码时才替代终结器
+        //~CameraViewModel()
+        //{
+        //    // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
+        //    Dispose(disposing: false);
+        //}
+
+        //public void Dispose()
+        //{
+        //    // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
+        //    Dispose(disposing: true);
+        //    GC.SuppressFinalize(this);
+        //}
 
         [RelayCommand]
-        async Task GetError()
+        private async Task GetErrorAsync()
         {
-            // 图像处理
-            VisionWrapper vision = new();
+            IsProcessingImg = true;
+            
             double px, py, pz, rz;
             int width, height, stride;
             byte[] rawBuffer;
 
             if (TopImageSource is not BitmapSource topBitmap || BottomImageSource is not BitmapSource bottomBitmap)
             {
+                await Task.Delay(1000);
+                Debug.WriteLine("Sending message from camera view model...");
+                TaskSpace msg = new() { Px = 114.514, Py = 1.2, Pz = 3.2, Ry = 0, Rz = 12 };
+                WeakReferenceMessenger.Default.Send(msg);
+                IsProcessingImg = false;
                 return;
             }
 
@@ -109,7 +151,8 @@ namespace DOF5RobotControl_GUI.ViewModel
             rawBuffer = new byte[height * stride];
             topBitmap.CopyPixels(rawBuffer, stride, 0);
             TopImgSrcMutex.ReleaseMutex();
-            (px, py, rz) = await Task.Run(() =>
+
+            var processTopImg = Task.Run(() =>
             {
                 TaskSpaceError error = new();
                 GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
@@ -137,7 +180,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             rawBuffer = new byte[height * stride];
             bottomBitmap.CopyPixels(rawBuffer, stride, 0);
             BottomImgSrcMutex.ReleaseMutex();
-            pz = await Task.Run(() =>
+            var processBottomImg = Task.Run(() =>
             {
                 double verticalError = 0.0;
                 GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
@@ -158,21 +201,41 @@ namespace DOF5RobotControl_GUI.ViewModel
                 return verticalError;
             });
 
-            Debug.WriteLine($"{px} {py} {pz} {rz}");
-            //if (processTopImgTask != null)
-            //{
-            //    (double x, double y, double rz) = await processTopImgTask;
+            (px, py, rz) = await processTopImg;
+            pz = await processBottomImg;
 
-            //}
-            //RoboticState state = new(0, 0, 0, 0, 0);
-            //double z = await processBottomImgTask;
-            //Debug.WriteLine($"{x} {y} {z} {rz}");
+            DPx = px;
+            DPy = py;
+            DPz = pz;
+            DRz = rz;
+
+            IsProcessingImg = false;
+        }
+
+        private async Task StartCaptureImage()
+        {
+            try
+            {
+                gxCameraTaskCancelSource = new();
+                gxCameraTaskCancelToken = gxCameraTaskCancelSource.Token;
+                await Task.Run(GxLibTask);
+            }
+            finally
+            {
+                gxCameraTaskCancelSource?.Dispose();
+                gxCameraTaskCancelSource = null;
+            }
+        }
+
+        public void StopCaptureImage()
+        {
+            gxCameraTaskCancelSource?.Cancel();
         }
 
         /// <summary>
         /// 大恒相机库的初始化和逆初始化处理
         /// </summary>
-        private void GxLibTask()
+        private async Task GxLibTask()
         {
             try
             {
@@ -206,8 +269,9 @@ namespace DOF5RobotControl_GUI.ViewModel
                 var topCameraTask = Task.Run(() => GxCameraCaptureTask(CaptureTaskCameraSelect.TopCamera), gxCameraTaskCancelToken);
                 var bottomCameraTask = Task.Run(() => GxCameraCaptureTask(CaptureTaskCameraSelect.BottomCamera), gxCameraTaskCancelToken);
 
-                topCameraTask.Wait();
-                bottomCameraTask.Wait();
+                //await topCameraTask;
+                //await bottomCameraTask;
+                await Task.WhenAll(topCameraTask, bottomCameraTask);
 
             }
             catch (CGalaxyException ex)

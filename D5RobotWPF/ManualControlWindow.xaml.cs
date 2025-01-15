@@ -34,10 +34,7 @@ namespace DOF5RobotControl_GUI
         private readonly static SoundPlayer mediumPlayer = new("res/Medium.wav");
         private readonly static SoundPlayer highPlayer = new("res/High.wav");
         private readonly static int controlPeriod = 20;  // ms
-        //private readonly VideoCapture capture;
         private readonly Mat frame;
-        //private readonly CancellationTokenSource captureCancelSource;
-        //private readonly CancellationToken captureCancelToken;
         private readonly CancellationTokenSource xInputCancelSource;
         private readonly CancellationToken xInputCancelToken;
         private readonly CancellationTokenSource gxCameraTaskCancelSource;
