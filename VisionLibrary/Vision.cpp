@@ -100,13 +100,13 @@ namespace NativeVision {
 		case 2:
 			cv::matchTemplate(img, _posTemplate_2, result, cv::TM_CCOEFF_NORMED);
 			cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc);
+			_roiPos = cv::Point2f(maxLoc.x - 300.0f, maxLoc.y + 300.0f);
 			// 测试匹配效果
 			//cv::rectangle(img, maxLoc, cv::Point(maxLoc.x + 280, maxLoc.y + 280), cv::Scalar(0), 4);
 			//cv::namedWindow("test", cv::WINDOW_NORMAL);
 			//cv::resizeWindow("test", cv::Size(1300, 1000));
 			//cv::imshow("test", img);
 			//cv::waitKey(0);
-			_roiPos = cv::Point2f(maxLoc.x - 300.0f, maxLoc.y + 300.0f);
 			break;
 		case 3:
 			throw gcnew System::NotImplementedException("index = 3 is not implemented, please let index = 2.");

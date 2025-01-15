@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics.Arm;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -20,6 +21,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
 using System.Windows.Threading;
 using VisionLibrary;
+using Windows.Graphics.Printing.Workflow;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace DOF5RobotControl_GUI.ViewModel
@@ -81,6 +83,11 @@ namespace DOF5RobotControl_GUI.ViewModel
             {
                 m.Reply(r.TopImageSource);
             });
+
+            WeakReferenceMessenger.Default.Register<CameraViewModel, BottomImgRequestMessage>(this, (r, m) =>
+            {
+                m.Reply(r.BottomImageSource);
+            });
         }
 
         ~CameraViewModel()
@@ -129,87 +136,168 @@ namespace DOF5RobotControl_GUI.ViewModel
         private async Task GetErrorAsync()
         {
             IsProcessingImg = true;
-            
-            double px, py, pz, rz;
+
+            //int width, height, stride;
+            //byte[] rawBuffer;
+
+            var topTask = ProcessTopImgAsync();
+            var bottomTask = ProcessBottomImgAsync();
+
+            await Task.WhenAll(topTask, bottomTask);
+            (DPx, DPy, DRz) = await topTask;
+            DPz = await bottomTask;
+
+
+
+            //if (TopImageSource is not BitmapSource topBitmap || BottomImageSource is not BitmapSource bottomBitmap)
+            //{
+            //    await Task.Delay(1000);
+            //    Debug.WriteLine("Sending message from camera view model...");
+            //    TaskSpace msg = new() { Px = 114.514, Py = 1.2, Pz = 3.2, Ry = 0, Rz = 12 };
+            //    WeakReferenceMessenger.Default.Send(msg);
+            //    IsProcessingImg = false;
+            //    return;
+            //}
+
+            ////TopImgSrcMutex.WaitOne();
+            //width = topBitmap.PixelWidth;
+            //height = topBitmap.PixelHeight;
+            //stride = width * ((topBitmap.Format.BitsPerPixel + 7) / 8); // 每行的字节数 ( + 7) / 8 是为了向上取整
+            //rawBuffer = new byte[height * stride];
+            //topBitmap.CopyPixels(rawBuffer, stride, 0);
+            ////TopImgSrcMutex.ReleaseMutex();
+
+            //var processTopImg = Task.Run(() =>
+            //{
+            //    TaskSpaceError error = new();
+            //    GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
+            //    try
+            //    {
+            //        IntPtr pointer = handle.AddrOfPinnedObject();
+            //        error = vision.GetTaskSpaceError(pointer, width, height, stride, MatchingMode.ROUGH);
+            //        Debug.WriteLine(error);
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        Debug.WriteLine("Error in VisionWrapper: " + ex.Message);
+            //    }
+            //    finally
+            //    {
+            //        handle.Free();
+            //    }
+            //    return (error.Px, error.Py, error.Rz);
+            //});
+
+            //BottomImgSrcMutex.WaitOne();
+            //width = bottomBitmap.PixelWidth;
+            //height = bottomBitmap.PixelHeight;
+            //stride = width * ((bottomBitmap.Format.BitsPerPixel + 7) / 8); // 每行的字节数 ( + 7) / 8 是为了向上取整
+            //rawBuffer = new byte[height * stride];
+            //bottomBitmap.CopyPixels(rawBuffer, stride, 0);
+            //BottomImgSrcMutex.ReleaseMutex();
+            //var processBottomImg = Task.Run(() =>
+            //{
+            //    double verticalError = 0.0;
+            //    GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
+            //    try
+            //    {
+            //        IntPtr pointer = handle.AddrOfPinnedObject();
+            //        verticalError = vision.GetVerticalError(pointer, width, height, stride);
+            //        Debug.WriteLine(verticalError);
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        Debug.WriteLine("Error in VisionWrapper: " + ex.Message);
+            //    }
+            //    finally
+            //    {
+            //        handle.Free();
+            //    }
+            //    return verticalError;
+            //});
+
+            //(px, py, rz) = await processTopImg;
+            //pz = await processBottomImg;
+
+            //DPx = px;
+            //DPy = py;
+            //DPz = pz;
+            //DRz = rz;
+
+            IsProcessingImg = false;
+        }
+
+        private async Task<(double px, double py, double rz)> ProcessTopImgAsync()
+        {
             int width, height, stride;
             byte[] rawBuffer;
 
-            if (TopImageSource is not BitmapSource topBitmap || BottomImageSource is not BitmapSource bottomBitmap)
+            if (TopImageSource is not BitmapSource topBitmap)
             {
-                await Task.Delay(1000);
-                Debug.WriteLine("Sending message from camera view model...");
-                TaskSpace msg = new() { Px = 114.514, Py = 1.2, Pz = 3.2, Ry = 0, Rz = 12 };
-                WeakReferenceMessenger.Default.Send(msg);
-                IsProcessingImg = false;
-                return;
+                Debug.WriteLine("Top image source is not BitmapSource");
+                return (double.NaN, double.NaN, double.NaN);
             }
 
-            TopImgSrcMutex.WaitOne();
             width = topBitmap.PixelWidth;
             height = topBitmap.PixelHeight;
             stride = width * ((topBitmap.Format.BitsPerPixel + 7) / 8); // 每行的字节数 ( + 7) / 8 是为了向上取整
             rawBuffer = new byte[height * stride];
             topBitmap.CopyPixels(rawBuffer, stride, 0);
-            TopImgSrcMutex.ReleaseMutex();
 
-            var processTopImg = Task.Run(() =>
+            TaskSpaceError error = new();
+            GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
+            try
             {
-                TaskSpaceError error = new();
-                GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
-                try
-                {
-                    IntPtr pointer = handle.AddrOfPinnedObject();
-                    error = vision.GetTaskSpaceError(pointer, width, height, stride, MatchingMode.ROUGH);
-                    Debug.WriteLine(error);
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine("Error in VisionWrapper: " + ex.Message);
-                }
-                finally
-                {
-                    handle.Free();
-                }
-                return (error.Px, error.Py, error.Rz);
-            });
+                IntPtr pointer = handle.AddrOfPinnedObject();
+                error = await Task.Run(() => vision.GetTaskSpaceError(pointer, width, height, stride, MatchingMode.ROUGH));
+                Debug.WriteLine(error);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Error in VisionWrapper: " + ex.Message);
+            }
+            finally
+            {
+                handle.Free();
+            }
 
-            BottomImgSrcMutex.WaitOne();
+            return (error.Px, error.Py, error.Rz);
+        }
+
+        private async Task<double> ProcessBottomImgAsync()
+        {
+            int width, height, stride;
+            byte[] rawBuffer;
+
+            if (BottomImageSource is not BitmapSource bottomBitmap)
+            {
+                Debug.WriteLine("Bottom image source is not BitmapSource");
+                return double.NaN;
+            }
+
             width = bottomBitmap.PixelWidth;
             height = bottomBitmap.PixelHeight;
             stride = width * ((bottomBitmap.Format.BitsPerPixel + 7) / 8); // 每行的字节数 ( + 7) / 8 是为了向上取整
             rawBuffer = new byte[height * stride];
             bottomBitmap.CopyPixels(rawBuffer, stride, 0);
-            BottomImgSrcMutex.ReleaseMutex();
-            var processBottomImg = Task.Run(() =>
+
+            double verticalError = 0.0;
+            GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
+            try
             {
-                double verticalError = 0.0;
-                GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
-                try
-                {
-                    IntPtr pointer = handle.AddrOfPinnedObject();
-                    verticalError = vision.GetVerticalError(pointer, width, height, stride);
-                    Debug.WriteLine(verticalError);
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine("Error in VisionWrapper: " + ex.Message);
-                }
-                finally
-                {
-                    handle.Free();
-                }
-                return verticalError;
-            });
-
-            (px, py, rz) = await processTopImg;
-            pz = await processBottomImg;
-
-            DPx = px;
-            DPy = py;
-            DPz = pz;
-            DRz = rz;
-
-            IsProcessingImg = false;
+                IntPtr pointer = handle.AddrOfPinnedObject();
+                verticalError = await Task.Run( () => vision.GetVerticalError(pointer, width, height, stride));
+                Debug.WriteLine(verticalError);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Error in VisionWrapper: " + ex.Message);
+            }
+            finally
+            {
+                handle.Free();
+            }
+            return verticalError;
         }
 
         private async Task StartCaptureImage()

@@ -266,8 +266,16 @@ namespace DOF5RobotControl_GUI.ViewModel
         [RelayCommand]
         private async Task GoToReadyPosition()
         {
-            ImageSource? topImage = WeakReferenceMessenger.Default.Send<TopImgRequestMessage>();
-            ImageSource? bottomImage = WeakReferenceMessenger.Default.Send<BottomImgRequestMessage>();
+            ImageSource? topImage = null, bottomImage = null;
+            try
+            {
+                topImage = WeakReferenceMessenger.Default.Send<TopImgRequestMessage>();
+                bottomImage = WeakReferenceMessenger.Default.Send<BottomImgRequestMessage>();
+            } catch (InvalidOperationException ex)
+            {
+                Debug.WriteLine(ex.Message);
+                MessageBox.Show("Request Image failed. Please open the camera first.", "Error when go to ready position");
+            }
 
             if (topImage is not BitmapSource topBitmap || bottomImage is not BitmapSource bottomBitmap)
             {
