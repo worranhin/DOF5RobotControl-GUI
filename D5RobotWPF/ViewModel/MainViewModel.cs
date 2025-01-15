@@ -74,7 +74,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         public static IEnumerable<JogResolution> JogResolutions => Enum.GetValues(typeof(JogResolution)).Cast<JogResolution>();
         public readonly int natorJogResolution = 30000;
         public readonly int RMDJogResolution = 20;
-        readonly uint jogPeriod = 20;  // ms
+        const uint jogPeriod = 20;  // ms
         System.Timers.Timer? jogTimer;
         [ObservableProperty]
         private JogMode _jogModeSelected = JogMode.OneStep;
@@ -132,6 +132,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                 robot = null;
                 SystemConnected = false;
                 updateStateTaskCancelSource?.Cancel();
+                updateStateTaskCancelSource?.Dispose();
                 updateStateTaskCancelSource = null;
             }
             else  // 系统未连接，则建立连接
@@ -154,7 +155,8 @@ namespace DOF5RobotControl_GUI.ViewModel
 
                     updateStateTaskCancelSource = new();
                     updateStateTaskCancelToken = updateStateTaskCancelSource.Token;
-                    Task.Run(UpdateCurrentStateTask, updateStateTaskCancelToken);
+                    UpdateCurrentStateTaskAsync();
+                    //Task.Run(UpdateCurrentStateTaskAsync, updateStateTaskCancelToken);
                 }
                 catch (RobotException err)
                 {
@@ -271,7 +273,8 @@ namespace DOF5RobotControl_GUI.ViewModel
             {
                 topImage = WeakReferenceMessenger.Default.Send<TopImgRequestMessage>();
                 bottomImage = WeakReferenceMessenger.Default.Send<BottomImgRequestMessage>();
-            } catch (InvalidOperationException ex)
+            }
+            catch (InvalidOperationException ex)
             {
                 Debug.WriteLine(ex.Message);
                 MessageBox.Show("Request Image failed. Please open the camera first.", "Error when go to ready position");
@@ -613,11 +616,11 @@ namespace DOF5RobotControl_GUI.ViewModel
 
         /***** 任务相关代码 *****/
 
-        private void UpdateCurrentStateTask()
+        private async void UpdateCurrentStateTaskAsync()
         {
-            while (robot != null && !updateStateTaskCancelToken.IsCancellationRequested)
+            try
             {
-                try
+                while (robot != null && !updateStateTaskCancelToken.IsCancellationRequested)
                 {
                     Joints joints = (Joints)robot.GetCurrentJoint();
                     Dispatcher.Invoke(() =>
@@ -632,20 +635,24 @@ namespace DOF5RobotControl_GUI.ViewModel
                                 Debug.WriteLine(exc.Message);
                         }
                     });
-                }
-                catch (RobotException exc)
-                {
-                    Debug.WriteLine(exc.Message);
-                    if (exc.Code != ErrorCode.RMDFormatError && exc.Code != ErrorCode.SerialSendError)
-                        throw;
-                }
-                catch (ArgumentException exc)
-                {
-                    Debug.WriteLine(exc.Message);
-                }
 
-                Thread.Sleep(1000);
+                    await Task.Delay(1000);
+                }
             }
+            catch (RobotException exc)
+            {
+                Debug.WriteLine(exc.Message);
+                if (exc.Code != ErrorCode.RMDFormatError && exc.Code != ErrorCode.SerialSendError)
+                    throw;
+            }
+            catch (ArgumentException exc)
+            {
+                Debug.WriteLine(exc.Message);
+            } finally
+            {
+                updateStateTaskCancelSource?.Dispose();
+                updateStateTaskCancelSource = null;
+            }            
         }
 
         /***** 任务相关代码结束 *****/
