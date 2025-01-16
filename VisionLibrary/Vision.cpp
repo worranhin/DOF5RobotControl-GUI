@@ -421,7 +421,7 @@ namespace NativeVision {
 	TaskSpaceError VisualController::GetTaskSpaceError(cv::Mat img, MatchingMode m) {
 		std::vector<cv::Point2f> clampPos = SIFT(img, Models::CLAMP);
 		if (clampPos.size() < 2) {
-			throw gcnew System::Exception("Failed to SIFT");
+			throw gcnew System::InvalidOperationException("Failed to SIFT");
 		}
 
 		float clampAngle = static_cast<float>(atan2f(clampPos[0].y - clampPos[1].y, clampPos[0].x - clampPos[1].x) * (-180) / CV_PI);

@@ -129,6 +129,7 @@
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="Vision.h" />
+    <ClInclude Include="VisionException.h" />
     <ClInclude Include="VisionLibrary.h" />
   </ItemGroup>
   <ItemGroup>
@@ -140,6 +141,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Vision.cpp" />
+    <ClCompile Include="VisionException.cpp" />
     <ClCompile Include="VisionLibrary.cpp" />
   </ItemGroup>
   <ItemGroup>

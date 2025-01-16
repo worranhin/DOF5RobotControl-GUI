@@ -25,5 +25,13 @@ namespace DOF5RobotControl_GUI.Model
             string str = base.ToString() + $"\tPx:{Px} Py:{Py} Pz:{Pz} Ry:{Ry} Rz:{Rz}";
             return str;
         }
+
+        public static double Distance(TaskSpace a, TaskSpace b)
+        {
+            double dx = a.Px - b.Px;
+            double dy = a.Py - b.Py;
+            double dz = a.Pz - b.Pz;
+            return Math.Sqrt(dx * dx + dy * dy + dz * dz);
+        }
     }
 }

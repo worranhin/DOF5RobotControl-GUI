@@ -77,8 +77,6 @@ namespace DOF5RobotControl_GUI.ViewModel
 
         public CameraViewModel()
         {
-            captureTask = StartCaptureImage();
-
             WeakReferenceMessenger.Default.Register<CameraViewModel, TopImgRequestMessage>(this, (r, m) =>
             {
                 m.Reply(r.TopImageSource);
@@ -88,6 +86,8 @@ namespace DOF5RobotControl_GUI.ViewModel
             {
                 m.Reply(r.BottomImageSource);
             });
+
+            captureTask = StartCaptureImage();
         }
 
         ~CameraViewModel()
@@ -110,12 +110,22 @@ namespace DOF5RobotControl_GUI.ViewModel
                 return;
             }
 
-            var topTask = ImageProcessor.ProcessTopImgAsync(topBitmap);
-            var bottomTask = ImageProcessor.ProcessBottomImgAsync(bottomBitmap);
+            try
+            {
+                (DPx, DPy, DRz) = await ImageProcessor.ProcessTopImgAsync(topBitmap);
+                DPz = await ImageProcessor.ProcessBottomImgAsync(bottomBitmap);
+            } catch (InvalidOperationException ex)
+            {
+                MessageBox.Show(ex.Message, "Error when get error");
+            }
 
-            await Task.WhenAll(topTask, bottomTask);
-            (DPx, DPy, DRz) = await topTask;
-            DPz = await bottomTask;
+
+            //var topTask = ImageProcessor.ProcessTopImgAsync(topBitmap);
+            //var bottomTask = ImageProcessor.ProcessBottomImgAsync(bottomBitmap);
+
+            //await Task.WhenAll(topTask, bottomTask);
+            //(DPx, DPy, DRz) = await topTask;
+            //DPz = await bottomTask;
 
             IsProcessingImg = false;
         }
@@ -180,7 +190,6 @@ namespace DOF5RobotControl_GUI.ViewModel
                 //await topCameraTask;
                 //await bottomCameraTask;
                 await Task.WhenAll(topCameraTask, bottomCameraTask);
-
             }
             catch (CGalaxyException ex)
             {
@@ -210,7 +219,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         /// <param name="mac">相机的 MAC 地址</param>
         private void GxCameraCaptureAsync(CaptureTaskCameraSelect camSelect)
         {
-            const int timeout = 500; // TODO: 测试并改小这个值
+            const int timeout = 1000; // TODO: 测试并改小这个值
             const int period = 100; // 刷新率为 10Hz
             string mac;
             switch (camSelect)
@@ -291,9 +300,9 @@ namespace DOF5RobotControl_GUI.ViewModel
                                 // 设置触发模式
                                 if (featControl.IsImplemented("TriggerMode"))
                                 {
-                                    featControl.GetEnumFeature("TriggerMode").SetValue("On");
+                                    featControl.GetEnumFeature("TriggerMode").SetValue("Off");
                                     string s = featControl.GetEnumFeature("TriggerMode").GetValue();
-                                    Debug.Assert(s == "On");
+                                    Debug.Assert(s == "Off");
                                 }
                                 else
                                 {
@@ -332,9 +341,9 @@ namespace DOF5RobotControl_GUI.ViewModel
                             // 设置采集帧率值，当采集帧率调节模式为 On 时有效
                             if (featControl.IsImplemented("AcquisitionFrameRate"))
                             {
-                                featControl.GetFloatFeature("AcquisitionFrameRate").SetValue(10.0000);
+                                featControl.GetFloatFeature("AcquisitionFrameRate").SetValue(5.0000);
                                 double d = featControl.GetFloatFeature("AcquisitionFrameRate").GetValue();
-                                Debug.Assert(d == 10.0000);
+                                Debug.Assert(d == 5.0000);
                             }
                             else
                             {
@@ -352,58 +361,69 @@ namespace DOF5RobotControl_GUI.ViewModel
                         {
                             try
                             {
-                                featControl.GetCommandFeature("TriggerSoftware").Execute();
+                                //featControl.GetCommandFeature("TriggerSoftware").Execute();
                                 var frameData = stream.DQBuf(timeout);  // 零拷贝采单帧，超时 500ms
                                                                         //var frameData = stream.GetImage(500); // 拷贝采单帧，超时 500ms
                                                                         // 处理图像
                                                                         //Debug.WriteLine(frameData.GetStatus());
-                                ulong width = frameData.GetWidth();
-                                ulong height = frameData.GetHeight();
-                                Debug.Assert(width == 2592);
-                                Debug.Assert(height == 2048);
-                                var pixelFormat = frameData.GetPixelFormat();
-                                if (pixelFormat == GX_PIXEL_FORMAT_ENTRY.GX_PIXEL_FORMAT_MONO8)
+
+                                try
                                 {
+                                    ulong width = frameData.GetWidth();
+                                    ulong height = frameData.GetHeight();
 
-                                    var pRaw8Buffer = frameData.ConvertToRaw8(GX_VALID_BIT_LIST.GX_BIT_0_7);
-
-                                    var frameMat = Mat.FromPixelData((int)height, (int)width, MatType.CV_8U, pRaw8Buffer);
-
-                                    // 更新 UI 图像
-                                    dispatcher.Invoke(() =>
+                                    if (width != 2592 || height != 2048)
+                                        continue;
+                                    //Debug.Assert(width == 2592);
+                                    //Debug.Assert(height == 2048);
+                                    var pixelFormat = frameData.GetPixelFormat();
+                                    if (pixelFormat == GX_PIXEL_FORMAT_ENTRY.GX_PIXEL_FORMAT_MONO8)
                                     {
-                                        switch (camSelect)
+
+                                        var pRaw8Buffer = frameData.ConvertToRaw8(GX_VALID_BIT_LIST.GX_BIT_0_7);
+
+                                        var frameMat = Mat.FromPixelData((int)height, (int)width, MatType.CV_8U, pRaw8Buffer);
+
+                                        // 更新 UI 图像
+                                        dispatcher.Invoke(() =>
                                         {
-                                            case CaptureTaskCameraSelect.TopCamera:
-                                                TopImgSrcMutex.WaitOne();
-                                                TopImageSource = frameMat.ToBitmapSource();
-                                                TopImgSrcMutex.ReleaseMutex();
-                                                break;
-                                            case CaptureTaskCameraSelect.BottomCamera:
-                                                BottomImgSrcMutex.WaitOne();
-                                                BottomImageSource = frameMat.ToBitmapSource();
-                                                BottomImgSrcMutex.ReleaseMutex();
-                                                break;
-                                            default:
-                                                Debug.WriteLine("Error in GxCameraCaptureTask: please use proper CaptureTaskCameraSelect enum");
-                                                isRunningGood = false;
-                                                break;
-                                        }
-                                    });
+                                            switch (camSelect)
+                                            {
+                                                case CaptureTaskCameraSelect.TopCamera:
+                                                    //TopImgSrcMutex.WaitOne();
+                                                    TopImageSource = frameMat.ToBitmapSource();
+                                                    //TopImgSrcMutex.ReleaseMutex();
+                                                    break;
+                                                case CaptureTaskCameraSelect.BottomCamera:
+                                                    //BottomImgSrcMutex.WaitOne();
+                                                    BottomImageSource = frameMat.ToBitmapSource();
+                                                    //BottomImgSrcMutex.ReleaseMutex();
+                                                    break;
+                                                default:
+                                                    Debug.WriteLine("Error in GxCameraCaptureTask: please use proper CaptureTaskCameraSelect enum");
+                                                    isRunningGood = false;
+                                                    break;
+                                            }
+                                        });
+                                    }
+                                    else
+                                    {
+                                        Debug.WriteLine("Format error!");
+                                    }
                                 }
-                                else
+                                finally
                                 {
-                                    Debug.WriteLine("Format error!");
+                                    stream.QBuf(frameData);
                                 }
-                                stream.QBuf(frameData);
-                                //frameData.Destroy();
 
                                 Thread.Sleep(period);
                                 //await Task.Delay(period);
-                            } catch(CGalaxyException ex) {
+                            }
+                            catch (CGalaxyException ex)
+                            {
                                 if (ex.GetErrorCode() == -14)
                                 {
-                                    Debug.WriteLine("Camera timeout in capture loop: " + ex.Message);
+                                    Debug.WriteLine($"{camSelect} timeout in capture loop: " + ex.Message);
                                 }
                                 else
                                 {
@@ -412,8 +432,6 @@ namespace DOF5RobotControl_GUI.ViewModel
                                     throw;
                                 }
                             }
-
-                            
                         }
 
                         featControl.GetCommandFeature("AcquisitionStop").Execute();  // 发送停采命令

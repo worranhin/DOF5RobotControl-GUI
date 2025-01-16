@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "VisionLibrary.h"
+#include "VisionException.h"
 
 namespace VisionLibrary {
 	VisionWrapper::VisionWrapper() {
@@ -8,16 +9,16 @@ namespace VisionLibrary {
 			instance = new NativeVision::VisualController();
 		}
 		catch (cv::Exception& cvEx) {
-			throw gcnew System::Exception(gcnew System::String(cvEx.what()));
+			throw gcnew VisionException(gcnew System::String(cvEx.what()));
 		}
 		catch (HalconCpp::HException& hEx) {
-			throw gcnew System::Exception(gcnew System::String(hEx.ErrorMessage().Text()) + " 请在可执行文件目录中提供 model");
+			throw gcnew VisionException(gcnew System::String(hEx.ErrorMessage().Text()) + " 请在可执行文件目录中提供 model");
 		}
 		catch (const std::exception& e) {
-			throw gcnew System::Exception(gcnew System::String(e.what()));
+			throw gcnew VisionException(gcnew System::String(e.what()));
 		}
 		catch (...) {
-			throw gcnew System::Exception("Unknown exception occurred when initialize VisualController.");
+			throw gcnew VisionException("Unknown exception occurred when initialize VisualController.");
 		}
 	}
 
@@ -48,10 +49,14 @@ namespace VisionLibrary {
 			return managedError;
 		}
 		catch (cv::Exception& exc) {
-			throw gcnew Exception(gcnew System::String(exc.what()));
+			throw gcnew VisionException(gcnew System::String(exc.what()));
+			throw;
 		}
 		catch (HalconCpp::HTupleAccessException& ex) {
-			throw gcnew Exception(gcnew System::String(ex.ErrorMessage().Text()));
+			throw gcnew VisionException(gcnew System::String(ex.ErrorMessage().Text()));
+		}
+		catch (InvalidOperationException^) {
+			throw;
 		}
 	}
 
@@ -73,10 +78,13 @@ namespace VisionLibrary {
 			return instance->GetVerticalDistance(mat, 1);
 		}
 		catch (cv::Exception& exc) {
-			throw gcnew Exception(gcnew System::String(exc.what()));
+			throw gcnew VisionException(gcnew System::String(exc.what()));
 		}
 		catch (HalconCpp::HTupleAccessException& ex) {
-			throw gcnew Exception(gcnew System::String(ex.ErrorMessage().Text()));
+			throw gcnew VisionException(gcnew System::String(ex.ErrorMessage().Text()));
+		}
+		catch (InvalidOperationException^) {
+			throw;
 		}
 		return 0.0;
 	}

@@ -24,6 +24,9 @@
     <ClInclude Include="Vision.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="VisionException.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="VisionLibrary.cpp">
@@ -36,6 +39,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Vision.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="VisionException.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

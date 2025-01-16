@@ -41,16 +41,22 @@ namespace DOF5RobotControl_GUI.Model
                 IntPtr pointer = handle.AddrOfPinnedObject();
                 error = await Task.Run(() => vision.GetTaskSpaceError(pointer, width, height, stride, mode));
             }
-            catch (Exception ex)
+            catch (VisionException ex)
             {
-                Debug.WriteLine("Error in VisionWrapper: " + ex.Message);
+                Debug.WriteLine(ex.Message);
+                throw;
+            }
+            catch (InvalidOperationException ex)
+            {
+                Debug.WriteLine("Error when process top img: " + ex.Message);
+                throw;
             }
             finally
             {
                 handle.Free();
             }
 
-            return (error.Px, error.Py, error.Rz);
+            return (error.Px, error.Py, -error.Rz);
 
         }
 
@@ -83,7 +89,7 @@ namespace DOF5RobotControl_GUI.Model
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("Error in VisionWrapper: " + ex.Message);
+                Debug.WriteLine("Error when process top img: " + ex.Message);
             }
             finally
             {
