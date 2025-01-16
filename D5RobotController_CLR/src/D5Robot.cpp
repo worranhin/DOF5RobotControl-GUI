@@ -43,6 +43,13 @@ namespace D5R {
 		delete _port; _port = nullptr;
 	}
 
+	D5Robot::!D5Robot() {
+		delete natorMotor; natorMotor = nullptr;
+		delete topRMDMotor;	topRMDMotor = nullptr;
+		delete botRMDMotor;	botRMDMotor = nullptr;
+		delete _port; _port = nullptr;
+	}
+
 	bool D5Robot::IsInit() { return _isInit; }
 
 	bool D5Robot::SetZero() {

@@ -1,27 +1,12 @@
-﻿using System.ComponentModel;
-using System.Diagnostics;
-using System.IO.Ports;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using System.Text;
-using System.Windows;
-using System.Windows.Forms;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using DOF5RobotControl_GUI.Model;
+﻿using DOF5RobotControl_GUI.Model;
 using DOF5RobotControl_GUI.ViewModel;
+using MahApps.Metro.Controls;
 using Opc.UaFx;
 using Opc.UaFx.Server;
-using Window = System.Windows.Window;
-using System.Timers;
-using MahApps.Metro.Controls;
+using System.Diagnostics;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace DOF5RobotControl_GUI
 {

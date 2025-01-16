@@ -1,56 +1,33 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Media.Media3D;
 using D5R;
 
 namespace DOF5RobotControl_GUI.Model
 {
     public partial class RoboticState : ObservableObject
     {
-        private PropertyChangedEventHandler jointChangedHandler = (sender, e) => { };
-        private PropertyChangedEventHandler taskChangedHandler = (sender, e) => { };
         private bool isJointUpdating = false;
         private bool isTaskUpdating = false;
+
+        bool IsManuallyUpdating
+        {
+            set
+            {
+                this.isJointUpdating = value;
+                this.isTaskUpdating = value;
+            }
+        }
 
         [ObservableProperty]
         private JointSpace _jointSpace = new();
 
-        [ObservableProperty]
-        private TaskSpace _taskSpace = new();
-
-        public RoboticState()
+        partial void OnJointSpaceChanged(JointSpace value)
         {
-            InitHandler();
-        }
-
-        public RoboticState(double r1, double p2, double p3, double p4, double r5)
-        {
-            JointSpace.R1 = r1;
-            JointSpace.P2 = p2;
-            JointSpace.P3 = p3;
-            JointSpace.P4 = p4;
-            JointSpace.R5 = r5;
-            KineHelper.Forward(JointSpace, _taskSpace);
-
-            InitHandler();
-        }
-
-        private void InitHandler()
-        {
-            JointSpace.PropertyChanging += (sender, e) =>
+            value.PropertyChanging += (sender, e) =>
             {
                 isJointUpdating = true; // 指示正在更新属性
             };
 
-            JointSpace.PropertyChanged += (sender, e) =>
+            value.PropertyChanged += (sender, e) =>
             {
                 if (!isTaskUpdating) // 如果本来就在更新属性，则不要再根据 joint 更新，避免互相递归地调用
                 {
@@ -58,18 +35,23 @@ namespace DOF5RobotControl_GUI.Model
                     {
                         KineHelper.Forward(JointSpace, TaskSpace);
                     }
-
                 }
 
                 isJointUpdating = false; // 指示结束更新属性
             };
+        }
 
-            TaskSpace.PropertyChanging += (sender, e) =>
+        [ObservableProperty]
+        private TaskSpace _taskSpace = new();
+
+        partial void OnTaskSpaceChanged(TaskSpace value)
+        {
+            value.PropertyChanging += (sender, e) =>
             {
                 isTaskUpdating = true;
             };
 
-            TaskSpace.PropertyChanged += (sender, e) =>
+            value.PropertyChanged += (sender, e) =>
             {
                 if (!isJointUpdating)
                 {
@@ -80,6 +62,32 @@ namespace DOF5RobotControl_GUI.Model
                 isTaskUpdating = false;
             };
         }
+
+        public RoboticState()
+        {
+            JointSpace = new();
+            TaskSpace = KineHelper.Forward(JointSpace);
+            //InitHandler();
+        }
+
+        public RoboticState(double r1, double p2, double p3, double p4, double r5)
+        {
+            JointSpace = new() { R1 = r1, P2 = p2, P3 = p3, P4 = p4, R5 = r5 };
+            TaskSpace = KineHelper.Forward(JointSpace);
+        }
+
+        public static RoboticState operator -(RoboticState left, RoboticState right)
+        {
+            RoboticState result = new();
+            result.Copy(left);
+            result.JointSpace.Minus(right.JointSpace);
+            return result;
+        }
+
+        //public static bool operator < (RoboticState state, double value)
+        //{
+        //    state
+        //}
 
         /// <summary>
         /// 转换为控制用的 struct
@@ -112,35 +120,31 @@ namespace DOF5RobotControl_GUI.Model
                 j.R5 = -(36000 - j.R5);
 
             // TODO: 优化这段代码的性能，让它在所有属性更改后再通知 Task 进行正解
+            //isJointUpdating = true;
+            //isTaskUpdating = true;
+            IsManuallyUpdating = true;
+
             JointSpace.R1 = j.R1 / 100.0;
             JointSpace.P2 = -j.P2 / 1000000.0;
             JointSpace.P3 = j.P3 / 1000000.0;
             JointSpace.P4 = j.P4 / 1000000.0;
             JointSpace.R5 = -j.R5 / 100.0;
-        }
 
-
-
-        /// <summary>
-        /// 就地更新 TODO: 删除这个函数
-        /// </summary>
-        private void UpdateTaskSpace()
-        {
-            KineHelper.ClipJoint(JointSpace);
             KineHelper.Forward(JointSpace, TaskSpace);
+
+            IsManuallyUpdating = false;
+            //isJointUpdating = false;
+            //isTaskUpdating = false;
         }
 
-        private void UpdateJointSpace()
+        public RoboticState Copy(RoboticState state)
         {
-            KineHelper.Inverse(TaskSpace, JointSpace);
-            if (!KineHelper.CheckJoint(JointSpace))
-            {
-                KineHelper.ClipJoint(JointSpace);
-                KineHelper.Forward(JointSpace, TaskSpace);
-                MessageBox.Show("Joint out of range.");
-            }
-            //JointSpace.PropertyChanged += jointChangedHandler;
-            //TaskSpace.PropertyChanged += taskChangedHandler;
+            IsManuallyUpdating = true;
+            JointSpace.Copy(state.JointSpace);
+            KineHelper.Forward(JointSpace, TaskSpace);
+            IsManuallyUpdating = false;
+
+            return this;
         }
     }
 }

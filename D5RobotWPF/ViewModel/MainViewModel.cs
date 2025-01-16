@@ -1,35 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
-using CommunityToolkit.Mvvm;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DOF5RobotControl_GUI.Model;
-using D5R;
-using System.Windows;
-using System.Diagnostics;
-using System.Windows.Threading;
-using Opc.Ua;
-using System.Windows.Input;
-using System.IO.Ports;
 using CommunityToolkit.Mvvm.Messaging;
+using D5R;
+using DOF5RobotControl_GUI.Model;
+using System.Diagnostics;
+using System.IO.Ports;
+using System.Windows;
 using System.Windows.Media;
-using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics.Arm;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using VisionLibrary;
-using System.Drawing;
 
 namespace DOF5RobotControl_GUI.ViewModel
 {
     public struct JogParams
     {
+        public JogParams() { }
+
         public JointSelect Joint { get; set; }
         public bool IsPositive { get; set; }
+        public bool IsJogTaskSpace { get; set; } = false;
     };
 
     partial class MainViewModel : ObservableObject
@@ -52,6 +42,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         CancellationToken updateStateTaskCancelToken;
         private CancellationTokenSource? insertCancelSource;
         private CancellationToken insertCancelToken;
+         CancellationTokenSource? attachCancelSource;
 
         /***** 机器人系统相关 *****/
         readonly string natorId = "usb:id:2250716012";
@@ -68,6 +59,8 @@ namespace DOF5RobotControl_GUI.ViewModel
         private RoboticState _currentState = new(0, 0, 0, 0, 0);
         [ObservableProperty]
         private bool _isInserting = false;
+        [ObservableProperty]
+        private bool _isAttachingJaw = false;
 
         /***** 点动相关字段/属性 *****/
         public static IEnumerable<JogMode> JogModes => Enum.GetValues(typeof(JogMode)).Cast<JogMode>();
@@ -111,6 +104,10 @@ namespace DOF5RobotControl_GUI.ViewModel
         ~MainViewModel()
         {
             updateStateTaskCancelSource?.Cancel();
+            insertCancelSource?.Cancel();
+            attachCancelSource?.Cancel();
+
+            robot?.Dispose();
         }
 
         private void Initialize()
@@ -155,7 +152,7 @@ namespace DOF5RobotControl_GUI.ViewModel
 
                     updateStateTaskCancelSource = new();
                     updateStateTaskCancelToken = updateStateTaskCancelSource.Token;
-                    UpdateCurrentStateTaskAsync();
+                    _ = UpdateCurrentStateTaskAsync();
                     //Task.Run(UpdateCurrentStateTaskAsync, updateStateTaskCancelToken);
                 }
                 catch (RobotException err)
@@ -192,47 +189,44 @@ namespace DOF5RobotControl_GUI.ViewModel
         [RelayCommand]
         private void RobotRun()
         {
-            if (robot == null)
-            {
-                MessageBox.Show("Robot not connected.");
-                return;
-            }
-
-            if (TargetState.JointSpace.HasErrors)
-            {
-                MessageBox.Show("Joint out of range, adjust it first.");
-                return;
-            }
-
-            Joints j = TargetState.ToD5RJoints();
             try
             {
-                robot.JointsMoveAbsolute(j);
+                RobotMoveTo(TargetState);
             }
-            catch (RobotException exc)
+            catch (InvalidOperationException ex)
             {
-                MessageBox.Show($"Jog error while running: {exc.Code}");
+                MessageBox.Show(ex.Message, "Error when running");
             }
-        }
+            catch (ArgumentException ex)
+            {
+                MessageBox.Show(ex.Message, "Error when running");
+            }
+            catch (RobotException ex)
+            {
+                MessageBox.Show($"Error code: {ex.Code}\nError Message: {ex.Message}", "Robot error occurs while running");
+            }
+        }        
 
         [RelayCommand]
         private void RobotStop()
         {
+            // 取消异步任务
             insertCancelSource?.Cancel();
-            insertCancelSource?.Dispose();
-            insertCancelSource = null;
+            attachCancelSource?.Cancel();
 
-            if (robot == null)
-            {
-                MessageBox.Show("Robot not connected.");
-                return;
-            }
+            robot?.Stop();
 
-            if (!robot.Stop())
-            {
-                MessageBox.Show($"Error while stopping.");
-                return;
-            }
+            //if (robot == null)
+            //{
+            //    MessageBox.Show("Robot not connected.");
+            //    return;
+            //}
+
+            //if (!robot.Stop())
+            //{
+            //    MessageBox.Show($"Error while stopping.");
+            //    return;
+            //}
         }
 
         [RelayCommand]
@@ -251,6 +245,130 @@ namespace DOF5RobotControl_GUI.ViewModel
             }
         }
 
+        
+
+        [RelayCommand]
+        private async Task MoveToInitialPosition()
+        {
+            try
+            {
+                await MoveToInitialPositionAsync();
+            }
+            catch (InvalidOperationException ex)
+            {
+                MessageBox.Show(ex.Message, "Error when go to insertion initial position");
+            }
+        }        
+
+        [RelayCommand]
+        private async Task ToggleInsertion()
+        {
+            if (!IsInserting)
+            {
+                try
+                {
+                    await InsertTaskAsync();
+                } catch (InvalidOperationException ex)
+                {
+                    MessageBox.Show(ex.Message, "Error When Inserting");
+                }
+            }
+            else  // if inserting, then cancel it
+            {
+                insertCancelSource?.Cancel();
+            }
+        }
+
+        /// <summary>
+        /// 自动从零点开始装上钳口，再返回零点
+        /// </summary>
+        /// <returns></returns>
+        [RelayCommand]
+        private async Task AttachJawAsync()
+        {
+            IsAttachingJaw = true;
+            attachCancelSource = new();
+            var cancelToken = attachCancelSource.Token;
+
+            try
+            {
+                cancelToken.ThrowIfCancellationRequested();
+                await MoveToInitialPositionAsync(); // 前往装钳口初始位置
+
+                cancelToken.ThrowIfCancellationRequested();
+                await InsertTaskAsync(); // 插装钳口
+
+                // 此时应处于插入的状态，接下来将夹钳抬起来
+                cancelToken.ThrowIfCancellationRequested();
+                TargetState.Copy(CurrentState);
+                TargetState.TaskSpace.Px -= 1; // 先退 1mm，避免与台子前方有挤压
+                await Task.Run(async () =>
+                {
+                    //robot?.JointsMoveAbsolute(TargetState.ToD5RJoints());
+                    RobotMoveTo(TargetState);
+                    while (Math.Abs(TargetState.TaskSpace.Px - CurrentState.TaskSpace.Px) > 1)
+                    {
+                        cancelToken.ThrowIfCancellationRequested();
+                        await Task.Delay(100);
+                        UpdateCurrentState();
+                    }
+                });
+
+                cancelToken.ThrowIfCancellationRequested();
+                TargetState.Copy(CurrentState);
+                TargetState.TaskSpace.Pz += 5;  // 向上抬一段距离，避免发生碰撞
+                await Task.Run(async () =>
+                {
+                    RobotMoveTo(TargetState);
+                    while (Math.Abs(TargetState.TaskSpace.Pz - CurrentState.TaskSpace.Pz) > 1)
+                    {
+                        cancelToken.ThrowIfCancellationRequested();
+                        await Task.Delay(100);
+                        UpdateCurrentState();
+                    }
+                });
+
+                cancelToken.ThrowIfCancellationRequested();
+                TargetState.Copy(CurrentState);
+                TargetState.SetFromD5RJoints(ZeroPos); // 返回零点
+                await Task.Run(async () =>
+                {
+                    RobotMoveTo(TargetState);
+                    bool isPositioned = false;
+                    double maxError = 1.0;
+                    while (!isPositioned)
+                    {
+                        cancelToken.ThrowIfCancellationRequested();
+                        await Task.Delay(500);
+                        UpdateCurrentState();
+                        bool xOk = Math.Abs(TargetState.TaskSpace.Px - CurrentState.TaskSpace.Px) < maxError;
+                        bool yOk = Math.Abs(TargetState.TaskSpace.Py - CurrentState.TaskSpace.Py) < maxError;
+                        bool zOk = Math.Abs(TargetState.TaskSpace.Pz - CurrentState.TaskSpace.Pz) < maxError;
+                        bool ryOk = Math.Abs(TargetState.TaskSpace.Ry - CurrentState.TaskSpace.Ry) < maxError;
+                        bool rzOk = Math.Abs(TargetState.TaskSpace.Rz - CurrentState.TaskSpace.Rz) < maxError;
+                        isPositioned = xOk && yOk && zOk && ryOk && rzOk;
+                    }
+                });
+            }
+            catch (OperationCanceledException)
+            {
+                Debug.WriteLine("Attach jaw task is canceled.");
+            }
+            catch (InvalidOperationException ex)
+            {
+                MessageBox.Show(ex.Message, "Error When Attach Jaw");
+            }
+            finally
+            {
+                IsAttachingJaw = false;
+                attachCancelSource.Dispose();
+                attachCancelSource = null;
+            }
+        }
+
+        /// <summary>
+        /// 打开相机
+        /// </summary>
         [RelayCommand]
         private static void OpenCamera()
         {
@@ -258,16 +376,25 @@ namespace DOF5RobotControl_GUI.ViewModel
             window.Show();
         }
 
-        [RelayCommand]
-        private static void GetImage()
+        private void RobotMoveTo(RoboticState target)
         {
-            ImageSource? image = WeakReferenceMessenger.Default.Send<TopImgRequestMessage>();
-            Debug.WriteLine(image);
+            if (robot == null)
+                throw new InvalidOperationException("Robot is not connected.");
+
+            if (target.JointSpace.HasErrors)
+                throw new ArgumentOutOfRangeException("Joint value is not valid.");
+
+            robot.JointsMoveAbsolute(TargetState.ToD5RJoints());
         }
 
-        [RelayCommand]
-        private async Task GoToReadyPosition()
+        private async Task MoveToInitialPositionAsync()
         {
+            // 为了安全，先前往便于视觉检测的位置
+            TargetState.SetFromD5RJoints(PreChangeJawPos);
+            robot?.JointsMoveAbsolute(TargetState.ToD5RJoints());
+            await Task.Delay(1000);
+
+            // 下面获取图像信息
             ImageSource? topImage = null, bottomImage = null;
             try
             {
@@ -277,77 +404,45 @@ namespace DOF5RobotControl_GUI.ViewModel
             catch (InvalidOperationException ex)
             {
                 Debug.WriteLine(ex.Message);
-                MessageBox.Show("Request Image failed. Please open the camera first.", "Error when go to ready position");
+                throw;
             }
 
             if (topImage is not BitmapSource topBitmap || bottomImage is not BitmapSource bottomBitmap)
-            {
-                MessageBox.Show("Failed to get image, please check the camera. (You have to start the camera first.)", "Fail to Get Image");
-                return;
-            }
+                throw new InvalidOperationException("Failed to get image, please check the camera state.");
 
             try
             {
-
-                //var testError = await GetErrorAsync(topBitmap, bottomBitmap); // Px:-0.1309112082714844 Py:-0.03595818257717385 Pz:-3.792922143182983 Ry:NaN Rz:2.742368907737685
-                //Debug.WriteLine(testError);
-
-                //return;
-
-
-                // 为了安全，先前往便于视觉检测的位置
-                //TargetState.SetFromD5RJoints(PreChangeJawPos);
-                //robot?.JointsMoveAbsolute(TargetState.ToD5RJoints());
-                //await Task.Delay(1000);
-
-                var error = await GetErrorAsync(topBitmap, bottomBitmap); // Px:-0.1309112082714844 Py:-0.03595818257717385 Pz:-3.792922143182983 Ry:NaN Rz:2.742368907737685
+                var error = await GetErrorAsync(topBitmap, bottomBitmap); // 处理图像，获得误差
                 Debug.WriteLine(error);
 
-                //TaskSpace delta = new() { Px = error.Px, Py = error.Py, Pz = error.Pz, Ry = 0, Rz = 0 };
                 JointSpace deltaJoint = KineHelper.InverseDifferential(error, CurrentState.TaskSpace);
-                if (deltaJoint.P4 + CurrentState.JointSpace.P4 > 9)
-                {
-                    Dispatcher.Invoke(() =>
-                    {
-                        MessageBox.Show("超出安全范围!请检查。");
-                    });
-                    return;
-                }
                 Debug.WriteLine(deltaJoint);
 
-                TargetState.JointSpace.Copy(CurrentState.JointSpace);
-                TargetState.JointSpace.Add(deltaJoint);
+                //JointSpace tempTarget = new();
+                //tempTarget.Copy(CurrentState.JointSpace).Add(deltaJoint);
+                //bool goodP4 = tempTarget.P4 < 10;
+                if (deltaJoint.P4 + CurrentState.JointSpace.P4 > 9)  // 对关节移动量进行安全检查
+                {
+                    throw new InvalidOperationException("前往初始位置时，关节移动量超出安全范围，请检查！");
+                }
+
+                TargetState.JointSpace.Copy(CurrentState.JointSpace).Add(deltaJoint); // 设置目标位置
                 Debug.WriteLine(TargetState.JointSpace);
 
-                //robot?.JointsMoveAbsolute(TargetState.ToD5RJoints());
+                RobotMoveTo(TargetState); // 前往目标位置
             }
             catch (OverflowException ex)
             {
                 Debug.WriteLine(ex.Message);
+                throw;
             }
         }
 
-        [RelayCommand]
-        private void ToggleInsertion()
-        {
-            if (!IsInserting)
-            {
-                IsInserting = true;
-                InsertTaskAsync();                
-            }
-            else  // if inserting, then cancel it
-            {
-                insertCancelSource?.Cancel();
-                insertCancelSource?.Dispose();
-                insertCancelSource = null;
-                IsInserting = false;
-            }
-        }
-
-        private async void InsertTaskAsync()
+        private async Task InsertTaskAsync()
         {
             try
-            {                
+            {
+                IsInserting = true;
                 insertCancelSource = new();
                 insertCancelToken = insertCancelSource.Token;
                 var insertTask = Task.Run(async () =>
@@ -360,7 +455,8 @@ namespace DOF5RobotControl_GUI.ViewModel
                             TargetState.TaskSpace.Px = CurrentState.TaskSpace.Px + 0.1;
                             double dRz = 0.01 * CurrentState.TaskSpace.Rz > 0.01 ? 0.01 * CurrentState.TaskSpace.Rz : 0.01;
                             TargetState.TaskSpace.Rz = CurrentState.TaskSpace.Rz + dRz;
-                            RobotRun();
+                            RobotMoveTo(TargetState);
+                            //RobotRun();
                             //robot?.JointsMoveAbsolute(TargetState.ToD5RJoints());
                             await Task.Delay(200);
                         }
@@ -368,11 +464,12 @@ namespace DOF5RobotControl_GUI.ViewModel
                     catch (ArgumentOutOfRangeException ex)
                     {
                         insertCancelSource.Cancel();
-                        IsInserting = false;
+                        //IsInserting = false;
                         MessageBox.Show(ex.Message, "Error while Insertion");
                     }
                 }, insertCancelToken);
 
+                // 同时进行实时检测误差，若小于一定值，就停止插入任务
                 var errorTask = Task.Run(async () =>
                 {
                     while (!insertCancelToken.IsCancellationRequested)
@@ -383,6 +480,12 @@ namespace DOF5RobotControl_GUI.ViewModel
                             var (top, bottom) = bitmaps.Value;
                             var error = await GetErrorAsync(top, bottom, MatchingMode.FINE);
                             Debug.WriteLine("Task Error:" + error);
+                            if (error.Px < 1)
+                            {
+                                Debug.WriteLine("Insert complete!");
+                                insertCancelSource.Cancel();
+                                break;
+                            }
                         }
                     }
                 }, insertCancelToken);
@@ -393,10 +496,18 @@ namespace DOF5RobotControl_GUI.ViewModel
             {
                 insertCancelSource?.Dispose();
                 insertCancelSource = null;
+                IsInserting = false;
             }
         }
 
-        // TODO: 由图像坐标系换算为机器人坐标系
+        
+
+        private async Task DetachJawAsync()
+        {
+            await Task.Delay(100);
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// 异步获得误差（目标值减去当前值）
         /// </summary>
@@ -404,7 +515,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         /// <param name="bottomBitmap"></param>
         /// <param name="mode"></param>
         /// <returns></returns>
-        private async Task<TaskSpace> GetErrorAsync(BitmapSource topBitmap, BitmapSource bottomBitmap, MatchingMode mode = MatchingMode.ROUGH)
+        private static async Task<TaskSpace> GetErrorAsync(BitmapSource topBitmap, BitmapSource bottomBitmap, MatchingMode mode = MatchingMode.ROUGH)
         {
             var topTask = ImageProcessor.ProcessTopImgAsync(topBitmap, mode);
             var bottomTask = ImageProcessor.ProcessBottomImgAsync(bottomBitmap);
@@ -414,6 +525,10 @@ namespace DOF5RobotControl_GUI.ViewModel
             return new TaskSpace() { Px = px, Py = py, Pz = pz, Ry = 0, Rz = -rz };
         }
 
+        /// <summary>
+        /// 向 CameraViewModel 请求图片并返回 Bitmap
+        /// </summary>
+        /// <returns></returns>
         private (BitmapSource topBitmap, BitmapSource bottomBitmap)? RequestImage()
         {
             ValueTuple<BitmapSource, BitmapSource>? retval = null;
@@ -435,10 +550,32 @@ namespace DOF5RobotControl_GUI.ViewModel
             catch (InvalidOperationException ex)
             {
                 Debug.WriteLine(ex.Message);
-                MessageBox.Show("Request Image failed. Please open the camera first.", "Error when go to ready position");
+                throw;
             }
 
             return retval;
+        }
+
+        /// <summary>
+        /// 与 robot 通讯并更新 ViewModel 的 CurrentState
+        /// </summary>
+        private void UpdateCurrentState()
+        {
+            if (robot == null) throw new InvalidOperationException("Robot is not connected, please connect first.");
+
+            Joints joints = robot.GetCurrentJoint();
+            Dispatcher.Invoke(() =>
+            {
+                try
+                {
+                    CurrentState.SetFromD5RJoints(joints);
+                }
+                catch (ArgumentException exc)
+                {
+                    if (exc.ParamName == "joint")
+                        Debug.WriteLine(exc.Message);
+                }
+            });
         }
 
         /***** 机器人控制命令结束 *****/
@@ -450,8 +587,6 @@ namespace DOF5RobotControl_GUI.ViewModel
         {
             if (JogModeSelected == JogMode.OneStep)
             {
-                Debug.WriteLine($"{param.Joint}, {param.IsPositive}, {JogModeSelected}, {JogResolutionSelected}");
-
                 double resolution = 0;
                 switch (JogResolutionSelected)
                 {
@@ -470,6 +605,8 @@ namespace DOF5RobotControl_GUI.ViewModel
                 }
 
                 resolution = param.IsPositive ? resolution : -resolution;
+
+                TargetState.JointSpace.Copy(CurrentState.JointSpace);
 
                 switch (param.Joint)
                 {
@@ -657,26 +794,17 @@ namespace DOF5RobotControl_GUI.ViewModel
 
         /***** 任务相关代码 *****/
 
-        private async void UpdateCurrentStateTaskAsync()
+        /// <summary>
+        /// 每隔 1s 不断更新当前关节值
+        /// </summary>
+        /// <returns></returns>
+        private async Task UpdateCurrentStateTaskAsync()
         {
             try
             {
                 while (robot != null && !updateStateTaskCancelToken.IsCancellationRequested)
                 {
-                    Joints joints = (Joints)robot.GetCurrentJoint();
-                    Dispatcher.Invoke(() =>
-                    {
-                        try
-                        {
-                            CurrentState.SetFromD5RJoints(joints);
-                        }
-                        catch (ArgumentException exc)
-                        {
-                            if (exc.ParamName == "joint")
-                                Debug.WriteLine(exc.Message);
-                        }
-                    });
-
+                    UpdateCurrentState();
                     await Task.Delay(1000);
                 }
             }

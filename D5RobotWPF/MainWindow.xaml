@@ -311,29 +311,30 @@
                 </Grid>
             </mah:MetroHeader>
             <Separator/>
-            <Grid Margin="7">
-                <Grid.RowDefinitions>
-                    <RowDefinition/>
-                    <RowDefinition/>
-                    <RowDefinition/>
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <Button Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Command="{Binding RobotRunCommand}">运行</Button>
-                <Button Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="2" Command="{Binding RobotSetZeroCommand}" ToolTip="将当前的位置设为零点">置零</Button>
-                <Button Grid.Row="0" Grid.Column="4" Grid.ColumnSpan="2" Command="{Binding RobotStopCommand}">停止</Button>
-                <Button Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Command="{Binding OpenCameraCommand}">启动相机</Button>
-                <Button Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" Command="{Binding GoToReadyPositionCommand}">前往插入预备位</Button>
-                <Button Grid.Row="1" Grid.Column="4" Grid.ColumnSpan="2" Content="{Binding IsInserting, Converter={StaticResource InsertBtnConverter}}" Command="{Binding ToggleInsertionCommand}"/>
-                <Button Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Content="连接服务器" Click="BtnConnectServer_Click"/>
-                <Button Grid.Row="2" Grid.Column="3" Grid.ColumnSpan="3" Content="断开服务器" Click="BtnDisconnectServer_Click"/>
-            </Grid>
+            <UniformGrid Margin="5" Columns="1">
+                <UniformGrid Rows="1">
+                    <Button Command="{Binding RobotRunCommand}">运行</Button>
+                    <Button Command="{Binding RobotSetZeroCommand}" ToolTip="将当前的位置设为零点">置零</Button>
+                    <Button Command="{Binding RobotStopCommand}">停止</Button>
+                </UniformGrid>
+                <UniformGrid Rows="1">
+                    <Button Command="{Binding MoveToInitialPositionCommand}">前往插入预备位</Button>
+                    <Button Command="{Binding ToggleInsertionCommand}" Content="{Binding IsInserting, Converter={StaticResource InsertBtnConverter}}"/>
+                    <Button Command="{Binding AttachJawCommand}" IsEnabled="{Binding IsAttachingJaw, Converter={StaticResource BoolInverseConverter}}">
+                        <Grid MinWidth="200">
+                            <TextBlock Text="装上钳口" HorizontalAlignment="Center"/>
+                            <mah:ProgressRing Width="10" Height="10" HorizontalAlignment="Right" IsActive="{Binding IsAttachingJaw}"/>
+                        </Grid>
+                    </Button>
+                </UniformGrid>
+                <UniformGrid Rows="1">
+                    <Button Command="{Binding OpenCameraCommand}">启动相机</Button>
+                </UniformGrid>
+                <UniformGrid Rows="1">
+                    <Button Content="连接服务器" Click="BtnConnectServer_Click"/>
+                    <Button Content="断开服务器" Click="BtnDisconnectServer_Click"/>
+                </UniformGrid>
+            </UniformGrid>
         </StackPanel>
         <mah:MetroHeader Grid.Row="2" Grid.Column="3" Header="预存点位" MinWidth="150">
             <StackPanel>
