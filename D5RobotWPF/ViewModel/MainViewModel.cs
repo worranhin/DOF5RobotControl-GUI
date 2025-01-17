@@ -45,7 +45,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         CancellationTokenSource? attachCancelSource;
 
         /***** 机器人系统相关 *****/
-        readonly string natorId = "usb:id:2250716012";
+        const string natorId = "usb:id:2250716012";
         private D5Robot? robot;
         [ObservableProperty]
         private bool _systemConnected = false;
@@ -65,9 +65,10 @@ namespace DOF5RobotControl_GUI.ViewModel
         /***** 点动相关字段/属性 *****/
         public static IEnumerable<JogMode> JogModes => Enum.GetValues(typeof(JogMode)).Cast<JogMode>();
         public static IEnumerable<JogResolution> JogResolutions => Enum.GetValues(typeof(JogResolution)).Cast<JogResolution>();
-        public readonly int natorJogResolution = 30000;
-        public readonly int RMDJogResolution = 20;
+        public const int natorJogResolution = 30000;
+        public const int RMDJogResolution = 20;
         const uint jogPeriod = 20;  // ms
+
         System.Timers.Timer? jogTimer;
         [ObservableProperty]
         private JogMode _jogModeSelected = JogMode.OneStep;
@@ -115,7 +116,13 @@ namespace DOF5RobotControl_GUI.ViewModel
             // 初始化 Serial
             PortsAvailable = SerialPort.GetPortNames();
             if (PortsAvailable.Length > 0)
-                SelectedPort = PortsAvailable[0];
+            {
+                var defaultPort = Properties.Settings.Default.Port; // 获取上次选择的 COM 口
+                if (PortsAvailable.Contains(defaultPort))
+                    SelectedPort = defaultPort;
+                else
+                    SelectedPort = PortsAvailable[0];
+            }
         }
 
         /***** 机器人控制命令 *****/
