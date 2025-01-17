@@ -369,6 +369,12 @@ namespace DOF5RobotControl_GUI.ViewModel
 
                                 try
                                 {
+                                    if (frameData.GetStatus() != GX_FRAME_STATUS_LIST.GX_FRAME_STATUS_SUCCESS)
+                                    {
+                                        Debug.WriteLine("采集到不完整帧");
+                                        continue;
+                                    }
+
                                     ulong width = frameData.GetWidth();
                                     ulong height = frameData.GetHeight();
 
