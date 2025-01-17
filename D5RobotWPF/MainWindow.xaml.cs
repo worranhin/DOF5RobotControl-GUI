@@ -36,6 +36,11 @@ namespace DOF5RobotControl_GUI
             serverThread = new(ServerRunTask);
 
             // 注册窗口关闭回调函数
+            this.Closing += (sender, e) => {
+                Properties.Settings.Default.Port = viewModel.SelectedPort;
+                Properties.Settings.Default.Save();
+            };
+
             this.Closed += Window_Closed;
         }
 
