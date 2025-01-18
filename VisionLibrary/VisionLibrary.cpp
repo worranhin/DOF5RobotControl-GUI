@@ -38,7 +38,7 @@ namespace VisionLibrary {
 	TaskSpaceError VisionWrapper::GetTaskSpaceError(IntPtr imgBuffer, int width, int height, int stride, MatchingMode mode) {
 		try {
 			unsigned char* data = static_cast<unsigned char*>(imgBuffer.ToPointer());
-			cv::Mat mat = cv::Mat(height, width, CV_8U, data, stride);
+			cv::Mat mat = cv::Mat(height, width, CV_8UC1, data, stride).clone();  // clone 表示生拷贝，将数据复制到 mat 里面，避免原数据被修改或删除影响后续的图像处理
 			NativeVision::MatchingMode nativeMode = (mode == MatchingMode::FINE ? NativeVision::FINE : NativeVision::ROUGH);
 
 			instance->JawLibSegmentation(mat, 2);

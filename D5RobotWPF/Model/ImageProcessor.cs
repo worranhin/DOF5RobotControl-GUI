@@ -57,7 +57,31 @@ namespace DOF5RobotControl_GUI.Model
             }
 
             return (error.Px, error.Py, -error.Rz);
+        }
 
+        public static async Task<(double px, double py, double rz)> ProcessTopImgAsync(byte[] rawBuffer, int width, int height, int stride, MatchingMode mode = MatchingMode.ROUGH)
+        {
+            GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
+            try
+            {
+                IntPtr pointer = handle.AddrOfPinnedObject();
+                TaskSpaceError error = await Task.Run(() => vision.GetTaskSpaceError(pointer, width, height, stride, mode));
+                return (error.Px, error.Py, -error.Rz);
+            }
+            catch (VisionException ex)
+            {
+                Debug.WriteLine(ex.Message);
+                throw;
+            }
+            catch (InvalidOperationException ex)
+            {
+                Debug.WriteLine("Error when process top img: " + ex.Message);
+                throw;
+            }
+            finally
+            {
+                handle.Free();
+            }
         }
 
         /// <summary>
@@ -71,7 +95,7 @@ namespace DOF5RobotControl_GUI.Model
             byte[] rawBuffer = [];
 
 
-            await Application.Current.Dispatcher.InvokeAsync(() =>
+            Application.Current.Dispatcher.Invoke(() =>
             {
                 width = bottomBitmap.PixelWidth;
                 height = bottomBitmap.PixelHeight;
@@ -96,6 +120,51 @@ namespace DOF5RobotControl_GUI.Model
                 handle.Free();
             }
             return verticalError;
+        }
+
+        public static async Task<double> ProcessBottomImgAsync(byte[] rawBuffer, int width, int height, int stride)
+        {
+            double verticalError = 0.0;
+            GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
+            try
+            {
+                IntPtr pointer = handle.AddrOfPinnedObject();
+                verticalError = await Task.Run(() => vision.GetVerticalError(pointer, width, height, stride));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Error when process top img: " + ex.Message);
+            }
+            finally
+            {
+                handle.Free();
+            }
+            return verticalError;
+        }
+
+        /// <summary>
+        /// 异步获得误差（目标值减去当前值）
+        /// </summary>
+        /// <param name="topBitmap"></param>
+        /// <param name="bottomBitmap"></param>
+        /// <param name="mode"></param>
+        /// <returns></returns>
+        public static async Task<TaskSpace> GetErrorAsync(BitmapSource topBitmap, BitmapSource bottomBitmap, MatchingMode mode = MatchingMode.ROUGH)
+        {
+            var topTask = ProcessTopImgAsync(topBitmap, mode);
+            var bottomTask = ProcessBottomImgAsync(bottomBitmap);
+            await Task.WhenAll(topTask, bottomTask);
+            try
+            {
+                (double px, double py, double rz) = await topTask;
+                double pz = await bottomTask;
+                return new TaskSpace() { Px = px, Py = py, Pz = pz, Ry = 0, Rz = rz };
+            }
+            catch (InvalidOperationException ex)
+            {
+                Debug.WriteLine($"In {nameof(GetErrorAsync)}: " + ex.Message);
+                throw;
+            }
         }
     }
 }

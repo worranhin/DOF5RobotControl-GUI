@@ -28,7 +28,6 @@
 
   <ItemGroup>
     <Compile Remove="Model\D5RControl.cs" />
-    <Compile Remove="Model\D5Robot.cs" />
   </ItemGroup>
 
   <ItemGroup>
