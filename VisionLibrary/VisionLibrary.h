@@ -36,7 +36,9 @@ namespace VisionLibrary {
 	public:
 		VisionWrapper();
 		~VisionWrapper();
+		void JawLibSegmentation(IntPtr imgBuffer, int width, int height, int stride);
 		TaskSpaceError GetTaskSpaceError(IntPtr imgBuffer, int width, int height, int stride, MatchingMode mode);
+		void GetHorizontalLine(IntPtr imgBuffer, int width, int height, int stride);
 		double GetVerticalError(IntPtr imgBuffer, int width, int height, int stride);
 	};
 }

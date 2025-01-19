@@ -1,8 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using CommunityToolkit.Mvvm.Messaging.Messages;
 using D5R;
 using DOF5RobotControl_GUI.Model;
+using GxIAPINET;
 using System.Diagnostics;
 using System.IO.Ports;
 using System.Windows;
@@ -22,6 +24,8 @@ namespace DOF5RobotControl_GUI.ViewModel
         public bool IsPositive { get; set; }
         public bool IsJogTaskSpace { get; set; } = false;
     };
+
+    internal class BottomImgMessage : RequestMessage<GxCamera.Frame> { }
 
     partial class MainViewModel : ObservableObject
     {
@@ -374,6 +378,8 @@ namespace DOF5RobotControl_GUI.ViewModel
             catch (InvalidOperationException ex)
             {
                 MessageBox.Show(ex.Message, "Error When Attach Jaw");
+                if (ex.InnerException != null)
+                    throw;
             }
             finally
             {
@@ -381,6 +387,13 @@ namespace DOF5RobotControl_GUI.ViewModel
                 attachCancelSource.Dispose();
                 attachCancelSource = null;
             }
+        }
+
+        [RelayCommand]
+        private async Task DetachJawAsync()
+        {
+            await Task.Delay(100);
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -424,26 +437,15 @@ namespace DOF5RobotControl_GUI.ViewModel
             }
 
             // 下面获取图像信息
-            var topBitmap = TopCamera.Instance.GetBitmapFrame();
-            var bottomBitmap = BottomCamera.Instance.GetBitmapFrame();
-            //ImageSource? topImage = null, bottomImage = null;
-            //try
-            //{
-            //    topImage = WeakReferenceMessenger.Default.Send<TopImgRequestMessage>();
-            //    bottomImage = WeakReferenceMessenger.Default.Send<BottomImgRequestMessage>();
-            //}
-            //catch (InvalidOperationException ex)
-            //{
-            //    Debug.WriteLine(ex.Message);
-            //    throw;
-            //}
-
-            //if (topImage is not BitmapSource topBitmap || bottomImage is not BitmapSource bottomBitmap)
-            //    throw new InvalidOperationException("Failed to get image, please check the camera state.");
-
             try
             {
-                var error = await ImageProcessor.GetErrorAsync(topBitmap, bottomBitmap); // 处理图像，获得误差
+                var topFrame = TopCamera.Instance.LastFrame;
+                var (x, y, rz) = await ImageProcessor.ProcessTopImgAsync(topFrame.Buffer, topFrame.Width, topFrame.Height, topFrame.Stride, MatchingMode.ROUGH);
+
+                var bottomFrame = BottomCamera.Instance.LastFrame;
+                double pz = await ImageProcessor.ProcessBottomImgAsync(bottomFrame.Buffer, bottomFrame.Width, bottomFrame.Height, bottomFrame.Stride);
+
+                TaskSpace error = new() { Px = x, Py = y, Pz = pz, Ry = 0, Rz = 0 };
                 Debug.WriteLine(error);
 
                 JointSpace deltaJoint = KineHelper.InverseDifferential(error, CurrentState.TaskSpace);
@@ -482,19 +484,20 @@ namespace DOF5RobotControl_GUI.ViewModel
 
 
                 //var initError = await GetErrorAsync()
-                const double forwardSpeed = 0.1; // mm/s
-                const int forwardPeriod = 20; // ms
+                const double forwardSpeed = 1; // mm/s
+                const int forwardPeriod = 100; // ms
 
                 //// 前往振动开始点 ////
                 await Task.Run(async () =>
                 {
-                    double x, y;
+                    double x, y, rz;
                     do
                     {
                         insertCancelToken.ThrowIfCancellationRequested();
-                        BitmapSource topImg = TopCamera.Instance.GetBitmapFrame();
-                        (x, y, _) = await ImageProcessor.ProcessTopImgAsync(topImg, MatchingMode.FINE);
                         UpdateCurrentState();
+                        var frame = TopCamera.Instance.LastFrame;
+                        (x, y, rz) = await ImageProcessor.ProcessTopImgAsync(frame.Buffer, frame.Width, frame.Height, frame.Stride, MatchingMode.FINE);
+                        Debug.WriteLine($"errors at start point: x: {x}, y: {y}, rz:{rz}");
                         TargetState.TaskSpace.Px = CurrentState.TaskSpace.Px + x - 4;
                         TargetState.TaskSpace.Py = CurrentState.TaskSpace.Py + y;
                         RobotMoveTo(TargetState);
@@ -511,6 +514,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                     {
                         double dx = forwardSpeed * forwardPeriod / 1000.0;
                         TargetState.TaskSpace.Px = CurrentState.TaskSpace.Px + dx;
+                        Debug.WriteLine($"dx:{dx}");
                         lock (robotMoveLock)
                         {
                             RobotMoveTo(TargetState);
@@ -522,7 +526,8 @@ namespace DOF5RobotControl_GUI.ViewModel
                 //// 到达位置，暂停 ////
                 await Task.Run(async () =>
                 {
-                    BitmapSource img;
+                    //BitmapSource img;
+                    GxCamera.Frame frame;
 
                     while (!insertCancelToken.IsCancellationRequested)
                     {
@@ -531,9 +536,9 @@ namespace DOF5RobotControl_GUI.ViewModel
                             lock (robotMoveLock)
                             {
                                 Task.Delay(forwardPeriod).Wait(); // 获取图像前先静止一段时间
-                                img = TopCamera.Instance.GetBitmapFrame();
+                                frame = TopCamera.Instance.LastFrame;
                             }
-                            var (x, y, rz) = await ImageProcessor.ProcessTopImgAsync(img, MatchingMode.FINE);
+                            var (x, y, rz) = await ImageProcessor.ProcessTopImgAsync(frame.Buffer, frame.Width, frame.Height, frame.Stride, MatchingMode.FINE);
                             Debug.WriteLine($"Task Error: x:{x} y:{y} rz:{rz}");
 
                             if (x < 0.1) // 误差小于一定值，则认为已经插入成功
@@ -564,92 +569,6 @@ namespace DOF5RobotControl_GUI.ViewModel
                 VibrateHelper.Stop();
                 await forwardTask;
 
-                //var insertTask = Task.Run(async () =>
-                //{
-                //    try
-                //    {
-                //        while (!insertCancelToken.IsCancellationRequested)
-                //        {
-                //            //TargetState.JointSpace.P3 = CurrentState.JointSpace.P3 + 0.1;
-                //            double dx = forwardSpeed * forwardPeriod / 1000.0;
-                //            //Debug.WriteLine(forwardSpeed);
-                //            Debug.WriteLine($"dx:{dx}");
-                //            TargetState.TaskSpace.Px = CurrentState.TaskSpace.Px + dx;
-
-                //            double dRz = -CurrentState.TaskSpace.Rz;
-                //            dRz = (Math.Abs(0.1 * dRz) > 0.01) ? (0.1 * dRz) : (CurrentState.TaskSpace.Rz > 0 ? -0.01 : 0.01);
-                //            Debug.WriteLine($"dRz:{dRz}");
-                //            TargetState.TaskSpace.Rz = CurrentState.TaskSpace.Rz + dRz;
-
-                //            RobotMoveTo(TargetState);
-                //            await Task.Delay(forwardPeriod);
-                //        }
-                //    }
-                //    catch (ArgumentOutOfRangeException ex)
-                //    {
-                //        insertCancelSource.Cancel();
-                //        //IsInserting = false;
-                //        MessageBox.Show(ex.Message, "Error while Insertion");
-                //    }
-                //}, insertCancelToken);
-
-                // 同时进行实时检测误差，若小于一定值，就停止插入任务
-                //var errorTask = Task.Run(async () =>
-                //{
-                //    while (!insertCancelToken.IsCancellationRequested)
-                //    {
-                //        var bitmaps = RequestImage();
-                //        if (bitmaps.HasValue)
-                //        {
-                //            var (top, bottom) = bitmaps.Value;
-                //            try
-                //            {
-                //                //var error = await GetErrorAsync(top, bottom, MatchingMode.FINE);
-                //                var (x, y, rz) = await ImageProcessor.ProcessTopImgAsync(top, MatchingMode.FINE);
-                //                Debug.WriteLine($"Task Error: x:{x} y:{y} rz:{rz}");
-
-                //                if (x < 0.5)
-                //                {
-                //                    Debug.WriteLine("Insert complete!");
-                //                    insertCancelSource.Cancel();
-
-                //                    VibrateHelper?.Stop();
-                //                    IsVibrating = false;
-
-                //                    break;
-                //                }
-
-                //                forwardSpeed = 0.5 * x;
-                //                forwardSpeed = forwardSpeed > 0.1 ? forwardSpeed : 0.1;
-                //                Debug.WriteLine(forwardSpeed);
-
-                //                if (!IsVibrating && x < 4)
-                //                {
-                //                    IsVibrating = true;
-                //                    Debug.Assert(VibrateHelper != null);
-                //                    VibrateHelper?.Start(IsVibrateHorizontal, IsVibrateVertical, VibrateAmplitude, VibrateFrequency);
-                //                }
-
-                //                if (!IsVibrating)
-                //                    TargetState.TaskSpace.Py = CurrentState.TaskSpace.Py + 0.5 * y; // 修正 y 方向误差
-                //            }
-                //            catch (VisionException ex)
-                //            {
-                //                Debug.WriteLine(ex.Message);
-                //                insertCancelSource.Cancel();
-                //                throw;
-                //            }
-                //            catch (InvalidOperationException ex)
-                //            {
-                //                Debug.WriteLine("When inserting" + ex.Message);
-                //                insertCancelSource.Cancel();
-                //                throw;
-                //            }
-                //        }
-                //    }
-                //}, insertCancelToken);
-
-                //await Task.WhenAll(insertTask, errorTask);
             }
             catch (OperationCanceledException ex)
             {
@@ -661,14 +580,6 @@ namespace DOF5RobotControl_GUI.ViewModel
                 insertCancelSource = null;
                 IsInserting = false;
             }
-        }
-
-
-        [RelayCommand]
-        private async Task DetachJawAsync()
-        {
-            await Task.Delay(100);
-            throw new NotImplementedException();
         }
 
         /// <summary>

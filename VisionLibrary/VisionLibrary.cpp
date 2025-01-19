@@ -26,6 +26,26 @@ namespace VisionLibrary {
 		delete instance;
 	}
 
+	void VisionWrapper::JawLibSegmentation(IntPtr imgBuffer, int width, int height, int stride)
+	{
+		try {
+			unsigned char* data = static_cast<unsigned char*>(imgBuffer.ToPointer());
+			cv::Mat mat = cv::Mat(height, width, CV_8UC1, data, stride).clone();  // clone 表示生拷贝，将数据复制到 mat 里面，避免原数据被修改或删除影响后续的图像处理
+
+			instance->JawLibSegmentation(mat, 2);
+		}
+		catch (cv::Exception& exc) {
+			throw gcnew VisionException(gcnew System::String(exc.what()));
+		}
+		catch (HalconCpp::HTupleAccessException& ex) {
+			throw gcnew VisionException(gcnew System::String(ex.ErrorMessage().Text()));
+		}
+		catch (InvalidOperationException^) {
+			throw;
+		}
+	}
+
+
 	/// <summary>
 	/// 通过顶部相机获取的图像，得到任务空间中夹钳与钳口的误差
 	/// </summary>
@@ -49,8 +69,27 @@ namespace VisionLibrary {
 			return managedError;
 		}
 		catch (cv::Exception& exc) {
-			throw gcnew VisionException(gcnew System::String(exc.what()));
+			//throw gcnew VisionException(gcnew System::String(exc.what()));
 			throw;
+		}
+		catch (HalconCpp::HTupleAccessException& ex) {
+			throw gcnew VisionException(gcnew System::String(ex.ErrorMessage().Text()));
+		}
+		catch (InvalidOperationException^) {
+			throw;
+		}
+	}
+
+	void VisionWrapper::GetHorizontalLine(IntPtr imgBuffer, int width, int height, int stride)
+	{
+		try {
+			unsigned char* data = static_cast<unsigned char*>(imgBuffer.ToPointer());
+			cv::Mat mat = cv::Mat(height, width, CV_8UC1, data, stride);
+
+			instance->GetHorizontalLine(mat, 1);
+		}
+		catch (cv::Exception& exc) {
+			throw gcnew VisionException(gcnew System::String(exc.what()));
 		}
 		catch (HalconCpp::HTupleAccessException& ex) {
 			throw gcnew VisionException(gcnew System::String(ex.ErrorMessage().Text()));

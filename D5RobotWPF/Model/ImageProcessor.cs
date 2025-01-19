@@ -15,6 +15,38 @@ namespace DOF5RobotControl_GUI.Model
     {
         static readonly VisionWrapper vision = new();
 
+        public static void Init(GxCamera.Frame topFrame, GxCamera.Frame bottomFrame)
+        {
+            GCHandle topHandle = GCHandle.Alloc(topFrame.Buffer, GCHandleType.Pinned);
+            try
+            {
+                vision.JawLibSegmentation(topHandle.AddrOfPinnedObject(), topFrame.Width, topFrame.Height, topFrame.Stride);
+            }
+            catch (VisionException ex)
+            {
+                Debug.WriteLine(ex.Message);
+                throw;
+            } finally
+            {
+                topHandle.Free();
+            }
+
+            GCHandle bottomHandle = GCHandle.Alloc(bottomFrame.Buffer, GCHandleType.Pinned);
+            try
+            {
+                vision.GetHorizontalLine(bottomHandle.AddrOfPinnedObject(), bottomFrame.Width, bottomFrame.Height, bottomFrame.Stride);
+            }
+            catch (VisionException ex)
+            {
+                Debug.WriteLine(ex.Message);
+                throw;
+            }
+            finally
+            {
+                bottomHandle.Free();
+            }
+        }
+
         /// <summary>
         /// 处理顶部相机图像，获得任务空间信息
         /// </summary>

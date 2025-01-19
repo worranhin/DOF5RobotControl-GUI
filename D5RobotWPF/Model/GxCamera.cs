@@ -1,18 +1,9 @@
 ﻿using GxIAPINET;
 using OpenCvSharp;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing.Imaging;
-using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Media.Media3D;
 
 namespace DOF5RobotControl_GUI.Model
 {
@@ -37,10 +28,11 @@ namespace DOF5RobotControl_GUI.Model
 
         public readonly struct Frame(byte[] buf, int width, int height)
         {
-            public byte[] BufferPtr { get; } = buf;
+            public byte[] Buffer { get; } = buf;
             public int Width { get; } = width;
             public int Height { get; } = height;
             public readonly int Size => (Width * Height);
+            public readonly int Stride => (Width * 8 + 7) / 8;
         }
 
         private static readonly ManualResetEvent libInitializedEvent = new(false);
@@ -49,9 +41,12 @@ namespace DOF5RobotControl_GUI.Model
         private IGXDevice? camera;
         private IGXStream? stream;
         private IGXFeatureControl? featControl;
-        private Mat? lastFrame;
+        private Mat? lastMat;
 
         public bool IsOpened { get; private set; } = false;
+        public Frame LastFrame { get; private set; }
+
+        public event EventHandler<Frame>? FrameReceived;
 
         private static void EnsureInitialized()
         {
@@ -113,7 +108,7 @@ namespace DOF5RobotControl_GUI.Model
             libInitializedEvent.Reset();
         }
 
-        public void Open()
+        public void Open(bool useCallback = false)
         {
             lock (camOpLock)
             {
@@ -156,16 +151,16 @@ namespace DOF5RobotControl_GUI.Model
 
                             {
                                 // 设置 buffer 行为（好像这个无效）
-                                if (featControl.IsImplemented("StreamBufferHandlingMode"))
-                                {
-                                    featControl.GetEnumFeature("StreamBufferHandlingMode").SetValue("NewestOnly");
-                                    string s = featControl.GetEnumFeature("StreamBufferHandlingMode").GetValue();
-                                    Debug.Assert(s == "NewestOnly");
-                                }
-                                else
-                                {
-                                    Debug.WriteLine("StreamBufferHandlingMode not supported");
-                                }
+                                //if (featControl.IsImplemented("StreamBufferHandlingMode"))
+                                //{
+                                //    featControl.GetEnumFeature("StreamBufferHandlingMode").SetValue("NewestOnly");
+                                //    string s = featControl.GetEnumFeature("StreamBufferHandlingMode").GetValue();
+                                //    Debug.Assert(s == "NewestOnly");
+                                //}
+                                //else
+                                //{
+                                //    Debug.WriteLine("StreamBufferHandlingMode not supported");
+                                //}
 
                                 // 设置采集模式
                                 if (featControl.IsImplemented("AcquisitionMode"))
@@ -186,9 +181,9 @@ namespace DOF5RobotControl_GUI.Model
                                     // 设置触发模式
                                     if (featControl.IsImplemented("TriggerMode"))
                                     {
-                                        featControl.GetEnumFeature("TriggerMode").SetValue("On");
+                                        featControl.GetEnumFeature("TriggerMode").SetValue("Off");
                                         string s = featControl.GetEnumFeature("TriggerMode").GetValue();
-                                        Debug.Assert(s == "On");
+                                        Debug.Assert(s == "Off");
                                     }
                                     else
                                     {
@@ -213,31 +208,36 @@ namespace DOF5RobotControl_GUI.Model
                                 }
 
                                 // 设置采集帧率调节模式：控制采集帧率是否激活
-                                if (featControl.IsImplemented("AcquisitionFrameRateMode"))
-                                {
-                                    featControl.GetEnumFeature("AcquisitionFrameRateMode").SetValue("On");
-                                    string s = featControl.GetEnumFeature("AcquisitionFrameRateMode").GetValue();
-                                    Debug.Assert(s == "On");
-                                }
-                                else
-                                {
-                                    Debug.WriteLine("AcquisitionFrameRateMode not supported");
-                                }
+                                //if (featControl.IsImplemented("AcquisitionFrameRateMode"))
+                                //{
+                                //    featControl.GetEnumFeature("AcquisitionFrameRateMode").SetValue("On");
+                                //    string s = featControl.GetEnumFeature("AcquisitionFrameRateMode").GetValue();
+                                //    Debug.Assert(s == "On");
+                                //}
+                                //else
+                                //{
+                                //    Debug.WriteLine("AcquisitionFrameRateMode not supported");
+                                //}
 
                                 // 设置采集帧率值，当采集帧率调节模式为 On 时有效
-                                if (featControl.IsImplemented("AcquisitionFrameRate"))
-                                {
-                                    featControl.GetFloatFeature("AcquisitionFrameRate").SetValue(5.0000);
-                                    double d = featControl.GetFloatFeature("AcquisitionFrameRate").GetValue();
-                                    Debug.Assert(d == 5.0000);
-                                }
-                                else
-                                {
-                                    Debug.WriteLine("AcquisitionFrameRate not supported");
-                                }
+                                //if (featControl.IsImplemented("AcquisitionFrameRate"))
+                                //{
+                                //    featControl.GetFloatFeature("AcquisitionFrameRate").SetValue(5.0000);
+                                //    double d = featControl.GetFloatFeature("AcquisitionFrameRate").GetValue();
+                                //    Debug.Assert(d == 5.0000);
+                                //}
+                                //else
+                                //{
+                                //    Debug.WriteLine("AcquisitionFrameRate not supported");
+                                //}
                             }
 
                             /***** 相机配置结束 *****/
+
+                            if (useCallback)
+                            {
+                                stream.RegisterCaptureCallback(camera, OnFrameCallback); // 这个 API 貌似有 bug，启用了 回调模式后，camera.close() 会使程序卡住！
+                            }
 
                             stream.StartGrab();  // 开启流通道
                             featControl.GetCommandFeature("AcquisitionStart").Execute();  // 发送开采命令，必须先开启流通道
@@ -272,6 +272,35 @@ namespace DOF5RobotControl_GUI.Model
             }
         }
 
+        public void OnFrameCallback(object objPara, IFrameData objIFrameData)
+        {
+            IGXDevice? objIGXDevice = objPara as IGXDevice;
+            if (GX_FRAME_STATUS_LIST.GX_FRAME_STATUS_SUCCESS == objIFrameData.GetStatus())
+            {
+                // 获取图像数据
+                int width = (int)objIFrameData.GetWidth();
+                int height = (int)objIFrameData.GetHeight();
+                if (width != 2592 || height != 2048)
+                {
+                    Debug.WriteLine("The size of image is not correct!");
+                    return;
+                }
+
+                GX_PIXEL_FORMAT_ENTRY emPixelFormat = objIFrameData.GetPixelFormat();
+                if (emPixelFormat != GX_PIXEL_FORMAT_ENTRY.GX_PIXEL_FORMAT_MONO8)
+                {
+                    Debug.WriteLine("Error in OnFrameCallback: 图像格式不对！需要 MONO8");
+                    return;
+                }
+
+                IntPtr rawBufferPtr = objIFrameData.GetBuffer();
+                byte[] buffer = new byte[width * height];
+                Marshal.Copy(rawBufferPtr, buffer, 0, width * height);
+                LastFrame = new(buffer, width, height);
+                FrameReceived?.Invoke(this, LastFrame);
+            }
+        }
+
         public void Close()
         {
             lock (camOpLock)
@@ -280,6 +309,7 @@ namespace DOF5RobotControl_GUI.Model
                 featControl = null;
 
                 stream?.StopGrab();
+                stream?.UnregisterCaptureCallback();
                 stream?.Close(); // 关闭流通道
                 stream = null;
 
@@ -307,34 +337,46 @@ namespace DOF5RobotControl_GUI.Model
 
                 featControl.GetCommandFeature("TriggerSoftware").Execute();
 
-                var frameData = stream.DQBuf(timeout);  // 零拷贝采单帧，超时 timeout ms
-                if (frameData.GetStatus() != GX_FRAME_STATUS_LIST.GX_FRAME_STATUS_SUCCESS)
-                    throw new InvalidOperationException("图像帧不完整");
-
                 try
                 {
-                    ulong width = frameData.GetWidth();
-                    ulong height = frameData.GetHeight();
+                    var frameData = stream.DQBuf(timeout);  // 零拷贝采单帧，超时 timeout ms
+                    if (frameData.GetStatus() != GX_FRAME_STATUS_LIST.GX_FRAME_STATUS_SUCCESS)
+                        throw new InvalidOperationException("图像帧不完整");
 
-                    if (width != 2592 || height != 2048)
-                        throw new InvalidOperationException("The size of image is not correct!");
-                    var pixelFormat = frameData.GetPixelFormat();
-                    if (pixelFormat == GX_PIXEL_FORMAT_ENTRY.GX_PIXEL_FORMAT_MONO8)
+                    try
                     {
+                        ulong width = frameData.GetWidth();
+                        ulong height = frameData.GetHeight();
 
-                        var pRaw8Buffer = frameData.ConvertToRaw8(GX_VALID_BIT_LIST.GX_BIT_0_7);
-                        lastFrame = Mat.FromPixelData((int)height, (int)width, MatType.CV_8U, pRaw8Buffer);
+                        if (width != 2592 || height != 2048)
+                            throw new InvalidOperationException("The size of image is not correct!");
+                        var pixelFormat = frameData.GetPixelFormat();
+                        if (pixelFormat == GX_PIXEL_FORMAT_ENTRY.GX_PIXEL_FORMAT_MONO8)
+                        {
+
+                            var pRaw8Buffer = frameData.ConvertToRaw8(GX_VALID_BIT_LIST.GX_BIT_0_7);
+                            lastMat = Mat.FromPixelData((int)height, (int)width, MatType.CV_8U, pRaw8Buffer);
+                        }
+                        else
+                        {
+                            Debug.WriteLine("Format error!");
+                        }
+
+                        return lastMat;
                     }
-                    else
+                    finally
                     {
-                        Debug.WriteLine("Format error!");
+                        stream.QBuf(frameData);
                     }
-
-                    return lastFrame;
                 }
-                finally
+                catch (CGalaxyException ex)
                 {
-                    stream.QBuf(frameData);
+                    if (ex.GetErrorCode() == -14)
+                    {
+                        Debug.WriteLine("Camera timeout: " + ex.Message);
+                        throw new InvalidOperationException("相机采集超时.", ex);
+                    }
+                    else throw;
                 }
             }
         }
@@ -356,36 +398,68 @@ namespace DOF5RobotControl_GUI.Model
 
                 featControl.GetCommandFeature("TriggerSoftware").Execute();
 
-                var frameData = stream.DQBuf(timeout);  // 零拷贝采单帧，超时 timeout ms
-                if (frameData.GetStatus() != GX_FRAME_STATUS_LIST.GX_FRAME_STATUS_SUCCESS)
-                    throw new InvalidOperationException("图像帧不完整");
-
                 try
                 {
-                    int width = (int)frameData.GetWidth();
-                    int height = (int)frameData.GetHeight();
-                    if (width != 2592 || height != 2048)
-                        throw new InvalidOperationException("The size of image is not correct!");
+                    var frameData = stream.DQBuf(timeout);  // 零拷贝采单帧，超时 timeout ms
+                    if (frameData.GetStatus() != GX_FRAME_STATUS_LIST.GX_FRAME_STATUS_SUCCESS)
+                        throw new InvalidOperationException("图像帧不完整");
 
-                    var pixelFormat = frameData.GetPixelFormat();
-                    if (pixelFormat != GX_PIXEL_FORMAT_ENTRY.GX_PIXEL_FORMAT_MONO8)
-                        throw new InvalidOperationException("图像格式错误，要求 MONO8");
+                    try
+                    {
+                        int width = (int)frameData.GetWidth();
+                        int height = (int)frameData.GetHeight();
+                        if (width != 2592 || height != 2048)
+                            throw new InvalidOperationException("The size of image is not correct!");
 
-                    //var pRaw8Buffer = frameData.ConvertToRaw8(GX_VALID_BIT_LIST.GX_BIT_0_7);
-                    // 下面转成 bitmap 格式
-                    var rawBufferPtr = frameData.GetBuffer();
-                    int size = width * height;
-                    System.Windows.Media.PixelFormat pf = PixelFormats.Gray8; // 下面转成 bitmap 格式
-                    int rawStride = (width * pf.BitsPerPixel + 7) / 8;
-                    BitmapSource bitmap = BitmapSource.Create(width, height, 96, 96, pf, null, rawBufferPtr, size, rawStride);
+                        var pixelFormat = frameData.GetPixelFormat();
+                        if (pixelFormat != GX_PIXEL_FORMAT_ENTRY.GX_PIXEL_FORMAT_MONO8)
+                            throw new InvalidOperationException("图像格式错误，要求 MONO8");
 
-                    return bitmap;
+                        //var pRaw8Buffer = frameData.ConvertToRaw8(GX_VALID_BIT_LIST.GX_BIT_0_7);
+                        // 下面转成 bitmap 格式
+                        var rawBufferPtr = frameData.GetBuffer();
+                        int size = width * height;
+                        System.Windows.Media.PixelFormat pf = PixelFormats.Gray8; // 下面转成 bitmap 格式
+                        int rawStride = (width * pf.BitsPerPixel + 7) / 8;
+                        BitmapSource bitmap = BitmapSource.Create(width, height, 96, 96, pf, null, rawBufferPtr, size, rawStride);
+
+                        return bitmap;
+                    }
+                    finally
+                    {
+                        stream.QBuf(frameData);
+                    }
                 }
-                finally
+                catch (CGalaxyException ex)
                 {
-                    stream.QBuf(frameData);
+                    if (ex.GetErrorCode() == -14)
+                    {
+                        Debug.WriteLine("Camera timeout: " + ex.Message);
+                        throw new InvalidOperationException("相机采集超时.", ex);
+                    }
+                    else throw;
                 }
             }
+        }
+
+        public bool TryGetBitmapFrame(out BitmapSource? bitmap)
+        {
+            try
+            {
+                bitmap = GetBitmapFrame();
+                return true;
+            }
+            catch (InvalidOperationException)
+            {
+                bitmap = null;
+                return false;
+            }
+        }
+
+        public static async Task<BitmapSource> GetBitmapFrameAsync()
+        {
+            await Task.Delay(1000);
+            throw new NotImplementedException();
         }
 
         public Frame GetRawFrame()
@@ -405,31 +479,59 @@ namespace DOF5RobotControl_GUI.Model
 
                 featControl.GetCommandFeature("TriggerSoftware").Execute();
 
-                var frameData = stream.DQBuf(timeout);  // 零拷贝采单帧，超时 timeout ms
-                if (frameData.GetStatus() != GX_FRAME_STATUS_LIST.GX_FRAME_STATUS_SUCCESS)
-                    throw new InvalidOperationException("图像帧不完整");
-
                 try
                 {
-                    int width = (int)frameData.GetWidth();
-                    int height = (int)frameData.GetHeight();
-                    if (width != 2592 || height != 2048)
-                        throw new InvalidOperationException("The size of image is not correct!");
+                    var frameData = stream.DQBuf(timeout);  // 零拷贝采单帧，超时 timeout ms
+                    if (frameData.GetStatus() != GX_FRAME_STATUS_LIST.GX_FRAME_STATUS_SUCCESS)
+                        throw new InvalidOperationException("图像帧不完整");
 
-                    var pixelFormat = frameData.GetPixelFormat();
-                    if (pixelFormat != GX_PIXEL_FORMAT_ENTRY.GX_PIXEL_FORMAT_MONO8)
-                        throw new InvalidOperationException("图像格式错误，要求 MONO8");
+                    try
+                    {
+                        int width = (int)frameData.GetWidth();
+                        int height = (int)frameData.GetHeight();
+                        if (width != 2592 || height != 2048)
+                            throw new InvalidOperationException("The size of image is not correct!");
 
-                    IntPtr rawBufferPtr = frameData.GetBuffer();
-                    byte[] buffer = new byte[width * height];
-                    Marshal.Copy(rawBufferPtr, buffer, 0, width * height);
-                    Frame frame = new(buffer, width, height);
-                    return frame;                    
+                        var pixelFormat = frameData.GetPixelFormat();
+                        if (pixelFormat != GX_PIXEL_FORMAT_ENTRY.GX_PIXEL_FORMAT_MONO8)
+                            throw new InvalidOperationException("图像格式错误，要求 MONO8");
+
+                        IntPtr rawBufferPtr = frameData.GetBuffer();
+                        byte[] buffer = new byte[width * height];
+                        Marshal.Copy(rawBufferPtr, buffer, 0, width * height);
+                        Frame frame = new(buffer, width, height);
+                        LastFrame = frame;
+                        return frame;
+                    }
+                    finally
+                    {
+                        stream.QBuf(frameData);
+                    }
                 }
-                finally
+                catch (CGalaxyException ex)
                 {
-                    stream.QBuf(frameData);
+                    if (ex.GetErrorCode() == -14)
+                    {
+                        Debug.WriteLine("Camera timeout: " + ex.Message);
+                        throw new InvalidOperationException("相机采集超时.", ex);
+                    }
+                    else throw;
                 }
+            }
+        }
+
+        public bool TryGetRawFrame(out Frame frame)
+        {
+            try
+            {
+                frame = GetRawFrame();
+                return true;
+            }
+            catch (InvalidOperationException)
+            {
+                //frame = null;
+                frame = new Frame([], 0, 0);
+                return false;
             }
         }
     }
