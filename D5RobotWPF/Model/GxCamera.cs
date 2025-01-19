@@ -35,6 +35,9 @@ namespace DOF5RobotControl_GUI.Model
             public readonly int Stride => (Width * 8 + 7) / 8;
         }
 
+        const string TopCameraMac = "00-21-49-03-4D-95";
+        const string BottomCameraMac = "00-21-49-03-4D-94";
+
         private static readonly ManualResetEvent libInitializedEvent = new(false);
         private readonly string mac;
         private readonly object camOpLock = new();
@@ -54,12 +57,17 @@ namespace DOF5RobotControl_GUI.Model
                 throw new InvalidOperationException("相机库未成功打开，请尝试重启应用。");
         }
 
-        public static void GxLibInit()
+        public static async Task GxLibInit()
         {
             try
             {
                 // 初始化大恒相机库
                 IGXFactory.GetInstance().Init();
+
+                IGXFactory.GetInstance().GigEResetDevice(TopCameraMac, GX_RESET_DEVICE_MODE.GX_MANUFACTURER_SPECIFIC_RECONNECT);
+                IGXFactory.GetInstance().GigEResetDevice(BottomCameraMac, GX_RESET_DEVICE_MODE.GX_MANUFACTURER_SPECIFIC_RECONNECT);
+
+                await Task.Delay(2000); // 等待相机重连
 
                 // 枚举设备
                 List<IGXDeviceInfo> deviceInfos = [];
@@ -313,8 +321,8 @@ namespace DOF5RobotControl_GUI.Model
                 stream?.Close(); // 关闭流通道
                 stream = null;
 
-                camera?.Close();
-                camera = null;
+                //camera?.Close();
+                //camera = null;
 
                 IsOpened = false;
             }

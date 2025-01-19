@@ -322,7 +322,8 @@ namespace DOF5RobotControl_GUI.ViewModel
                 // 此时应处于插入的状态，接下来将夹钳抬起来
                 cancelToken.ThrowIfCancellationRequested();
                 TargetState.Copy(CurrentState);
-                TargetState.TaskSpace.Px = CurrentState.TaskSpace.Px - 1; // 先退 1mm，避免与台子前方有挤压
+                TargetState.TaskSpace.Px = CurrentState.TaskSpace.Px - 1.5; // 先退 1mm，避免与台子前方有挤压
+                TargetState.TaskSpace.Pz = CurrentState.TaskSpace.Px + 1; // 先退 1mm，避免与台子前方有挤压
                 await Task.Run(async () =>
                 {
                     //robot?.JointsMoveAbsolute(TargetState.ToD5RJoints());
@@ -439,6 +440,8 @@ namespace DOF5RobotControl_GUI.ViewModel
             // 下面获取图像信息
             try
             {
+                UpdateCurrentState();
+
                 var topFrame = TopCamera.Instance.LastFrame;
                 var (x, y, rz) = await ImageProcessor.ProcessTopImgAsync(topFrame.Buffer, topFrame.Width, topFrame.Height, topFrame.Stride, MatchingMode.ROUGH);
 
@@ -484,7 +487,7 @@ namespace DOF5RobotControl_GUI.ViewModel
 
 
                 //var initError = await GetErrorAsync()
-                const double forwardSpeed = 1; // mm/s
+                const double forwardSpeed = 0.2; // mm/s
                 const int forwardPeriod = 100; // ms
 
                 //// 前往振动开始点 ////
@@ -498,7 +501,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                         var frame = TopCamera.Instance.LastFrame;
                         (x, y, rz) = await ImageProcessor.ProcessTopImgAsync(frame.Buffer, frame.Width, frame.Height, frame.Stride, MatchingMode.FINE);
                         Debug.WriteLine($"errors at start point: x: {x}, y: {y}, rz:{rz}");
-                        TargetState.TaskSpace.Px = CurrentState.TaskSpace.Px + x - 4;
+                        TargetState.TaskSpace.Px = CurrentState.TaskSpace.Px + x - 5;
                         TargetState.TaskSpace.Py = CurrentState.TaskSpace.Py + y;
                         RobotMoveTo(TargetState);
                     } while (Math.Abs(x - 4) > 0.1 && Math.Abs(y) > 0.1);
@@ -512,9 +515,9 @@ namespace DOF5RobotControl_GUI.ViewModel
                 {
                     while (!insertCancelToken.IsCancellationRequested)
                     {
-                        double dx = forwardSpeed * forwardPeriod / 1000.0;
-                        TargetState.TaskSpace.Px = CurrentState.TaskSpace.Px + dx;
-                        Debug.WriteLine($"dx:{dx}");
+                        const double dx = forwardSpeed * forwardPeriod / 1000.0;
+                        //TargetState.TaskSpace.Px += dx;
+                        TargetState.JointSpace.P3 += dx;
                         lock (robotMoveLock)
                         {
                             RobotMoveTo(TargetState);
@@ -533,11 +536,11 @@ namespace DOF5RobotControl_GUI.ViewModel
                     {
                         try
                         {
-                            lock (robotMoveLock)
-                            {
-                                Task.Delay(forwardPeriod).Wait(); // 获取图像前先静止一段时间
-                                frame = TopCamera.Instance.LastFrame;
-                            }
+                            //lock (robotMoveLock)
+                            //{
+                            //    Task.Delay(forwardPeriod).Wait(); // 获取图像前先静止一段时间
+                            frame = TopCamera.Instance.LastFrame;
+                            //}
                             var (x, y, rz) = await ImageProcessor.ProcessTopImgAsync(frame.Buffer, frame.Width, frame.Height, frame.Stride, MatchingMode.FINE);
                             Debug.WriteLine($"Task Error: x:{x} y:{y} rz:{rz}");
 
@@ -560,8 +563,8 @@ namespace DOF5RobotControl_GUI.ViewModel
                         catch (InvalidOperationException ex)
                         {
                             Debug.WriteLine("When inserting" + ex.Message);
-                            insertCancelSource.Cancel();
-                            throw;
+                            //insertCancelSource.Cancel();
+                            //throw;
                         }
                     }
                 }, insertCancelToken);
