@@ -53,29 +53,18 @@ namespace DOF5RobotControl_GUI.Model
             var startTime = DateTime.Now;
             while (!vibrateCancelToken.IsCancellationRequested)
             {
-                //Debug.WriteLine("test time begin");
-
-                //DateTime testTime = DateTime.Now;
                 var currentTime = DateTime.Now;
                 var deltaTime = currentTime - startTime;
                 var t = deltaTime.TotalSeconds;
                 var x = amplitude * Math.Sin(2 * Math.PI * frequency * t);  // 正弦函数，频率为 frequency，幅值为正负 amplitude 单位 mm
-                //Debug.WriteLine((DateTime.Now - testTime).TotalMilliseconds);
 
-                //testTime = DateTime.Now;
                 Joints joints = targetState.ToD5RJoints();
                 if (vibrateHorizontal)
                     joints.P2 += (int)(x * 1000000); // x mm
                 if (vibrateVertical)
                     joints.P4 += (int)(x * 1000000);
-                //Debug.WriteLine((DateTime.Now - testTime).TotalMilliseconds);
 
-                //testTime = DateTime.Now;
                 robot.JointsMoveAbsolute(joints);  // TODO: 目前的控制周期实际是 (6ms) 左右，如果输出debug信息会更久，猜测瓶颈在于 RMD 的通讯速率（115200 baud)
-                //Debug.WriteLine((DateTime.Now - testTime).TotalMilliseconds);
-
-                //Debug.WriteLine("test time end");
-
                 Thread.Sleep(5);
             }
 

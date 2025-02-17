@@ -24,7 +24,8 @@ namespace DOF5RobotControl_GUI.Model
 
     public enum JointSelect
     {
-        R1, P2, P3, P4, R5
+        R1, P2, P3, P4, R5,
+        Px, Py, Pz, Ry, Rz
     };
 
     public class JogHandler

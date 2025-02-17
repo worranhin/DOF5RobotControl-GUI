@@ -86,9 +86,9 @@ namespace DOF5RobotControl_GUI.ViewModel
         [ObservableProperty]
         private bool _isVibrateVertical = false;
         [ObservableProperty]
-        private double _vibrateAmplitude = 0.1;
+        private double _vibrateAmplitude = 0.05;
         [ObservableProperty]
-        private double _vibrateFrequency = 1.0;
+        private double _vibrateFrequency = 10.0;
 
         public MainViewModel()
         {
@@ -557,7 +557,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                     target.TaskSpace.Px += dx;
                     double x0 = CurrentState.TaskSpace.Px;
                     double xf = target.TaskSpace.Px;
-                    double tf = dx * 10; // seconds, 0.1 mm/s
+                    double tf = dx / 0.5; // seconds, 速度为 0.5 mm/s
                     double trackX(double t) => x0 + t * (xf - x0) / tf;
 
                     double z0 = CurrentState.TaskSpace.Pz;
@@ -730,6 +730,21 @@ namespace DOF5RobotControl_GUI.ViewModel
                     case JointSelect.R5:
                         TargetState.JointSpace.R5 += resolution;
                         break;
+                    case JointSelect.Px:
+                        TargetState.TaskSpace.Px += resolution;
+                        break;
+                    case JointSelect.Py:
+                        TargetState.TaskSpace.Py += resolution;
+                        break;
+                    case JointSelect.Pz:
+                        TargetState.TaskSpace.Pz += resolution;
+                        break;
+                    case JointSelect.Ry:
+                        TargetState.TaskSpace.Ry += resolution;
+                        break;
+                    case JointSelect.Rz:
+                        TargetState.TaskSpace.Rz += resolution;
+                        break;
                     default:
                         Debug.WriteLine("Invalid JointSelect");
                         break;
@@ -786,6 +801,21 @@ namespace DOF5RobotControl_GUI.ViewModel
                     break;
                 case JointSelect.R5:
                     updateJointAction = () => { TargetState.JointSpace.R5 += resolution; };
+                    break;
+                case JointSelect.Px:
+                    updateJointAction = () => { TargetState.TaskSpace.Px += resolution; };
+                    break;
+                case JointSelect.Py:
+                    updateJointAction = () => { TargetState.TaskSpace.Py += resolution; };
+                    break;
+                case JointSelect.Pz:
+                    updateJointAction = () => { TargetState.TaskSpace.Pz += resolution; };
+                    break;
+                case JointSelect.Ry:
+                    updateJointAction = () => { TargetState.TaskSpace.Ry += resolution; };
+                    break;
+                case JointSelect.Rz:
+                    updateJointAction = () => { TargetState.TaskSpace.Rz += resolution; };
                     break;
                 default:
                     break;

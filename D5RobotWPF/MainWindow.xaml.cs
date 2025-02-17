@@ -213,6 +213,126 @@ namespace DOF5RobotControl_GUI
             viewModel.StartJogContinuous(param);
         }
 
+        // Px jogging button callbacks //
+
+        private void BtnPxJogDown_N(object sender, MouseButtonEventArgs e)
+        {
+            JogParams param = new()
+            {
+                Joint = JointSelect.Px,
+                IsPositive = false
+            };
+
+            viewModel.StartJogContinuous(param);
+        }
+
+        private void BtnPxJogDown_P(object sender, MouseButtonEventArgs e)
+        {
+            JogParams param = new()
+            {
+                Joint = JointSelect.Px,
+                IsPositive = true
+            };
+
+            viewModel.StartJogContinuous(param);
+        }
+
+        // Py jogging button callbacks //
+
+        private void BtnPyJogDown_N(object sender, MouseButtonEventArgs e)
+        {
+            JogParams param = new()
+            {
+                Joint = JointSelect.Py,
+                IsPositive = false
+            };
+
+            viewModel.StartJogContinuous(param);
+        }
+
+        private void BtnPyJogDown_P(object sender, MouseButtonEventArgs e)
+        {
+            JogParams param = new()
+            {
+                Joint = JointSelect.Py,
+                IsPositive = true
+            };
+
+            viewModel.StartJogContinuous(param);
+        }
+
+        // Pz jogging button callbacks //
+
+        private void BtnPzJogDown_N(object sender, MouseButtonEventArgs e)
+        {
+            JogParams param = new()
+            {
+                Joint = JointSelect.Pz,
+                IsPositive = false
+            };
+
+            viewModel.StartJogContinuous(param);
+        }
+
+        private void BtnPzJogDown_P(object sender, MouseButtonEventArgs e)
+        {
+            JogParams param = new()
+            {
+                Joint = JointSelect.Pz,
+                IsPositive = true
+            };
+
+            viewModel.StartJogContinuous(param);
+        }
+
+        // Ry jogging button callbacks //
+
+        private void BtnRyJogDown_N(object sender, MouseButtonEventArgs e)
+        {
+            JogParams param = new()
+            {
+                Joint = JointSelect.Ry,
+                IsPositive = false
+            };
+
+            viewModel.StartJogContinuous(param);
+        }
+
+        private void BtnRyJogDown_P(object sender, MouseButtonEventArgs e)
+        {
+            JogParams param = new()
+            {
+                Joint = JointSelect.Ry,
+                IsPositive = true
+            };
+
+            viewModel.StartJogContinuous(param);
+        }
+
+        // Rz jogging button callbacks //
+
+        private void BtnRzJogDown_N(object sender, MouseButtonEventArgs e)
+        {
+            JogParams param = new()
+            {
+                Joint = JointSelect.Rz,
+                IsPositive = false
+            };
+
+            viewModel.StartJogContinuous(param);
+        }
+
+        private void BtnRzJogDown_P(object sender, MouseButtonEventArgs e)
+        {
+            JogParams param = new()
+            {
+                Joint = JointSelect.Rz,
+                IsPositive = true
+            };
+
+            viewModel.StartJogContinuous(param);
+        }
+
         private void TextBoxSelectAll(object sender, RoutedEventArgs e)
         {
             if (sender is TextBox textbox)
