@@ -1,0 +1,70 @@
+﻿<mah:MetroWindow x:Class="DOF5RobotControl_GUI.CameraWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DOF5RobotControl_GUI"
+        xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro" 
+        xmlns:viewmodel="clr-namespace:DOF5RobotControl_GUI.ViewModel" 
+        xmlns:cvt="clr-namespace:DOF5RobotControl_GUI.Converter"
+        d:DataContext="{d:DesignInstance Type=viewmodel:CameraViewModel}"
+        mc:Ignorable="d"
+        Title="相机监控面板" Height="720" Width="1280" FontSize="16">
+    <mah:MetroWindow.Resources>
+        <cvt:BoolInverseConverter x:Key="BoolInverseConverter"/>
+        <Style TargetType="Button" BasedOn="{StaticResource userButton}"/>
+    </mah:MetroWindow.Resources>
+    <DockPanel Margin="10">
+            <UniformGrid DockPanel.Dock="Bottom" Rows="1">
+            <UniformGrid.Resources>
+                <Style TargetType="TextBlock" BasedOn="{StaticResource MahApps.Styles.TextBlock}">
+                    <Setter Property="VerticalAlignment" Value="Center"/>
+                </Style>
+            </UniformGrid.Resources>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Px:"/>
+                    <TextBlock Text="{Binding DPx}"/>                    
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Py:"/>
+                    <TextBlock Text="{Binding DPy}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Pz:"/>
+                    <TextBlock Text="{Binding DPz}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Ry:"/>
+                    <TextBlock Text="{Binding DRy}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Rz:"/>
+                    <TextBlock Text="{Binding DRz}"/>
+                </StackPanel>
+            <Button Command="{Binding GetErrorCommand}" Height="40" IsEnabled="{Binding IsProcessingImg, Converter={StaticResource BoolInverseConverter}}">
+                <Grid HorizontalAlignment="Stretch" Width="160">
+                    <TextBlock Text="获取误差" HorizontalAlignment="Center"/>
+                    <mah:ProgressRing Width="10" HorizontalAlignment="Right" IsActive="{Binding IsProcessingImg}"/>
+                </Grid>
+            </Button>
+        </UniformGrid>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <GroupBox Header="Top Camera" Grid.Column="0">
+                <Grid>
+                    <TextBlock Text="Camera 1 disconnected!"  VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    <Image Source="{Binding TopImageSource}"></Image>
+                </Grid>
+            </GroupBox>
+            <GroupBox Header="Bottom Camera" Grid.Column="1">
+                <Grid>
+                    <TextBlock Text="Camera 2 disconnected!" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <Image Source="{Binding BottomImageSource}"></Image>
+                </Grid>
+            </GroupBox>
+        </Grid>
+    </DockPanel>
+</mah:MetroWindow>
