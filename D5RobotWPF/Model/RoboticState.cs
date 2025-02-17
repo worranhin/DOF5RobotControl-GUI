@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using D5R;
+using SharpDX;
 
 namespace DOF5RobotControl_GUI.Model
 {
@@ -137,6 +138,11 @@ namespace DOF5RobotControl_GUI.Model
             //isTaskUpdating = false;
         }
 
+        /// <summary>
+        /// 完全复制传入参数的 RoboticState
+        /// </summary>
+        /// <param name="state"></param>
+        /// <returns>返回已修改的本对象</returns>
         public RoboticState Copy(RoboticState state)
         {
             IsManuallyUpdating = true;
@@ -145,6 +151,17 @@ namespace DOF5RobotControl_GUI.Model
             IsManuallyUpdating = false;
 
             return this;
+        }
+
+        /// <summary>
+        /// 克隆调用对象，返回本对象的副本
+        /// </summary>
+        /// <returns></returns>
+        public RoboticState Clone()
+        {
+            RoboticState retval = new();
+            retval.Copy(this);
+            return retval;
         }
     }
 }

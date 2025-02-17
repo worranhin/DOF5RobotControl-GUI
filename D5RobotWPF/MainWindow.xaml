@@ -261,24 +261,64 @@
                     <Label Grid.Column="8" Target="{Binding ElementName=PosValueRz}">rz</Label>
                     <TextBox Grid.Column="9" x:Name="PosValueRz" Text="{Binding TargetState.TaskSpace.Rz, Mode=TwoWay, StringFormat=F4}" GotFocus="TextBoxSelectAll"></TextBox>
                     <UniformGrid Grid.Column="1" Grid.Row="1" Rows="1">
-                        <Button>Jog-</Button>
-                        <Button>Jog+</Button>
+                        <Button PreviewMouseDown="BtnPxJogDown_N" PreviewMouseUp="BtnJogUp" Command="{Binding JogCommand}" Content="Jog-">
+                            <Button.CommandParameter>
+                                <vm:JogParams Joint="{x:Static md:JointSelect.Px}" IsPositive="False"/>
+                            </Button.CommandParameter>
+                        </Button>
+                        <Button PreviewMouseDown="BtnPxJogDown_P" PreviewMouseUp="BtnJogUp" Command="{Binding JogCommand}" Content="Jog+">
+                            <Button.CommandParameter>
+                                <vm:JogParams Joint="{x:Static md:JointSelect.Px}" IsPositive="True"/>
+                            </Button.CommandParameter>
+                        </Button>
                     </UniformGrid>
                     <UniformGrid Grid.Column="3" Grid.Row="1" Rows="1">
-                        <Button>Jog-</Button>
-                        <Button>Jog+</Button>
+                        <Button PreviewMouseDown="BtnPyJogDown_N" PreviewMouseUp="BtnJogUp" Command="{Binding JogCommand}" Content="Jog-">
+                            <Button.CommandParameter>
+                                <vm:JogParams Joint="{x:Static md:JointSelect.Py}" IsPositive="False"/>
+                            </Button.CommandParameter>
+                        </Button>
+                        <Button PreviewMouseDown="BtnPyJogDown_P" PreviewMouseUp="BtnJogUp" Command="{Binding JogCommand}" Content="Jog+">
+                            <Button.CommandParameter>
+                                <vm:JogParams Joint="{x:Static md:JointSelect.Py}" IsPositive="True"/>
+                            </Button.CommandParameter>
+                        </Button>
                     </UniformGrid>
                     <UniformGrid Grid.Column="5" Grid.Row="1" Rows="1">
-                        <Button>Jog-</Button>
-                        <Button>Jog+</Button>
+                        <Button PreviewMouseDown="BtnPzJogDown_N" PreviewMouseUp="BtnJogUp" Command="{Binding JogCommand}" Content="Jog-">
+                            <Button.CommandParameter>
+                                <vm:JogParams Joint="{x:Static md:JointSelect.Pz}" IsPositive="False"/>
+                            </Button.CommandParameter>
+                        </Button>
+                        <Button PreviewMouseDown="BtnPzJogDown_P" PreviewMouseUp="BtnJogUp" Command="{Binding JogCommand}" Content="Jog+">
+                            <Button.CommandParameter>
+                                <vm:JogParams Joint="{x:Static md:JointSelect.Pz}" IsPositive="True"/>
+                            </Button.CommandParameter>
+                        </Button>
                     </UniformGrid>
                     <UniformGrid Grid.Column="7" Grid.Row="1" Rows="1">
-                        <Button>Jog-</Button>
-                        <Button>Jog+</Button>
+                        <Button PreviewMouseDown="BtnRyJogDown_N" PreviewMouseUp="BtnJogUp" Command="{Binding JogCommand}" Content="Jog-">
+                            <Button.CommandParameter>
+                                <vm:JogParams Joint="{x:Static md:JointSelect.Ry}" IsPositive="False"/>
+                            </Button.CommandParameter>
+                        </Button>
+                        <Button PreviewMouseDown="BtnRyJogDown_P" PreviewMouseUp="BtnJogUp" Command="{Binding JogCommand}" Content="Jog+">
+                            <Button.CommandParameter>
+                                <vm:JogParams Joint="{x:Static md:JointSelect.Ry}" IsPositive="True"/>
+                            </Button.CommandParameter>
+                        </Button>
                     </UniformGrid>
                     <UniformGrid Grid.Column="9" Grid.Row="1" Rows="1">
-                        <Button>Jog-</Button>
-                        <Button>Jog+</Button>
+                        <Button PreviewMouseDown="BtnRzJogDown_N" PreviewMouseUp="BtnJogUp" Command="{Binding JogCommand}" Content="Jog-">
+                            <Button.CommandParameter>
+                                <vm:JogParams Joint="{x:Static md:JointSelect.Rz}" IsPositive="False"/>
+                            </Button.CommandParameter>
+                        </Button>
+                        <Button PreviewMouseDown="BtnRzJogDown_P" PreviewMouseUp="BtnJogUp" Command="{Binding JogCommand}" Content="Jog+">
+                            <Button.CommandParameter>
+                                <vm:JogParams Joint="{x:Static md:JointSelect.Rz}" IsPositive="True"/>
+                            </Button.CommandParameter>
+                        </Button>
                     </UniformGrid>
                 </Grid>
             </mah:MetroHeader>

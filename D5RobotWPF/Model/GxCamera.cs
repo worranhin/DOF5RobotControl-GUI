@@ -45,6 +45,7 @@ namespace DOF5RobotControl_GUI.Model
         private IGXStream? stream;
         private IGXFeatureControl? featControl;
         private Mat? lastMat;
+        private bool usingCallback = false;
 
         public bool IsOpened { get; private set; } = false;
         public Frame LastFrame { get; private set; }
@@ -245,6 +246,7 @@ namespace DOF5RobotControl_GUI.Model
                             if (useCallback)
                             {
                                 stream.RegisterCaptureCallback(camera, OnFrameCallback); // 这个 API 貌似有 bug，启用了 回调模式后，camera.close() 会使程序卡住！
+                                usingCallback = true;
                             }
 
                             stream.StartGrab();  // 开启流通道
@@ -343,6 +345,9 @@ namespace DOF5RobotControl_GUI.Model
                 if (featControl == null)
                     throw new InvalidOperationException("FeatControl is null, open camera first.");
 
+                if (usingCallback == true)
+                    throw new InvalidOperationException("相机使用了回调模式，无法使用 GetMatFrame() 方法。请访问 LastFrame 以获取当前图像");
+
                 featControl.GetCommandFeature("TriggerSoftware").Execute();
 
                 try
@@ -403,6 +408,9 @@ namespace DOF5RobotControl_GUI.Model
 
                 if (featControl == null)
                     throw new InvalidOperationException("FeatControl is null, open camera first.");
+
+                if (usingCallback == true)
+                    throw new InvalidOperationException("相机使用了回调模式，无法使用 GetBitmapFrame() 方法。请访问 LastFrame 以获取当前图像");
 
                 featControl.GetCommandFeature("TriggerSoftware").Execute();
 
@@ -484,6 +492,9 @@ namespace DOF5RobotControl_GUI.Model
 
                 if (featControl == null)
                     throw new InvalidOperationException("FeatControl is null, open camera first.");
+
+                if (usingCallback == true)
+                    throw new InvalidOperationException("相机使用了回调模式，无法使用 GetRawFrame() 方法。请访问 LastFrame 以获取当前图像");
 
                 featControl.GetCommandFeature("TriggerSoftware").Execute();
 
