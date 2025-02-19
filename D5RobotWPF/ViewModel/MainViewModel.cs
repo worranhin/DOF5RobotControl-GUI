@@ -459,7 +459,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                     topFrame = TopCamera.Instance.LastFrame;
                     (x, y, rz) = await ImageProcessor.ProcessTopImgAsync(topFrame.Buffer, topFrame.Width, topFrame.Height, topFrame.Stride, MatchingMode.FINE);
                     Debug.WriteLine($"Fine  x:{x}, y:{y}, z:{rz}");
-                    if (Math.Abs(y) < 0.025)
+                    if (Math.Abs(y) < 0.05)
                         break;
 
                     TargetState.TaskSpace.Px += x - VibratePointX;
@@ -517,7 +517,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                     var topFrame = TopCamera.Instance.LastFrame;
                     var (dx, dy, drz) = await ImageProcessor.ProcessTopImgAsync(topFrame.Buffer, topFrame.Width, topFrame.Height, topFrame.Stride, MatchingMode.FINE);
 
-                    if (dx < 0.01) // 若误差小于一定值则退出循环
+                    if (dx < 0.05) // 若误差小于一定值则退出循环
                         break;
 
                     RoboticState target = CurrentState.Clone();
