@@ -10,7 +10,7 @@
         xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         d:DataContext="{d:DesignInstance Type=vm:MainViewModel, IsDesignTimeCreatable=True}"
         mc:Ignorable="d"
-        Title="五自由度机械臂控制面板" Height="600" Width="960"
+        Title="五自由度机械臂控制面板" Height="680" Width="960"
         FontFamily="Microsoft YaHei UI"
         FontSize="16">
     <Window.Resources>
@@ -69,14 +69,16 @@
                     <Setter Property="Margin" Value="5 0"/>
                 </Style>
             </StackPanel.Resources>
-            <TextBlock>端口</TextBlock>
+            <Button Content="配置通讯端口" MinWidth="120" Command="{Binding OpenConfigWindowCommand}"/>
+            <Separator Margin="5 0"/>
+            <!--<TextBlock>端口</TextBlock>
             <ComboBox ItemsSource="{Binding PortsAvailable}" SelectedItem="{Binding SelectedPort}" IsEnabled="{Binding SystemConnected, Converter={StaticResource BoolInverseConverter}}"/>
             <Button Command="{Binding PortRefreshCommand}">刷新</Button>
             <Separator Margin="15 0"/>
             <TextBlock>波特率</TextBlock>
             <ComboBox SelectedIndex="0" ToolTip="该功能未实现，默认 115200">
                 <ComboBoxItem>115200</ComboBoxItem>
-            </ComboBox>
+            </ComboBox>-->
             <Button MinWidth="80" Command="{Binding ToggleConnectCommand}" Content="{Binding SystemConnected, Converter={StaticResource ConnectBtnConverter}}"/>
             <Separator Margin="15 0"/>
             <TextBlock>点动模式</TextBlock>
@@ -375,6 +377,30 @@
                     <Button Content="断开服务器" Click="BtnDisconnectServer_Click"/>
                 </UniformGrid>
             </UniformGrid>
+            <mah:MetroHeader Header="相机位置控制">
+                <UniformGrid>
+                    <!--<Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal" Grid.Column="0" Margin="8">
+                            <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">端口</TextBlock>
+                            <ComboBox ItemsSource="{Binding PortsAvailable}" SelectedItem="{Binding SelectedCameraMotorPort}" IsEnabled="{Binding CameraMotorConnected, Converter={StaticResource BoolInverseConverter}}"/>
+                            <Button Margin="5,0,0,0">刷新</Button>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Grid.Column="1" Margin="8">
+                            <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">波特率</TextBlock>
+                            <ComboBox SelectedIndex="0" ToolTip="该功能未实现，默认 115200">
+                                <ComboBoxItem>9600</ComboBoxItem>
+                            </ComboBox>
+                            <Button Margin="5,0,0,0" Content="{Binding CameraMotorConnected, Converter={StaticResource ConnectBtnConverter}}"/>
+                        </StackPanel>
+                    </Grid>-->
+                    <Button>前往钳口库位置</Button>
+                    <Button>前往零件库位置</Button>
+                </UniformGrid>
+            </mah:MetroHeader>
         </StackPanel>
         <mah:MetroHeader Grid.Row="2" Grid.Column="3" Header="预存点位" MinWidth="150">
             <StackPanel>

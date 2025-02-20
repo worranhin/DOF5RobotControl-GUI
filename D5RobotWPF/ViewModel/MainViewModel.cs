@@ -69,6 +69,8 @@ namespace DOF5RobotControl_GUI.ViewModel
         private bool _isInserting = false;
         [ObservableProperty]
         private bool _isAttachingJaw = false;
+        [ObservableProperty]
+        private bool _camMotorIsConnected = false;
 
         /***** 点动相关字段/属性 *****/
         public static IEnumerable<JogMode> JogModes => Enum.GetValues(typeof(JogMode)).Cast<JogMode>();
@@ -141,6 +143,13 @@ namespace DOF5RobotControl_GUI.ViewModel
         /***** 机器人控制命令 *****/
 
         [RelayCommand]
+        private static void OpenConfigWindow()
+        {
+            ConfigWindow window = new();
+            window.Show();
+        }
+
+        [RelayCommand]
         private void ToggleConnect()
         {
             if (SystemConnected)  // 如果目前系统已连接，则断开连接
@@ -185,12 +194,6 @@ namespace DOF5RobotControl_GUI.ViewModel
                     //throw;
                 }
             }
-        }
-
-        [RelayCommand]
-        private void PortRefresh()
-        {
-            PortsAvailable = SerialPort.GetPortNames();
         }
 
         [RelayCommand]
@@ -379,6 +382,17 @@ namespace DOF5RobotControl_GUI.ViewModel
             CameraWindow window = new();
             window.Show();
         }
+
+        [RelayCommand]
+        private void ToggleCamMotorConnection()
+        {
+            if (!CamMotorIsConnected)
+            {
+
+            }
+        }
+
+        /***** 以上为 RelayCommand *****/
 
         /// <summary>
         /// 移动机器人至目标状态
@@ -793,7 +807,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             // 创建一个 EventArgs 实例来传递给 ButtonClicked 方法
             switch (method)
             {
-                case 1: PortRefreshCommand.Execute(null); break;
+                case 1: break;
                 case 2: ToggleConnectCommand.Execute(null); break;
                 case 3: SetTargetJointsCommand.Execute(ZeroPos); break;
                 case 4: SetTargetJointsCommand.Execute(IdlePos); break;

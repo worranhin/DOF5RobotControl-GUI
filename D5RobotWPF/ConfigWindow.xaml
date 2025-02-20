@@ -1,0 +1,29 @@
+﻿<Window x:Class="DOF5RobotControl_GUI.ConfigWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DOF5RobotControl_GUI" 
+        xmlns:viewmodel="clr-namespace:DOF5RobotControl_GUI.ViewModel" 
+        xmlns:cvt="clr-namespace:DOF5RobotControl_GUI.Converter"
+        d:DataContext="{d:DesignInstance Type=viewmodel:ConfigViewModel}"
+        mc:Ignorable="d"
+        Title="配置窗口" Height="300" Width="260">
+    <Window.Resources>
+        <cvt:BoolInverseConverter x:Key="BoolInverseConverter"/>
+    </Window.Resources>
+    <StackPanel Margin="10">
+        <StackPanel.Resources>
+            <Style TargetType="Button" BasedOn="{StaticResource userButton}">
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Margin" Value="0 5 0 0"/>
+            </Style>
+        </StackPanel.Resources>
+        <Label Content="RMD 电机通讯端口"/>
+        <ComboBox ItemsSource="{Binding PortsAvailable}" SelectedItem="{Binding RmdPort}" IsEnabled="{Binding SystemConnected, Converter={StaticResource BoolInverseConverter}}"/>
+        <Label Content="相机电机通讯端口"/>
+        <ComboBox ItemsSource="{Binding PortsAvailable}" SelectedItem="{Binding CamMotorPort}" IsEnabled="{Binding SystemConnected, Converter={StaticResource BoolInverseConverter}}"/>
+        <Button Content="刷新端口" Command="{Binding PortRefreshCommand}"/>
+        <Button Content="保存配置"/>
+    </StackPanel>
+</Window>
