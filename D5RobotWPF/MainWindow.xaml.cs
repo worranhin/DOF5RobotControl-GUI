@@ -1,6 +1,7 @@
 ﻿using DOF5RobotControl_GUI.Model;
 using DOF5RobotControl_GUI.ViewModel;
 using MahApps.Metro.Controls;
+using Microsoft.Extensions.DependencyInjection;
 using Opc.UaFx;
 using Opc.UaFx.Server;
 using System.Diagnostics;
@@ -22,12 +23,12 @@ namespace DOF5RobotControl_GUI
         CancellationTokenSource opcTaskCancelSource;
         CancellationToken opcTaskCancelToken;
 
-        public MainWindow()
+        public MainWindow(MainViewModel vm)
         {
             InitializeComponent();
 
             // 初始化 ViewModel
-            viewModel = new(this.Dispatcher);
+            viewModel = vm;
             DataContext = viewModel;
 
             // 初始化 OPC
@@ -36,17 +37,11 @@ namespace DOF5RobotControl_GUI
             serverThread = new(ServerRunTask);
 
             // 注册窗口关闭回调函数
-            this.Closing += (sender, e) => {
-                Properties.Settings.Default.Port = viewModel.SelectedPort;
-                Properties.Settings.Default.Save();
-            };
-
             this.Closed += Window_Closed;
         }
 
         private void Window_Closed(object? sender, EventArgs e)
         {
-            Debug.WriteLine("Window closed");
             opcTaskCancelSource.Cancel();
         }
 
