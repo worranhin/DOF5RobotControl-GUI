@@ -408,6 +408,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             if (target.JointSpace.HasErrors)
                 throw new ArgumentOutOfRangeException(nameof(target), "Joint value is not valid.");
 
+            TargetState = target;
             robot.JointsMoveAbsolute(TargetState.ToD5RJoints());
         }
 
