@@ -26,15 +26,6 @@ namespace DOF5RobotControl_GUI.Model
             BottomCamera
         };
 
-        public readonly struct Frame(byte[] buf, int width, int height)
-        {
-            public byte[] Buffer { get; } = buf;
-            public int Width { get; } = width;
-            public int Height { get; } = height;
-            public readonly int Size => (Width * Height);
-            public readonly int Stride => (Width * 8 + 7) / 8;
-        }
-
         const string TopCameraMac = "00-21-49-03-4D-95";
         const string BottomCameraMac = "00-21-49-03-4D-94";
 
@@ -48,9 +39,9 @@ namespace DOF5RobotControl_GUI.Model
         private bool usingCallback = false;
 
         public bool IsOpened { get; private set; } = false;
-        public Frame LastFrame { get; private set; }
+        public CamFrame LastFrame { get; private set; }
 
-        public event EventHandler<Frame>? FrameReceived;
+        public event EventHandler<CamFrame>? FrameReceived;
 
         private static void EnsureInitialized()
         {
@@ -478,7 +469,7 @@ namespace DOF5RobotControl_GUI.Model
             throw new NotImplementedException();
         }
 
-        public Frame GetRawFrame()
+        public CamFrame GetRawFrame()
         {
             const int timeout = 1000; // TODO: 测试并改小这个值
 
@@ -518,7 +509,7 @@ namespace DOF5RobotControl_GUI.Model
                         IntPtr rawBufferPtr = frameData.GetBuffer();
                         byte[] buffer = new byte[width * height];
                         Marshal.Copy(rawBufferPtr, buffer, 0, width * height);
-                        Frame frame = new(buffer, width, height);
+                        CamFrame frame = new(buffer, width, height);
                         LastFrame = frame;
                         return frame;
                     }
@@ -539,7 +530,7 @@ namespace DOF5RobotControl_GUI.Model
             }
         }
 
-        public bool TryGetRawFrame(out Frame frame)
+        public bool TryGetRawFrame(out CamFrame frame)
         {
             try
             {
@@ -549,7 +540,7 @@ namespace DOF5RobotControl_GUI.Model
             catch (InvalidOperationException)
             {
                 //frame = null;
-                frame = new Frame([], 0, 0);
+                frame = new CamFrame([], 0, 0);
                 return false;
             }
         }

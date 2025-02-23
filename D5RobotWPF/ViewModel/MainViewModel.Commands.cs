@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -20,7 +21,10 @@ namespace DOF5RobotControl_GUI.ViewModel
         [RelayCommand]
         private static void OpenConfigWindow()
         {
-            ConfigWindow window = new();
+            ConfigWindow window = new()
+            {
+                Owner = Application.Current.MainWindow
+            };
             window.Show();
         }
 
@@ -30,6 +34,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             if (SystemConnected)  // 如果目前系统已连接，则断开连接
             {
                 _robotControlService.Disconnect();
+                updateStateTimer?.Dispose();
                 SystemConnected = false;
             }
             else  // 系统未连接，则建立连接
@@ -224,10 +229,20 @@ namespace DOF5RobotControl_GUI.ViewModel
             window.Show();
         }
 
+        /***** 相机控制命令 *****/
+
         [RelayCommand]
-        private void ToggleCamMotorConnection()
+        private void CameraGotoJawVault()
         {
-            throw new NotImplementedException();
+            _cameraCtrlService.MoveTopCamera(10);
+            _cameraCtrlService.MoveBottomCamera(10);
+        }
+
+        [RelayCommand]
+        private void CameraGotoPartsVault()
+        {
+            _cameraCtrlService.MoveTopCamera(-10);
+            _cameraCtrlService.MoveBottomCamera(-10);
         }
 
         /// <summary>

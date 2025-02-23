@@ -2,6 +2,8 @@
 {
     public interface ICamMotorControlService
     {
+        bool IsConnected { get; }
+
         void Connect(string port);
         void Disconnect();
         void MoveRelativeLeft(CamMotorControlService.MotorSelect id, int data);

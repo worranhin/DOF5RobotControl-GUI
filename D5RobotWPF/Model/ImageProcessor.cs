@@ -15,7 +15,7 @@ namespace DOF5RobotControl_GUI.Model
     {
         static readonly VisionWrapper vision = new();
 
-        public static void Init(GxCamera.Frame topFrame, GxCamera.Frame bottomFrame)
+        public static void Init(CamFrame topFrame, CamFrame bottomFrame)
         {
             GCHandle topHandle = GCHandle.Alloc(topFrame.Buffer, GCHandleType.Pinned);
             try

@@ -7,6 +7,7 @@ using D5R;
 using DOF5RobotControl_GUI.Model;
 using DOF5RobotControl_GUI.Services;
 using GxIAPINET;
+using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics;
 using System.IO.Ports;
 using System.Windows;
@@ -27,7 +28,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         public bool IsJogTaskSpace { get; set; } = false;
     };
 
-    internal class BottomImgMessage : RequestMessage<GxCamera.Frame> { }
+    internal class BottomImgMessage : RequestMessage<CamFrame> { }
 
     public partial class MainViewModel : ObservableObject
     {
@@ -45,6 +46,7 @@ namespace DOF5RobotControl_GUI.ViewModel
 
         private readonly IRobotControlService _robotControlService;
         private readonly IPopUpService _popUpService;
+        private readonly ICameraControlService _cameraCtrlService;
 
         /***** 线程相关字段 *****/
         public Dispatcher Dispatcher { get; private set; }
@@ -55,8 +57,6 @@ namespace DOF5RobotControl_GUI.ViewModel
         readonly List<CancellationTokenSource> cancelSourceList = []; // 存储所有的取消源，在 stop 时统一取消
 
         /***** 机器人系统相关 *****/
-        //const string natorId = "usb:id:2250716012";
-        //private D5Robot? robot;
         [ObservableProperty]
         private bool _systemConnected = false;
         [ObservableProperty]
@@ -99,13 +99,25 @@ namespace DOF5RobotControl_GUI.ViewModel
         [ObservableProperty]
         private double _vibrateFrequency = 10.0;
 
-        public MainViewModel(IRobotControlService robotControlService, IPopUpService popUpService)
+        public MainViewModel(IRobotControlService robotControlService, IPopUpService popUpService, ICameraControlService cameraCtrlService)
         {
             Dispatcher = Application.Current.Dispatcher;
+
+            // 获取服务引用
             _robotControlService = robotControlService;
             _popUpService = popUpService;
+            _cameraCtrlService = cameraCtrlService;
 
-            Initialize();
+            // 初始化 Serial
+            PortsAvailable = SerialPort.GetPortNames();
+            if (PortsAvailable.Length > 0)
+            {
+                var defaultPort = Properties.Settings.Default.Port; // 获取上次选择的 COM 口
+                if (PortsAvailable.Contains(defaultPort))
+                    SelectedPort = defaultPort;
+                else
+                    SelectedPort = PortsAvailable[0];
+            }
         }
 
         ~MainViewModel()
@@ -118,20 +130,6 @@ namespace DOF5RobotControl_GUI.ViewModel
                 cancelSource?.Cancel();
             }
         }
-
-        private void Initialize()
-        {
-            // 初始化 Serial
-            PortsAvailable = SerialPort.GetPortNames();
-            if (PortsAvailable.Length > 0)
-            {
-                var defaultPort = Properties.Settings.Default.Port; // 获取上次选择的 COM 口
-                if (PortsAvailable.Contains(defaultPort))
-                    SelectedPort = defaultPort;
-                else
-                    SelectedPort = PortsAvailable[0];
-            }
-        }        
 
         /// <summary>
         /// 移动到插入初始位置

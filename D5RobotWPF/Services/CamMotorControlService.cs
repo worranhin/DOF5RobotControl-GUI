@@ -8,6 +8,8 @@ namespace DOF5RobotControl_GUI.Services
 
         private SerialPort? motorSerial;
 
+        public bool IsConnected { get; private set; } = false;
+
         public void Connect(string port)
         {
             motorSerial = new(port, 115200, Parity.None, 8, StopBits.One)
@@ -16,13 +18,14 @@ namespace DOF5RobotControl_GUI.Services
                 WriteTimeout = 500
             };
             motorSerial.Open();
+            IsConnected = true;
         }
 
         public void Disconnect()
         {
             motorSerial?.Close();
             motorSerial = null;
-            throw new NotImplementedException();
+            IsConnected = false;
         }
 
         public void MoveStepLeft(MotorSelect id)
@@ -42,7 +45,7 @@ namespace DOF5RobotControl_GUI.Services
             if (motorSerial == null)
                 throw new InvalidOperationException("相机电机串口未连接，请先调用 Connect() 方法进行连接");
 
-            byte[] command = { 0x4E, 0x41, 0x00, 0x00, 0x00 };
+            byte[] command = [0x4E, 0x41, 0x00, 0x00, 0x00];
             command[2] = (byte)id;
             command[4] = GetHeaderCheckSum(command);
 

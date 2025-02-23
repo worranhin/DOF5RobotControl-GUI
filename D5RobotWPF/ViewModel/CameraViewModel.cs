@@ -78,7 +78,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             BottomCamera.Instance.FrameReceived += BottomFrameReceived;
         }
 
-        private void TopFrameReceived(object? sender, GxCamera.Frame e)
+        private void TopFrameReceived(object? sender, CamFrame e)
         {
             PixelFormat pf = PixelFormats.Gray8; // 下面转成 bitmap 格式
             int rawStride = (e.Width * pf.BitsPerPixel + 7) / 8;
@@ -89,7 +89,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             });
         }
 
-        private void BottomFrameReceived(object? sender, GxCamera.Frame e)
+        private void BottomFrameReceived(object? sender, CamFrame e)
         {
             PixelFormat pf = PixelFormats.Gray8; // 下面转成 bitmap 格式
             int rawStride = (e.Width * pf.BitsPerPixel + 7) / 8;

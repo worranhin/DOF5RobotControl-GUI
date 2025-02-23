@@ -40,7 +40,7 @@ namespace DOF5RobotControl_GUI.Model
         //    }
         //    return true;
         //}
-        private bool opcBtn_1([OpcArgument("运行", Description = "是否运行")] bool change)//刷新
+        private bool OpcBtn_1([OpcArgument("运行", Description = "是否运行")] bool change)//刷新
         {
             try
             {
@@ -53,7 +53,7 @@ namespace DOF5RobotControl_GUI.Model
             }
             return true;
         }
-        private bool opcBtn_2([OpcArgument("运行", Description = "是否运行")] bool change)//刷新
+        private bool OpcBtn_2([OpcArgument("运行", Description = "是否运行")] bool change)//刷新
         {
             try
             {
@@ -66,7 +66,7 @@ namespace DOF5RobotControl_GUI.Model
             }
             return true;
         }
-        private bool opcBtn_3([OpcArgument("运行", Description = "是否运行")] bool change)//刷新
+        private bool OpcBtn_3([OpcArgument("运行", Description = "是否运行")] bool change)//刷新
         {
             try
             {
@@ -79,7 +79,7 @@ namespace DOF5RobotControl_GUI.Model
             }
             return true;
         }
-        private bool opcBtn_4([OpcArgument("运行", Description = "是否运行")] bool change)//刷新
+        private bool OpcBtn_4([OpcArgument("运行", Description = "是否运行")] bool change)//刷新
         {
             try
             {
@@ -92,7 +92,7 @@ namespace DOF5RobotControl_GUI.Model
             }
             return true;
         }
-        private bool opcBtn_5([OpcArgument("运行", Description = "是否运行")] bool change)//刷新
+        private bool OpcBtn_5([OpcArgument("运行", Description = "是否运行")] bool change)//刷新
         {
             try
             {
@@ -105,7 +105,7 @@ namespace DOF5RobotControl_GUI.Model
             }
             return true;
         }
-        private bool opcBtn_6([OpcArgument("运行", Description = "是否运行")] bool change)//刷新
+        private bool OpcBtn_6([OpcArgument("运行", Description = "是否运行")] bool change)//刷新
         {
             try
             {
@@ -118,7 +118,7 @@ namespace DOF5RobotControl_GUI.Model
             }
             return true;
         }
-        private bool opcBtn_7([OpcArgument("运行", Description = "是否运行")] bool change)//刷新
+        private bool OpcBtn_7([OpcArgument("运行", Description = "是否运行")] bool change)//刷新
         {
             try
             {
@@ -131,7 +131,7 @@ namespace DOF5RobotControl_GUI.Model
             }
             return true;
         }
-        private bool opcBtn_8([OpcArgument("运行", Description = "是否运行")] bool change)//刷新
+        private bool OpcBtn_8([OpcArgument("运行", Description = "是否运行")] bool change)//刷新
         {
             try
             {
@@ -144,7 +144,7 @@ namespace DOF5RobotControl_GUI.Model
             }
             return true;
         }
-        private bool opcBtn_9([OpcArgument("运行", Description = "是否运行")] bool change)//刷新
+        private bool OpcBtn_9([OpcArgument("运行", Description = "是否运行")] bool change)//刷新
         {
             try
             {
@@ -157,7 +157,7 @@ namespace DOF5RobotControl_GUI.Model
             }
             return true;
         }
-        private bool opcBtn_10([OpcArgument("运行", Description = "是否运行")] bool change)//刷新
+        private bool OpcBtn_10([OpcArgument("运行", Description = "是否运行")] bool change)//刷新
         {
             try
             {
@@ -170,7 +170,7 @@ namespace DOF5RobotControl_GUI.Model
             }
             return true;
         }
-        private bool opcBtn_11([OpcArgument("运行", Description = "是否运行")] bool change)//刷新
+        private bool OpcBtn_11([OpcArgument("运行", Description = "是否运行")] bool change)//刷新
         {
             try
             {
@@ -184,7 +184,7 @@ namespace DOF5RobotControl_GUI.Model
             return true;
         }
         [return: OpcArgument("调用情况")]//此处为输出参数，类型为下函数返回的类型
-        private bool opcBtn_12([OpcArgument("运行", Description = "是否运行")] bool change)//内部为输入参数
+        private bool OpcBtn_12([OpcArgument("运行", Description = "是否运行")] bool change)//内部为输入参数
         {
             try
             {
@@ -197,7 +197,7 @@ namespace DOF5RobotControl_GUI.Model
             }
             return true;
         }
-        private bool opcBtn_13([OpcArgument("运行", Description = "是否运行")] bool change)//刷新
+        private bool OpcBtn_13([OpcArgument("运行", Description = "是否运行")] bool change)//刷新
         {
             try
             {
@@ -210,7 +210,7 @@ namespace DOF5RobotControl_GUI.Model
             }
             return true;
         }
-        private bool opcBtn_14([OpcArgument("运行", Description = "是否运行")] bool change)//刷新
+        private bool OpcBtn_14([OpcArgument("运行", Description = "是否运行")] bool change)//刷新
         {
             try
             {
@@ -256,20 +256,20 @@ namespace DOF5RobotControl_GUI.Model
             r5_Node.WriteVariableValueCallback = handleWriteR5_NodeCallback;
             r5_Node.ReadVariableValueCallback = handleReadR5_NodeCallback;
             var globalControlNode = new OpcFolderNode(rootNode, "全局控制");
-            var refreshNode = new OpcMethodNode(globalControlNode, "刷新", new Func<bool, bool>(this.opcBtn_1));
-            var connectNode = new OpcMethodNode(globalControlNode, "连接", new Func<bool, bool>(this.opcBtn_2));
-            var ZeroPosNode = new OpcMethodNode(globalControlNode, "零点位", new Func<bool, bool>(this.opcBtn_3));
-            var IdlePosNode = new OpcMethodNode(globalControlNode, "待机位", new Func<bool, bool>(this.opcBtn_4));
-            var PreChangeJawPosNode = new OpcMethodNode(globalControlNode, "换夹钳预备位", new Func<bool, bool>(this.opcBtn_5));
-            var ChangeJawPosNode = new OpcMethodNode(globalControlNode, "换夹钳位", new Func<bool, bool>(this.opcBtn_6));
-            var AssemblePos1Node = new OpcMethodNode(globalControlNode, "装配位1", new Func<bool, bool>(this.opcBtn_7));
-            var AssemblePos2Node = new OpcMethodNode(globalControlNode, "装配位2", new Func<bool, bool>(this.opcBtn_8));
-            var AssemblePos3Node = new OpcMethodNode(globalControlNode, "装配位3", new Func<bool, bool>(this.opcBtn_9));
-            var PreFetchRingPosNode = new OpcMethodNode(globalControlNode, "取零件预备位", new Func<bool, bool>(this.opcBtn_10));
-            var FetchRingPosNode = new OpcMethodNode(globalControlNode, "取零件位", new Func<bool, bool>(this.opcBtn_11));
-            var runNode = new OpcMethodNode(globalControlNode, "运行", new Func<bool, bool>(this.opcBtn_12));
-            var StopNode = new OpcMethodNode(globalControlNode, "停止", new Func<bool, bool>(this.opcBtn_13));
-            var SetZeroNode = new OpcMethodNode(globalControlNode, "置零", new Func<bool, bool>(this.opcBtn_14));
+            var refreshNode = new OpcMethodNode(globalControlNode, "刷新", new Func<bool, bool>(this.OpcBtn_1));
+            var connectNode = new OpcMethodNode(globalControlNode, "连接", new Func<bool, bool>(this.OpcBtn_2));
+            var ZeroPosNode = new OpcMethodNode(globalControlNode, "零点位", new Func<bool, bool>(this.OpcBtn_3));
+            var IdlePosNode = new OpcMethodNode(globalControlNode, "待机位", new Func<bool, bool>(this.OpcBtn_4));
+            var PreChangeJawPosNode = new OpcMethodNode(globalControlNode, "换夹钳预备位", new Func<bool, bool>(this.OpcBtn_5));
+            var ChangeJawPosNode = new OpcMethodNode(globalControlNode, "换夹钳位", new Func<bool, bool>(this.OpcBtn_6));
+            var AssemblePos1Node = new OpcMethodNode(globalControlNode, "装配位1", new Func<bool, bool>(this.OpcBtn_7));
+            var AssemblePos2Node = new OpcMethodNode(globalControlNode, "装配位2", new Func<bool, bool>(this.OpcBtn_8));
+            var AssemblePos3Node = new OpcMethodNode(globalControlNode, "装配位3", new Func<bool, bool>(this.OpcBtn_9));
+            var PreFetchRingPosNode = new OpcMethodNode(globalControlNode, "取零件预备位", new Func<bool, bool>(this.OpcBtn_10));
+            var FetchRingPosNode = new OpcMethodNode(globalControlNode, "取零件位", new Func<bool, bool>(this.OpcBtn_11));
+            var runNode = new OpcMethodNode(globalControlNode, "运行", new Func<bool, bool>(this.OpcBtn_12));
+            var StopNode = new OpcMethodNode(globalControlNode, "停止", new Func<bool, bool>(this.OpcBtn_13));
+            var SetZeroNode = new OpcMethodNode(globalControlNode, "置零", new Func<bool, bool>(this.OpcBtn_14));
 
 
             return new IOpcNode[] { rootNode };

@@ -29,7 +29,9 @@ namespace DOF5RobotControl_GUI
             var services = new ServiceCollection();
 
             services.AddSingleton<IRobotControlService, RobotControlService>();
-            services.AddTransient<IPopUpService, PopUpService>();
+            services.AddSingleton<IPopUpService, PopUpService>();
+            services.AddSingleton<ICamMotorControlService, CamMotorControlService>();
+            services.AddSingleton<ICameraControlService, CameraControlService>();
             services.AddTransient<MainViewModel>();
             services.AddTransient(sp => new MainWindow(sp.GetRequiredService<MainViewModel>()));
 

@@ -8,9 +8,9 @@
         xmlns:vm="clr-namespace:DOF5RobotControl_GUI.ViewModel"
         xmlns:md="clr-namespace:DOF5RobotControl_GUI.Model"
         xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
-        d:DataContext="{d:DesignInstance Type=vm:MainViewModel, IsDesignTimeCreatable=True}"
+        d:DataContext="{d:DesignInstance Type=vm:DesignMainViewModel, IsDesignTimeCreatable=True}"
         mc:Ignorable="d"
-        Title="五自由度机械臂控制面板" Height="680" Width="960"
+        Title="五自由度机械臂控制面板" Height="780" Width="960"
         FontFamily="Microsoft YaHei UI"
         FontSize="16">
     <Window.Resources>
@@ -378,28 +378,29 @@
                 </UniformGrid>
             </UniformGrid>
             <mah:MetroHeader Header="相机位置控制">
-                <UniformGrid>
-                    <!--<Grid Grid.Row="0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="auto"/>
-                            <ColumnDefinition Width="auto"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Orientation="Horizontal" Grid.Column="0" Margin="8">
-                            <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">端口</TextBlock>
-                            <ComboBox ItemsSource="{Binding PortsAvailable}" SelectedItem="{Binding SelectedCameraMotorPort}" IsEnabled="{Binding CameraMotorConnected, Converter={StaticResource BoolInverseConverter}}"/>
-                            <Button Margin="5,0,0,0">刷新</Button>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Grid.Column="1" Margin="8">
-                            <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">波特率</TextBlock>
-                            <ComboBox SelectedIndex="0" ToolTip="该功能未实现，默认 115200">
-                                <ComboBoxItem>9600</ComboBoxItem>
-                            </ComboBox>
-                            <Button Margin="5,0,0,0" Content="{Binding CameraMotorConnected, Converter={StaticResource ConnectBtnConverter}}"/>
-                        </StackPanel>
-                    </Grid>-->
-                    <Button>前往钳口库位置</Button>
-                    <Button>前往零件库位置</Button>
-                </UniformGrid>
+                <StackPanel>
+                    <UniformGrid Rows="1">
+                        <Button Content="前往钳口库位置" Command="{Binding CameraGotoJawVaultCommand}"/>
+                        <Button Content="前往零件库位置" Command="{Binding CameraGotoPartsVaultCommand}"/>
+                    </UniformGrid>
+                    <StackPanel Orientation="Horizontal">
+                        <StackPanel.Resources>
+                            <Style TargetType="TextBox" BasedOn="{StaticResource MahApps.Styles.TextBox}">
+                                <Setter Property="MinWidth" Value="100"/>
+                                <Setter Property="FontSize" Value="14"/>
+                            </Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource userButton}">
+                                <Setter Property="Padding" Value="5 0"/>
+                            </Style>
+                        </StackPanel.Resources>
+                        <Label Content="顶部相机移动距离"/>
+                        <TextBox Text="{Binding TopCamMoveDistance}"/>
+                        <Button Content="顶部相机移动" Margin="5 0 20 0" Command="{Binding TopCamMoveCommand}"/>
+                        <Label Content="底部相机移动角度"/>
+                        <TextBox Text="{Binding BottomCamMoveAngle}"/>
+                        <Button Content="底部相机移动" Margin="5 0 0 0" Command="{Binding BottomCamMoveCommand}"/>
+                    </StackPanel>                    
+                </StackPanel>
             </mah:MetroHeader>
         </StackPanel>
         <mah:MetroHeader Grid.Row="2" Grid.Column="3" Header="预存点位" MinWidth="150">
