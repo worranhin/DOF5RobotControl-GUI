@@ -19,14 +19,16 @@ namespace DOF5RobotControl_GUI.ViewModel
             if (PortsAvailable.Length > 0)
             {
                 if (PortsAvailable.Contains(Properties.Settings.Default.RmdPort))
-                    rmdPort = Properties.Settings.Default.RmdPort;
+                    RmdPort = Properties.Settings.Default.RmdPort;
                 else
-                    rmdPort = PortsAvailable[0];
+                    RmdPort = PortsAvailable[0];
 
                 if (PortsAvailable.Contains(Properties.Settings.Default.CamMotorPort))
-                    camMotorPort = Properties.Settings.Default.CamMotorPort;
+                    CamMotorPort = Properties.Settings.Default.CamMotorPort;
                 else
-                    camMotorPort = PortsAvailable[0];
+                    CamMotorPort = PortsAvailable[0];
+
+                PropertiesNotSaved = false;
             }
         }
 
