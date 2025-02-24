@@ -34,6 +34,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             if (SystemConnected)  // 如果目前系统已连接，则断开连接
             {
                 _robotControlService.Disconnect();
+                _cameraCtrlService.DisconnectCamMotor();
                 updateStateTimer?.Dispose();
                 SystemConnected = false;
             }
@@ -41,12 +42,15 @@ namespace DOF5RobotControl_GUI.ViewModel
             {
                 try
                 {
-                    _robotControlService.Connect(SelectedPort);
+                    _robotControlService.Connect(Properties.Settings.Default.RmdPort);
+                    _cameraCtrlService.ConnectCamMotor(Properties.Settings.Default.CamMotorPort);
                     SystemConnected = true;
                     updateStateTimer = new(state => UpdateCurrentState(), null, 500, 1000);
                 }
                 catch (InvalidOperationException exc)
                 {
+                    _robotControlService.Disconnect();
+                    _cameraCtrlService.DisconnectCamMotor();
                     _popUpService.Show(exc.Message);
                 }
             }
@@ -217,32 +221,6 @@ namespace DOF5RobotControl_GUI.ViewModel
         {
             await Task.Delay(100);
             throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// 打开相机
-        /// </summary>
-        [RelayCommand]
-        private static void OpenCamera()
-        {
-            CameraWindow window = new();
-            window.Show();
-        }
-
-        /***** 相机控制命令 *****/
-
-        [RelayCommand]
-        private void CameraGotoJawVault()
-        {
-            _cameraCtrlService.MoveTopCamera(10);
-            _cameraCtrlService.MoveBottomCamera(10);
-        }
-
-        [RelayCommand]
-        private void CameraGotoPartsVault()
-        {
-            _cameraCtrlService.MoveTopCamera(-10);
-            _cameraCtrlService.MoveBottomCamera(-10);
         }
 
         /// <summary>

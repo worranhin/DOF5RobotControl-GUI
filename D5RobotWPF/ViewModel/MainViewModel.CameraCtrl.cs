@@ -1,10 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DOF5RobotControl_GUI.ViewModel
 {
@@ -15,16 +10,72 @@ namespace DOF5RobotControl_GUI.ViewModel
         [ObservableProperty]
         private int _bottomCamMoveAngle = 0;
 
+        /***** 相机控制命令 *****/
+
+        /// <summary>
+        /// 打开相机
+        /// </summary>
+        [RelayCommand]
+        private static void OpenCamera()
+        {
+            CameraWindow window = new();
+            window.Show();
+        }
+
+        [RelayCommand]
+        private async Task CameraGotoJawVaultAsync()
+        {
+            try
+            {
+                _cameraCtrlService.MoveTopCamera(TopCamMoveDistance);
+                await Task.Delay(100); // 需要延时一小段时间才能确保通讯正常
+                _cameraCtrlService.MoveBottomCamera(BottomCamMoveAngle);
+            }
+            catch (InvalidOperationException exc)
+            {
+                _popUpService.Show(exc.Message);
+            }
+        }
+
+        [RelayCommand]
+        private async Task CameraGotoPartsVaultAsync()
+        {
+            try
+            {
+                _cameraCtrlService.MoveTopCamera(-TopCamMoveDistance);
+                await Task.Delay(100);
+                _cameraCtrlService.MoveBottomCamera(-BottomCamMoveAngle);
+            }
+            catch (InvalidOperationException exc)
+            {
+                _popUpService.Show(exc.Message);
+            }
+        }
+
         [RelayCommand]
         private void TopCamMove()
         {
-            _cameraCtrlService.MoveTopCamera(TopCamMoveDistance);
+            try
+            {
+                _cameraCtrlService.MoveTopCamera(TopCamMoveDistance);
+            }
+            catch (InvalidOperationException exc)
+            {
+                _popUpService.Show(exc.Message);
+            }
         }
 
         [RelayCommand]
         private void BottomCamMove()
         {
-            _cameraCtrlService.MoveBottomCamera(BottomCamMoveAngle);
+            try
+            {
+                _cameraCtrlService.MoveBottomCamera(BottomCamMoveAngle);
+            }
+            catch (InvalidOperationException exc)
+            {
+                _popUpService.Show(exc.Message);
+            }
         }
     }
 }

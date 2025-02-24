@@ -6,6 +6,8 @@ namespace DOF5RobotControl_GUI.Services
     {
         public CamFrame GetTopFrame();
         public CamFrame GetBottomFrame();
+        void ConnectCamMotor(string port);
+        void DisconnectCamMotor();
         void MoveBottomCamera(int angle);
         void MoveTopCamera(int distance);
     }

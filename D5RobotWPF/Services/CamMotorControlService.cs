@@ -52,7 +52,7 @@ namespace DOF5RobotControl_GUI.Services
             motorSerial.Write(command, 0, command.Length);
         }
 
-        public void MoveRelativeLeft(MotorSelect id, Int32 data)
+        public void MoveRelativeRight(MotorSelect id, Int32 data)
         {
             if (motorSerial == null)
                 throw new InvalidOperationException("相机电机串口未连接，请先调用 Connect() 方法进行连接");
@@ -72,7 +72,7 @@ namespace DOF5RobotControl_GUI.Services
             motorSerial.Write(command, 0, command.Length);
         }
 
-        public void MoveRelativeRight(MotorSelect id, Int32 data)
+        public void MoveRelativeLeft(MotorSelect id, Int32 data)
         {
             if (motorSerial == null)
                 throw new InvalidOperationException("相机电机串口未连接，请先调用 Connect() 方法进行连接");

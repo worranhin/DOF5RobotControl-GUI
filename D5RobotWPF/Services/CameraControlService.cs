@@ -33,6 +33,11 @@ namespace DOF5RobotControl_GUI.Services
                 _camMotorCtrlService.Connect(port);
         }
 
+        public void DisconnectCamMotor()
+        {
+            _camMotorCtrlService.Disconnect();
+        }
+
         /// <summary>
         /// 移动顶部相机
         /// </summary>
