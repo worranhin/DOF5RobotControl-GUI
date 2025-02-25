@@ -85,19 +85,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         [ObservableProperty]
         private JogMode _jogModeSelected = JogMode.OneStep;
         [ObservableProperty]
-        private JogResolution _jogResolutionSelected = JogResolution.Speed1mm;
-
-        /***** 振动相关字段/属性 *****/
-        [ObservableProperty]
-        private bool _isVibrating = false;
-        [ObservableProperty]
-        private bool _isVibrateHorizontal = true;
-        [ObservableProperty]
-        private bool _isVibrateVertical = false;
-        [ObservableProperty]
-        private double _vibrateAmplitude = 0.05;
-        [ObservableProperty]
-        private double _vibrateFrequency = 10.0;
+        private JogResolution _jogResolutionSelected = JogResolution.Speed1mm;        
 
         public MainViewModel(IRobotControlService robotControlService, IPopUpService popUpService, ICameraControlService cameraCtrlService)
         {
@@ -456,36 +444,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         }
 
         /***** Jog 相关结束 *****/
-
-        /***** 处理振动相关 UI 逻辑 *****/
-
-        [RelayCommand]
-        private void ToggleVibrate()
-        {
-            if (!IsVibrating)
-            {
-                try
-                {
-                    _robotControlService.StartVibrate(IsVibrateHorizontal, IsVibrateVertical, VibrateAmplitude, VibrateFrequency);
-                    IsVibrating = true;
-                }
-                catch (ArgumentException exc)
-                {
-                    if (exc.ParamName == "vibrateVertical")
-                        _popUpService.Show(exc.Message, "Error while toggle vibration");
-                    else
-                        throw;
-                }
-            }
-            else
-            {
-                _robotControlService.StopVibrate();
-                IsVibrating = false;
-            }
-        }
-
-        /***** 处理振动结束 *****/
-
+        
         /***** OPC 相关代码 *****/
 
         public void OpcMapMethod(int method)
@@ -508,25 +467,6 @@ namespace DOF5RobotControl_GUI.ViewModel
                 case 13: RobotStopCommand.Execute(null); break;
                 case 14: RobotSetZeroCommand.Execute(null); break;
             }
-
-            // 备份，对照
-            //switch (method)
-            //{
-            //    case 1: PortRefresh_Click(this, args); break;
-            //    case 2: BtnConnect_Click(this, args); break;
-            //    case 3: BtnZeroPos_Click(this. args); break;
-            //    case 4: BtnIdlePos_Click(this, args); break;
-            //    case 5: BtnPreChangeJawPos_Click(this, args); break;
-            //    case 6: BtnChangeJawPos_Click(this, args); break;
-            //    case 7: BtnAssemblePos1_Click(this, args); break;
-            //    case 8: BtnAssemblePos2_Click(this, args); break;
-            //    case 9: BtnAssemblePos3_Click(this, args); break;
-            //    case 10: BtnPreFetchRingPos_Click(this, args); break;
-            //    case 11: BtnFetchRingPos_Click(this, args); break;
-            //    case 12: BtnRun_Click(this, args); break;
-            //    case 13: BtnStop_Click(this, args); break;
-            //    case 14: BtnSetZero_Click(this, args); break;
-            //}
         }
 
         /***** OPC 相关代码结束 *****/
