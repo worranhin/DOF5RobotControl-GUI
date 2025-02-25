@@ -1,21 +1,14 @@
-﻿using Accessibility;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Mvvm.Messaging;
 using CommunityToolkit.Mvvm.Messaging.Messages;
 using D5R;
 using DOF5RobotControl_GUI.Model;
 using DOF5RobotControl_GUI.Services;
-using GxIAPINET;
-using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics;
 using System.IO.Ports;
 using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using VisionLibrary;
-using D5Robot = D5R.D5Robot;
 
 namespace DOF5RobotControl_GUI.ViewModel
 {
@@ -47,6 +40,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         private readonly IRobotControlService _robotControlService;
         private readonly IPopUpService _popUpService;
         private readonly ICameraControlService _cameraCtrlService;
+        private readonly IOpcService _opcService;
 
         /***** 线程相关字段 *****/
         public Dispatcher Dispatcher { get; private set; }
@@ -85,9 +79,9 @@ namespace DOF5RobotControl_GUI.ViewModel
         [ObservableProperty]
         private JogMode _jogModeSelected = JogMode.OneStep;
         [ObservableProperty]
-        private JogResolution _jogResolutionSelected = JogResolution.Speed1mm;        
+        private JogResolution _jogResolutionSelected = JogResolution.Speed1mm;
 
-        public MainViewModel(IRobotControlService robotControlService, IPopUpService popUpService, ICameraControlService cameraCtrlService)
+        public MainViewModel(IRobotControlService robotControlService, IPopUpService popUpService, ICameraControlService cameraCtrlService, IOpcService opcService)
         {
             Dispatcher = Application.Current.Dispatcher;
 
@@ -95,6 +89,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             _robotControlService = robotControlService;
             _popUpService = popUpService;
             _cameraCtrlService = cameraCtrlService;
+            _opcService = opcService;
 
             // 初始化 Serial
             PortsAvailable = SerialPort.GetPortNames();
@@ -444,7 +439,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         }
 
         /***** Jog 相关结束 *****/
-        
+
         /***** OPC 相关代码 *****/
 
         public void OpcMapMethod(int method)

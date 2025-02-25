@@ -1,13 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using D5R;
-using DOF5RobotControl_GUI.Model;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 
 namespace DOF5RobotControl_GUI.ViewModel
@@ -221,6 +214,18 @@ namespace DOF5RobotControl_GUI.ViewModel
         {
             await Task.Delay(100);
             throw new NotImplementedException();
+        }
+
+        [RelayCommand]
+        private void OpcConnect()
+        {
+            _opcService.Connect();
+        }
+
+        [RelayCommand]
+        private void OpcDisconnect()
+        {
+            _opcService.Disconnect();
         }
 
         /// <summary>
