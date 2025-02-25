@@ -228,6 +228,15 @@ namespace DOF5RobotControl_GUI.ViewModel
             _opcService.Disconnect();
         }
 
+        [RelayCommand]
+        private void DoRecord()
+        {
+            var state = _robotControlService.GetCurrentState();
+            var topFrame = _cameraCtrlService.GetTopFrame();
+            var bottomFrame = _cameraCtrlService.GetBottomFrame();
+            _dataRecordService.Record(state.JointSpace, topFrame, bottomFrame);
+        }
+
         /// <summary>
         /// 获取机器人当前状态并更新 ViewModel 的 CurrentState
         /// </summary>

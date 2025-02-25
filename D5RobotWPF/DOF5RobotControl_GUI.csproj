@@ -9,6 +9,15 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <BaseOutputPath></BaseOutputPath>
     <Platforms>AnyCPU;x64</Platforms>
+    <Configurations>Debug;Release;Dummy_Debug</Configurations>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dummy_Debug|AnyCPU'">
+    <DefineConstants>$(DefineConstants);USE_DUMMY</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dummy_Debug|x64'">
+    <DefineConstants>$(DefineConstants);USE_DUMMY</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

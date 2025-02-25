@@ -41,6 +41,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         private readonly IPopUpService _popUpService;
         private readonly ICameraControlService _cameraCtrlService;
         private readonly IOpcService _opcService;
+        private readonly IDataRecordService _dataRecordService;
 
         /***** 线程相关字段 *****/
         public Dispatcher Dispatcher { get; private set; }
@@ -81,7 +82,12 @@ namespace DOF5RobotControl_GUI.ViewModel
         [ObservableProperty]
         private JogResolution _jogResolutionSelected = JogResolution.Speed1mm;
 
-        public MainViewModel(IRobotControlService robotControlService, IPopUpService popUpService, ICameraControlService cameraCtrlService, IOpcService opcService)
+        public MainViewModel(
+            IRobotControlService robotControlService,
+            IPopUpService popUpService,
+            ICameraControlService cameraCtrlService,
+            IOpcService opcService,
+            IDataRecordService dataRecordService)
         {
             Dispatcher = Application.Current.Dispatcher;
 
@@ -90,6 +96,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             _popUpService = popUpService;
             _cameraCtrlService = cameraCtrlService;
             _opcService = opcService;
+            _dataRecordService = dataRecordService;
 
             // 初始化 Serial
             PortsAvailable = SerialPort.GetPortNames();

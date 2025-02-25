@@ -16,9 +16,11 @@ namespace DOF5RobotControl_GUI.ViewModel
         /// 打开相机
         /// </summary>
         [RelayCommand]
-        private static void OpenCamera()
+        private void OpenCamera()
         {
+            _cameraCtrlService.OpenCamera();
             CameraWindow window = new();
+            window.Closed += (sender, e) => _cameraCtrlService.CloseCamera();
             window.Show();
         }
 
