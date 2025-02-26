@@ -4,6 +4,8 @@ namespace DOF5RobotControl_GUI.Services
 {
     public interface IDataRecordService
     {
-        void Record(JointSpace joints, CamFrame topFrame, CamFrame bottomFrame);
+        void Start();
+        void Stop();
+        void Record(JointSpace currentJoints, JointSpace deltaJoints, CamFrame topFrame, CamFrame bottomFrame);
     }
 }

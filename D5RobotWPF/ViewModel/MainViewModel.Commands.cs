@@ -1,5 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using D5R;
+using DOF5RobotControl_GUI.Model;
+using DOF5RobotControl_GUI.Services;
 using System.Diagnostics;
 using System.Windows;
 
@@ -229,12 +231,29 @@ namespace DOF5RobotControl_GUI.ViewModel
         }
 
         [RelayCommand]
-        private void DoRecord()
+        private async Task DoRecord()
         {
-            var state = _robotControlService.GetCurrentState();
-            var topFrame = _cameraCtrlService.GetTopFrame();
-            var bottomFrame = _cameraCtrlService.GetBottomFrame();
-            _dataRecordService.Record(state.JointSpace, topFrame, bottomFrame);
+            _dataRecordService.Start();
+            Debug.WriteLine("Start recording");
+
+            for (int i = 0; i < 10; i++)
+            {
+                var joints = _robotControlService.GetCurrentState().JointSpace;
+                var topFrame = _cameraCtrlService.GetTopFrame();
+                var bottomFrame = _cameraCtrlService.GetBottomFrame();
+                // 根据状态决定行动
+                JointSpace deltaJoints = new() { P2 = 1 }; // 模拟决策
+
+                _dataRecordService.Record(joints, deltaJoints, topFrame, bottomFrame); // 记录当前状态和对应的动作
+                Debug.WriteLine("Do one record.");
+                
+                TargetState.JointSpace.Add(deltaJoints);
+                _robotControlService.MoveTo(TargetState);
+                await Task.Delay(1000);
+            }
+
+            _dataRecordService.Stop();
+            Debug.WriteLine("Stop recording.");
         }
 
         /// <summary>
