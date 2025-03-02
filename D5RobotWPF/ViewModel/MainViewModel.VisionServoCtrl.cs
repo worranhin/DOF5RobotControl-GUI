@@ -209,6 +209,8 @@ namespace DOF5RobotControl_GUI.ViewModel
                 insertCancelSource = new();
                 insertCancelToken = insertCancelSource.Token;
 
+                _dataRecordService.Start();
+
                 //// 开始振动并插入 ////
                 while (!insertCancelToken.IsCancellationRequested)
                 {
@@ -246,10 +248,17 @@ namespace DOF5RobotControl_GUI.ViewModel
                             TargetState.TaskSpace.Pz = trackZ(t);
                             insertCancelToken.ThrowIfCancellationRequested();
                             _robotControlService.MoveTo(TargetState);
+
+                            // 记录数据
+                            JointSpace currentJoint = _robotControlService.GetCurrentState().JointSpace;
+                            JointSpace deltaJoint = TargetState.JointSpace.Clone().Minus(currentJoint);
+                            _dataRecordService.Record(currentJoint, deltaJoint, _cameraCtrlService.GetTopFrame(), _cameraCtrlService.GetBottomFrame());
                         } while (t < tf);
                     });
                     sw.Stop();
                 }
+
+                _dataRecordService.Stop();
             }
             catch (OperationCanceledException ex)
             {

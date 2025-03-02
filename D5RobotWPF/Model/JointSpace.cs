@@ -114,5 +114,12 @@ namespace DOF5RobotControl_GUI.Model
 
             return this;
         }
+
+        public JointSpace Clone()
+        {
+            JointSpace joint = new();
+            joint.Copy(this);
+            return joint;
+        }
     }
 }
