@@ -2,7 +2,8 @@
 using CommunityToolkit.Mvvm.Input;
 using DOF5RobotControl_GUI.Model;
 using DOF5RobotControl_GUI.Services;
-using Microsoft.Extensions.DependencyInjection;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Media;
@@ -18,6 +19,9 @@ namespace DOF5RobotControl_GUI.ViewModel
             TopCamera,
             BottomCamera
         };
+
+        private readonly ICameraControlService cameraControlService;
+        private readonly IYoloDetectionService yoloDetectionService;
 
         [ObservableProperty]
         private bool _topCameraConnected = false;
@@ -46,25 +50,42 @@ namespace DOF5RobotControl_GUI.ViewModel
         double _dRz = double.NaN;
 
 
-        public CameraViewModel()
+        public CameraViewModel(ICameraControlService cameraControlService, IYoloDetectionService yoloDetectionService)
         {
-            App.Current.Services.GetService<ICameraControlService>()?.RegisterCallback(TopFrameReceived, BottomFrameReceived);
+            this.cameraControlService = cameraControlService;
+            this.yoloDetectionService = yoloDetectionService;
+
+            this.cameraControlService.RegisterCallback(TopFrameReceived, BottomFrameReceived);
         }
 
         ~CameraViewModel()
         {
-            App.Current.Services.GetService<ICameraControlService>()?.UnRegisterCallback(TopFrameReceived, BottomFrameReceived);
+            cameraControlService.UnRegisterCallback(TopFrameReceived, BottomFrameReceived);
         }
 
         private void TopFrameReceived(object? sender, CamFrame e)
         {
-            PixelFormat pf = PixelFormats.Gray8; // 下面转成 bitmap 格式
-            int rawStride = (e.Width * pf.BitsPerPixel + 7) / 8;
-            dispatcher.Invoke(() =>
+            Image img = yoloDetectionService.Plot(e);
+            try
             {
-                BitmapSource bitmap = BitmapSource.Create(e.Width, e.Height, 96, 96, pf, null, e.Buffer, rawStride);
-                TopImageSource = bitmap;
-            });
+                if (img is Image<Rgba32> img32)
+                {
+                    byte[] procRaw = new byte[img.Width * img.Height * 4];
+                    img32.CopyPixelDataTo(procRaw);
+
+                    PixelFormat pf = PixelFormats.Bgra32; // 下面转成 bitmap 格式
+                    int rawStride = (e.Width * pf.BitsPerPixel + 7) / 8;
+                    dispatcher.Invoke(() =>
+                    {
+                        BitmapSource bitmap = BitmapSource.Create(img32.Width, img32.Height, 96, 96, pf, null, procRaw, rawStride);
+                        TopImageSource = bitmap;
+                    });
+                }
+            }
+            finally
+            {
+                img.Dispose();
+            }
         }
 
         private void BottomFrameReceived(object? sender, CamFrame e)

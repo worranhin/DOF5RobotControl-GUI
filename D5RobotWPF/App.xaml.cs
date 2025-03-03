@@ -28,18 +28,25 @@ namespace DOF5RobotControl_GUI
         {
             var services = new ServiceCollection();
 
+            // 注册服务
             services.AddSingleton<IRobotControlService, RobotControlService>();
             services.AddSingleton<IPopUpService, PopUpService>();
             services.AddSingleton<ICamMotorControlService, CamMotorControlService>();
             services.AddSingleton<ICameraControlService, CameraControlService>(); 
             services.AddSingleton<IOpcService, OpcService>();
             services.AddSingleton<IDataRecordService, DataRecordService>();
+            services.AddSingleton<IYoloDetectionService, YoloDetectionService>();
 #if USE_DUMMY // 使用虚假服务，用于测试代码逻辑
             services.AddSingleton<IRobotControlService, DummyRobotControlService>(); // 虚假类，仅用于测试代码逻辑
             services.AddSingleton<ICameraControlService, DummyCameraControlService>(); // 虚假类，仅用于测试代码逻辑
 #endif
+
+            // 注册 ViewModel
             services.AddSingleton<MainViewModel>();
-            services.AddTransient(sp => new MainWindow(sp.GetRequiredService<MainViewModel>()));
+            services.AddSingleton(sp => new MainWindow(sp.GetRequiredService<MainViewModel>()));
+
+            services.AddSingleton<CameraViewModel>();
+            services.AddSingleton(sp => new CameraWindow() { DataContext = sp.GetRequiredService<CameraViewModel>() });
 
             return services.BuildServiceProvider();
         }

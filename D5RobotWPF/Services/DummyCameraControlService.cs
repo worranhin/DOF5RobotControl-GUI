@@ -1,4 +1,7 @@
 ﻿using DOF5RobotControl_GUI.Model;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing.Processors.Filters;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,6 +13,8 @@ namespace DOF5RobotControl_GUI.Services
 {
     internal class DummyCameraControlService : ICameraControlService
     {
+        const string MockTopImgPath = "MockClamp.png";
+
         private event EventHandler<CamFrame>? TopFrameReceived;
         private event EventHandler<CamFrame>? BottomFrameReceived;
         private CancellationTokenSource? captureCancelSource;               
@@ -31,7 +36,13 @@ namespace DOF5RobotControl_GUI.Services
 
         public CamFrame GetTopFrame()
         {
-            return GenDummyImg();
+            Image<L8> img = Image.Load<L8>(MockTopImgPath);
+            byte[] buffer = new byte[img.Width * img.Height];
+            img.CopyPixelDataTo(buffer);
+            CamFrame frame = new(buffer, img.Width, img.Height);
+            return frame;
+
+            //return GenDummyImg();
         }
 
         public void MoveBottomCamera(int angle)
@@ -54,8 +65,8 @@ namespace DOF5RobotControl_GUI.Services
                 {
                     while (!captureCancelSource.Token.IsCancellationRequested)
                     {
-                        TopFrameReceived?.Invoke(this, GenDummyImg());
-                        BottomFrameReceived?.Invoke(this, GenDummyImg());
+                        TopFrameReceived?.Invoke(this, GetTopFrame());
+                        BottomFrameReceived?.Invoke(this, GetBottomFrame());
                         Thread.Sleep(1000);
                     }
                 }

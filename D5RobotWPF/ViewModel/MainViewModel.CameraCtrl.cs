@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DOF5RobotControl_GUI.ViewModel
 {
@@ -19,7 +20,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         private void OpenCamera()
         {
             _cameraCtrlService.OpenCamera();
-            CameraWindow window = new();
+            CameraWindow window = App.Current.Services.GetRequiredService<CameraWindow>();
             window.Closed += (sender, e) => _cameraCtrlService.CloseCamera();
             window.Show();
         }

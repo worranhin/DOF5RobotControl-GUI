@@ -9,12 +9,9 @@ namespace DOF5RobotControl_GUI
     /// </summary>
     public partial class CameraWindow : MahApps.Metro.Controls.MetroWindow
     {
-        private readonly CameraViewModel viewModel = new();
         public CameraWindow()
         {
             InitializeComponent();
-
-            this.DataContext = viewModel;
         }
     }
 }
