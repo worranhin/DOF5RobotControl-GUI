@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DOF5RobotControl_GUI.ViewModel
 {
@@ -16,9 +17,11 @@ namespace DOF5RobotControl_GUI.ViewModel
         /// 打开相机
         /// </summary>
         [RelayCommand]
-        private static void OpenCamera()
+        private void OpenCamera()
         {
-            CameraWindow window = new();
+            _cameraCtrlService.OpenCamera();
+            CameraWindow window = App.Current.Services.GetRequiredService<CameraWindow>();
+            window.Closed += (sender, e) => _cameraCtrlService.CloseCamera();
             window.Show();
         }
 

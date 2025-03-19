@@ -1,9 +1,8 @@
 ﻿using DOF5RobotControl_GUI.Model;
+using DOF5RobotControl_GUI.Services;
 using DOF5RobotControl_GUI.ViewModel;
 using MahApps.Metro.Controls;
 using Microsoft.Extensions.DependencyInjection;
-using Opc.UaFx;
-using Opc.UaFx.Server;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -19,10 +18,6 @@ namespace DOF5RobotControl_GUI
     {
         internal readonly MainViewModel viewModel;
 
-        Thread serverThread;
-        CancellationTokenSource opcTaskCancelSource;
-        CancellationToken opcTaskCancelToken;
-
         public MainWindow(MainViewModel vm)
         {
             InitializeComponent();
@@ -31,53 +26,14 @@ namespace DOF5RobotControl_GUI
             viewModel = vm;
             DataContext = viewModel;
 
-            // 初始化 OPC
-            opcTaskCancelSource = new();
-            opcTaskCancelToken = opcTaskCancelSource.Token;
-            serverThread = new(ServerRunTask);
-
             // 注册窗口关闭回调函数
             this.Closed += Window_Closed;
         }
 
         private void Window_Closed(object? sender, EventArgs e)
         {
-            opcTaskCancelSource.Cancel();
-        }
-
-        private void ServerRunTask()
-        {
-            var dof5robotInstance = new D5RobotOpcNodeManager(viewModel);
-
-            //var test = new MyNodeManager();
-            using (var server = new OpcServer("opc.tcp://localhost:4840", dof5robotInstance))//server以nodeManager初始化
-            {
-                //服务器配置
-                server.Configuration = OpcApplicationConfiguration.LoadServerConfig("Opc.UaFx.Server");
-                server.ApplicationName = "DOF5ROBOT";//应用名称
-                server.Start();
-                //Random rd = new Random(); 意义不明的操作，先注释掉，没问题再删
-                while (!opcTaskCancelToken.IsCancellationRequested)
-                {
-                    //int i = rd.Next();
-
-                    Thread.Sleep(1000);
-                }
-                server.Stop();
-            }
-        }
-
-        private void BtnDisconnectServer_Click(object sender, RoutedEventArgs e)
-        {
-            opcTaskCancelSource.Cancel();
-        }
-
-        private void BtnConnectServer_Click(object sender, RoutedEventArgs e)
-        {
-            serverThread = new Thread(ServerRunTask);
-            opcTaskCancelSource = new();
-            opcTaskCancelToken = opcTaskCancelSource.Token;
-            serverThread.Start();
+            var opc = App.Current.Services.GetService<IOpcService>();
+            opc?.Disconnect();
         }
 
         /***** UI 事件 *****/

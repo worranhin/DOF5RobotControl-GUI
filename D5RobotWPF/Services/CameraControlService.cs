@@ -12,9 +12,43 @@ namespace DOF5RobotControl_GUI.Services
     {
         private readonly ICamMotorControlService _camMotorCtrlService;
 
+        public bool CameraIsOpened { get; private set; } = false;
+        public bool CamMotorIsConnected { get; private set; } = false;
+
         public CameraControlService(ICamMotorControlService camMotorCtrlService)
         {
             _camMotorCtrlService = camMotorCtrlService;
+        }
+
+        public void OpenCamera()
+        {
+            TopCamera.Instance.Open(true);
+            BottomCamera.Instance.Open(true);
+            CameraIsOpened = true;
+        }
+
+        public void CloseCamera()
+        {
+            TopCamera.Instance.Close();
+            BottomCamera.Instance.Close();
+            CameraIsOpened = false;
+        }
+
+        /// <summary>
+        /// 注册相机接收到帧的回调函数
+        /// </summary>
+        /// <param name="TopFrameReceivedHandler">顶部相机接收帧时的回调函数</param>
+        /// <param name="BottomFrameReceivedHandler">底部相机接收帧时的回调函数</param>
+        public void RegisterCallback(EventHandler<CamFrame> TopFrameReceivedHandler, EventHandler<CamFrame> BottomFrameReceivedHandler)
+        {
+            TopCamera.Instance.FrameReceived += TopFrameReceivedHandler;
+            BottomCamera.Instance.FrameReceived += BottomFrameReceivedHandler;
+        }
+
+        public void UnRegisterCallback(EventHandler<CamFrame> TopFrameReceivedHandler, EventHandler<CamFrame> BottomFrameReceivedHandler)
+        {
+            TopCamera.Instance.FrameReceived -= TopFrameReceivedHandler;
+            BottomCamera.Instance.FrameReceived -= BottomFrameReceivedHandler;
         }
 
         public CamFrame GetTopFrame()
@@ -30,12 +64,16 @@ namespace DOF5RobotControl_GUI.Services
         public void ConnectCamMotor(string port)
         {
             if (!_camMotorCtrlService.IsConnected)
+            {
                 _camMotorCtrlService.Connect(port);
+                CamMotorIsConnected = true;
+            }
         }
 
         public void DisconnectCamMotor()
         {
             _camMotorCtrlService.Disconnect();
+            CamMotorIsConnected = false;
         }
 
         /// <summary>

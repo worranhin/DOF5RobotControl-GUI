@@ -373,9 +373,10 @@
                     <Button Command="{Binding OpenCameraCommand}">启动相机</Button>
                 </UniformGrid>
                 <UniformGrid Rows="1">
-                    <Button Content="连接服务器" Click="BtnConnectServer_Click"/>
-                    <Button Content="断开服务器" Click="BtnDisconnectServer_Click"/>
+                    <Button Content="连接服务器" Command="{Binding OpcConnectCommand}"/>
+                    <Button Content="断开服务器" Command="{Binding OpcDisconnectCommand}"/>
                 </UniformGrid>
+                <Button Content="记录数据(Debug)" Command="{Binding DoRecordCommand}"/>
             </UniformGrid>
             <mah:MetroHeader Header="相机位置控制">
                 <StackPanel>
