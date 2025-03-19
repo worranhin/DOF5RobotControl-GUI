@@ -142,9 +142,9 @@ namespace DOF5RobotControl_GUI.Services
             using CancellationTokenSource cancelSource = new();
             vibrateCancelSource = cancelSource;
 
+            Stopwatch sw = Stopwatch.StartNew();
             while (!cancelSource.Token.IsCancellationRequested)
             {
-                Stopwatch sw = Stopwatch.StartNew();
                 var t = sw.ElapsedMilliseconds / 1000.0;
                 var x = amplitude * Math.Sin(2 * Math.PI * frequency * t);  // 正弦函数，频率为 frequency，幅值为正负 amplitude 单位 mm
 
