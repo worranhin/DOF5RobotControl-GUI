@@ -81,6 +81,7 @@
             <Separator Margin="10 0"/>
             <TextBlock>点动分辨率</TextBlock>
             <ComboBox SelectedIndex="0" ItemsSource="{Binding JogResolutions, Mode=OneTime}" SelectedItem="{Binding JogResolutionSelected}"/>
+            <mah:ToggleSwitch Content="相对位姿" IsOn="{Binding IsPoseRelative}" FontFamily="Microsoft YaHei UI" FontSize="16"/>
         </StackPanel>
         <!-- 主控制面板 -->
         <StackPanel Grid.Row="2" Grid.Column="0">
@@ -249,11 +250,11 @@
                         <RowDefinition Height="auto"/>
                     </Grid.RowDefinitions>
                     <Label Grid.Column="0" Target="{Binding ElementName=PosValueX}">px</Label>
-                    <TextBox Grid.Column="1" x:Name="PosValueX" Text="{Binding TargetState.TaskSpace.Px, Mode=TwoWay, StringFormat=F4}" GotFocus="TextBoxSelectAll"></TextBox>
+                    <TextBox Grid.Column="1" x:Name="PosValueX" Text="{Binding TargetPx, Mode=TwoWay, StringFormat=F4}" GotFocus="TextBoxSelectAll"></TextBox>
                     <Label Grid.Column="2" Target="{Binding ElementName=PosValueY}">py</Label>
-                    <TextBox Grid.Column="3" x:Name="PosValueY" Text="{Binding TargetState.TaskSpace.Py, Mode=TwoWay, StringFormat=F4}" GotFocus="TextBoxSelectAll"></TextBox>
+                    <TextBox Grid.Column="3" x:Name="PosValueY" Text="{Binding TargetPy, Mode=TwoWay, StringFormat=F4}" GotFocus="TextBoxSelectAll"></TextBox>
                     <Label Grid.Column="4" Target="{Binding ElementName=PosValueZ}">pz</Label>
-                    <TextBox Grid.Column="5" x:Name="PosValueZ" Text="{Binding TargetState.TaskSpace.Pz, Mode=TwoWay, StringFormat=F4}" GotFocus="TextBoxSelectAll"></TextBox>
+                    <TextBox Grid.Column="5" x:Name="PosValueZ" Text="{Binding TargetPz, Mode=TwoWay, StringFormat=F4}" GotFocus="TextBoxSelectAll"></TextBox>
                     <Label Grid.Column="6" Target="{Binding ElementName=PosValueRy}">ry</Label>
                     <TextBox Grid.Column="7" x:Name="PosValueRy" Text="{Binding TargetState.TaskSpace.Ry, Mode=TwoWay, StringFormat=F4}" GotFocus="TextBoxSelectAll"></TextBox>
                     <Label Grid.Column="8" Target="{Binding ElementName=PosValueRz}">rz</Label>

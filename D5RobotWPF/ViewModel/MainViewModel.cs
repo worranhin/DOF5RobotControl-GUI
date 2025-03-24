@@ -62,12 +62,75 @@ namespace DOF5RobotControl_GUI.ViewModel
         private RoboticState _targetState = new(0, 0, 0, 0, 0);
         [ObservableProperty]
         private RoboticState _currentState = new(0, 0, 0, 0, 0);
+
         [ObservableProperty]
-        private bool _isInserting = false;
+        [NotifyPropertyChangedFor(nameof(TargetPx))]
+        [NotifyPropertyChangedFor(nameof(TargetPy))]
+        [NotifyPropertyChangedFor(nameof(TargetPz))]
+        private bool _isPoseRelative = true;
+
+        public double TargetPx
+        {
+            get
+            {
+                if (IsPoseRelative)
+                    return TargetState.TaskSpace.Px - 72.90;
+                else
+                    return TargetState.TaskSpace.Px;
+            }
+            set
+            {
+                if (IsPoseRelative)
+                    TargetState.TaskSpace.Px = value + 72.90;
+                else
+                    TargetState.TaskSpace.Px = value;
+
+                OnPropertyChanged();
+            }
+        }
+
+        public double TargetPy
+        {
+            get
+            {
+                if (IsPoseRelative)
+                    return TargetState.TaskSpace.Py + 88.75;
+                else
+                    return TargetState.TaskSpace.Py;
+            }
+            set
+            {
+                if (IsPoseRelative)
+                    TargetState.TaskSpace.Py = value - 88.75;
+                else
+                    TargetState.TaskSpace.Py = value;
+
+                OnPropertyChanged();
+            }
+        }
+
+        public double TargetPz
+        {
+            get
+            {
+                if (IsPoseRelative)
+                    return TargetState.TaskSpace.Pz + 88.46;
+                else
+                    return TargetState.TaskSpace.Pz;
+            }
+            set
+            {
+                if (IsPoseRelative)
+                    TargetState.TaskSpace.Pz = value - 88.46;
+                else
+                    TargetState.TaskSpace.Pz = value;
+
+                OnPropertyChanged();
+            }
+        }
+
         [ObservableProperty]
-        private bool _isAttachingJaw = false;
-        [ObservableProperty]
-        private bool _camMotorIsConnected = false;        
+        private bool _camMotorIsConnected = false;
 
         public MainViewModel(
             IRobotControlService robotControlService,
@@ -106,7 +169,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             {
                 cancelSource?.Cancel();
             }
-        }        
+        }
 
         /// <summary>
         /// 等待直到 CurrentState 与 TargetState 的距离小于一定值
@@ -125,9 +188,9 @@ namespace DOF5RobotControl_GUI.ViewModel
                 UpdateCurrentState();
             }
             cancelSourceList.Remove(waitCancelSource);
-        }       
+        }
 
-        
+
 
         /***** OPC 相关代码 *****/
 

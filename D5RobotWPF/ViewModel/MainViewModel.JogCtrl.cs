@@ -67,13 +67,13 @@ namespace DOF5RobotControl_GUI.ViewModel
                         TargetState.JointSpace.R5 += resolution;
                         break;
                     case JointSelect.Px:
-                        TargetState.TaskSpace.Px += resolution;
+                        TargetPx += resolution;
                         break;
                     case JointSelect.Py:
-                        TargetState.TaskSpace.Py += resolution;
+                        TargetPy += resolution;
                         break;
                     case JointSelect.Pz:
-                        TargetState.TaskSpace.Pz += resolution;
+                        TargetPz += resolution;
                         break;
                     case JointSelect.Ry:
                         TargetState.TaskSpace.Ry += resolution;
@@ -139,13 +139,13 @@ namespace DOF5RobotControl_GUI.ViewModel
                     updateJointAction = () => { TargetState.JointSpace.R5 += resolution; };
                     break;
                 case JointSelect.Px:
-                    updateJointAction = () => { TargetState.TaskSpace.Px += resolution; };
+                    updateJointAction = () => { TargetPx += resolution; };
                     break;
                 case JointSelect.Py:
-                    updateJointAction = () => { TargetState.TaskSpace.Py += resolution; };
+                    updateJointAction = () => { TargetPy += resolution; };
                     break;
                 case JointSelect.Pz:
-                    updateJointAction = () => { TargetState.TaskSpace.Pz += resolution; };
+                    updateJointAction = () => { TargetPz += resolution; };
                     break;
                 case JointSelect.Ry:
                     updateJointAction = () => { TargetState.TaskSpace.Ry += resolution; };
