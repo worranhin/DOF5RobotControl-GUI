@@ -13,11 +13,19 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dummy_Debug|AnyCPU'">
-    <DefineConstants>$(DefineConstants);USE_DUMMY</DefineConstants>
+    <DefineConstants>$(DefineConstants);USE_DUMMY;DEBUG</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dummy_Debug|x64'">
-    <DefineConstants>$(DefineConstants);USE_DUMMY</DefineConstants>
+    <DefineConstants>$(DefineConstants);USE_DUMMY;DEBUG</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <Optimize>False</Optimize>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Optimize>False</Optimize>
   </PropertyGroup>
 
   <ItemGroup>

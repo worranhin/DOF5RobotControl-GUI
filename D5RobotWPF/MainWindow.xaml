@@ -45,6 +45,8 @@
         <cvt:ConnectBtnConverter x:Key="ConnectBtnConverter"/>
         <cvt:VibrateBtnConverter x:Key="VibrateBtnConverter"/>
         <cvt:InsertBtnConverter x:Key="InsertBtnConverter"/>
+        <cvt:CameraBtnConverter x:Key="CameraBtnConverter"/>
+        <cvt:OpcBtnConverter x:Key="OpcBtnConverter"/>
     </Window.Resources>
     <Grid Margin="10">
         <Grid.RowDefinitions>
@@ -57,6 +59,7 @@
             <ColumnDefinition Width="20"/>
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
+        <!-- 顶部工具栏 -->
         <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" MaxHeight="50" Margin="0 0 0 10">
             <StackPanel.Resources>
                 <Style TargetType="TextBlock" BasedOn="{StaticResource centerTextBlock}">
@@ -71,14 +74,6 @@
             </StackPanel.Resources>
             <Button Content="配置通讯端口" MinWidth="120" Command="{Binding OpenConfigWindowCommand}"/>
             <Separator Margin="5 0"/>
-            <!--<TextBlock>端口</TextBlock>
-            <ComboBox ItemsSource="{Binding PortsAvailable}" SelectedItem="{Binding SelectedPort}" IsEnabled="{Binding SystemConnected, Converter={StaticResource BoolInverseConverter}}"/>
-            <Button Command="{Binding PortRefreshCommand}">刷新</Button>
-            <Separator Margin="15 0"/>
-            <TextBlock>波特率</TextBlock>
-            <ComboBox SelectedIndex="0" ToolTip="该功能未实现，默认 115200">
-                <ComboBoxItem>115200</ComboBoxItem>
-            </ComboBox>-->
             <Button MinWidth="80" Command="{Binding ToggleConnectCommand}" Content="{Binding SystemConnected, Converter={StaticResource ConnectBtnConverter}}"/>
             <Separator Margin="15 0"/>
             <TextBlock>点动模式</TextBlock>
@@ -87,6 +82,7 @@
             <TextBlock>点动分辨率</TextBlock>
             <ComboBox SelectedIndex="0" ItemsSource="{Binding JogResolutions, Mode=OneTime}" SelectedItem="{Binding JogResolutionSelected}"/>
         </StackPanel>
+        <!-- 主控制面板 -->
         <StackPanel Grid.Row="2" Grid.Column="0">
             <StackPanel.Resources>
                 <Style TargetType="Grid">
@@ -369,23 +365,19 @@
                         </Grid>
                     </Button>
                 </UniformGrid>
-                <UniformGrid Rows="1">
-                    <Button Command="{Binding OpenCameraCommand}">启动相机</Button>
-                </UniformGrid>
-                <UniformGrid Rows="1">
-                    <Button Content="连接服务器" Command="{Binding OpcConnectCommand}"/>
-                    <Button Content="断开服务器" Command="{Binding OpcDisconnectCommand}"/>
-                </UniformGrid>
-                <Button Content="记录数据(Debug)" Command="{Binding DoRecordCommand}"/>
             </UniformGrid>
+            <Separator/>
             <mah:MetroHeader Header="相机位置控制">
                 <StackPanel>
+                    <UniformGrid Rows="1">
+                        <Button Command="{Binding ToggleCameraCommand}" Content="{Binding CameraIsOpened, Converter={StaticResource CameraBtnConverter}}"/>
+                    </UniformGrid>
                     <UniformGrid Rows="1">
                         <Button Content="前往钳口库位置" Command="{Binding CameraGotoJawVaultCommand}"/>
                         <Button Content="前往零件库位置" Command="{Binding CameraGotoPartsVaultCommand}"/>
                     </UniformGrid>
-                    <StackPanel Orientation="Horizontal">
-                        <StackPanel.Resources>
+                    <UniformGrid Rows="1" Margin="0 2">
+                        <UniformGrid.Resources>
                             <Style TargetType="TextBox" BasedOn="{StaticResource MahApps.Styles.TextBox}">
                                 <Setter Property="MinWidth" Value="100"/>
                                 <Setter Property="FontSize" Value="14"/>
@@ -393,14 +385,37 @@
                             <Style TargetType="Button" BasedOn="{StaticResource userButton}">
                                 <Setter Property="Padding" Value="5 0"/>
                             </Style>
-                        </StackPanel.Resources>
-                        <Label Content="顶部相机移动距离"/>
-                        <TextBox Text="{Binding TopCamMoveDistance}"/>
-                        <Button Content="顶部相机移动" Margin="5 0 20 0" Command="{Binding TopCamMoveCommand}"/>
-                        <Label Content="底部相机移动角度"/>
-                        <TextBox Text="{Binding BottomCamMoveAngle}"/>
-                        <Button Content="底部相机移动" Margin="5 0 0 0" Command="{Binding BottomCamMoveCommand}"/>
-                    </StackPanel>                    
+                        </UniformGrid.Resources>
+                        <Grid Margin="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="auto"/>
+                                <ColumnDefinition Width="auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Column="0" Content="顶部相机移动距离"/>
+                            <TextBox Grid.Column="1" Text="{Binding TopCamMoveDistance}"/>
+                            <Button Grid.Column="2" Content="顶部相机移动" Margin="5 0 2.5 0" Command="{Binding TopCamMoveCommand}"/>
+                        </Grid>
+                        <Grid Margin="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="auto"/>
+                                <ColumnDefinition Width="auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Column="0" Content="底部相机移动角度"/>
+                            <TextBox Grid.Column="1" Text="{Binding BottomCamMoveAngle}"/>
+                            <Button Grid.Column="2" Content="底部相机移动" Margin="5 0 2.5 0" Command="{Binding BottomCamMoveCommand}"/>
+                        </Grid>
+                    </UniformGrid>
+                </StackPanel>
+            </mah:MetroHeader>
+            <Separator/>
+            <mah:MetroHeader Header="其它操作">
+                <StackPanel>
+                    <UniformGrid Rows="1">
+                        <Button Command="{Binding ToggleOpcServerCommand}" Content="{Binding OpcServerIsOn, Converter={StaticResource OpcBtnConverter}}"/>
+                        <Button Content="记录数据(Debug)" Command="{Binding DoRecordCommand}"/>
+                    </UniformGrid>
                 </StackPanel>
             </mah:MetroHeader>
         </StackPanel>

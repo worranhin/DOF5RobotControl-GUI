@@ -4,6 +4,9 @@ namespace DOF5RobotControl_GUI.Services
 {
     public interface ICameraControlService
     {
+        bool CameraIsOpened { get; }
+        bool CamMotorIsConnected { get; }
+
         void OpenCamera();
         void CloseCamera();
         void RegisterCallback(EventHandler<CamFrame> TopFrameReceivedHandler, EventHandler<CamFrame> BottomFrameReceivedHandler);

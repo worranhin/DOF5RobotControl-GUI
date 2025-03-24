@@ -17,16 +17,21 @@ namespace DOF5RobotControl_GUI.Services
 
         private event EventHandler<CamFrame>? TopFrameReceived;
         private event EventHandler<CamFrame>? BottomFrameReceived;
-        private CancellationTokenSource? captureCancelSource;               
+        private CancellationTokenSource? captureCancelSource;          
+        
+        public bool CameraIsOpened { get; private set; }
+        public bool CamMotorIsConnected { get; private set; }
 
         public void ConnectCamMotor(string port)
         {
             Debug.WriteLine("Dummy CamMotor connected");
+            CamMotorIsConnected = true;
         }
 
         public void DisconnectCamMotor()
         {
             Debug.WriteLine("Dummy cam motor disconnected");
+            CamMotorIsConnected = false;
         }
 
         public CamFrame GetBottomFrame()
@@ -57,13 +62,14 @@ namespace DOF5RobotControl_GUI.Services
 
         public void OpenCamera()
         {
-            Debug.WriteLine("Dummy camera is opened.");
+            Debug.WriteLine("Dummy camera is opening.");
+            captureCancelSource = new();
+            var token = captureCancelSource.Token;
             Task.Run(() =>
             {
-                captureCancelSource = new();
                 try
                 {
-                    while (!captureCancelSource.Token.IsCancellationRequested)
+                    while (!token.IsCancellationRequested)
                     {
                         TopFrameReceived?.Invoke(this, GetTopFrame());
                         BottomFrameReceived?.Invoke(this, GetBottomFrame());
@@ -73,14 +79,19 @@ namespace DOF5RobotControl_GUI.Services
                 finally
                 {
                     captureCancelSource.Dispose();
+                    Debug.WriteLine("captureCancelSource is disposed");
                 }
             });
+
+            CameraIsOpened = true;
+            Debug.WriteLine("Dummy camera is opened.");
         }
 
         public void CloseCamera()
         {
-            Debug.WriteLine("Dummy camera is closed");
             captureCancelSource?.Cancel();
+            CameraIsOpened = false;
+            Debug.WriteLine("Dummy camera is closed");
         }
 
         public void RegisterCallback(EventHandler<CamFrame> TopFrameReceivedHandler, EventHandler<CamFrame> BottomFrameReceivedHandler)

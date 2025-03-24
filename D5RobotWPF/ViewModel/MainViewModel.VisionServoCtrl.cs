@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.Input;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using DOF5RobotControl_GUI.Model;
 using System.Diagnostics;
 using VisionLibrary;
@@ -7,6 +8,11 @@ namespace DOF5RobotControl_GUI.ViewModel
 {
     partial class MainViewModel
     {
+        [ObservableProperty]
+        private bool _isInserting = false;
+        [ObservableProperty]
+        private bool _isAttachingJaw = false;
+
         [RelayCommand]
         private async Task MoveToInitialPosition()
         {

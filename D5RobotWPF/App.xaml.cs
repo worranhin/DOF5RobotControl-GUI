@@ -45,8 +45,8 @@ namespace DOF5RobotControl_GUI
             services.AddSingleton<MainViewModel>();
             services.AddSingleton(sp => new MainWindow(sp.GetRequiredService<MainViewModel>()));
 
-            services.AddSingleton<CameraViewModel>();
-            services.AddSingleton(sp => new CameraWindow() { DataContext = sp.GetRequiredService<CameraViewModel>() });
+            services.AddTransient<CameraViewModel>();
+            services.AddTransient(sp => new CameraWindow() { DataContext = sp.GetRequiredService<CameraViewModel>() });
 
             return services.BuildServiceProvider();
         }

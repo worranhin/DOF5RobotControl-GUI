@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.Input;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using D5R;
 using DOF5RobotControl_GUI.Model;
 using DOF5RobotControl_GUI.Services;
@@ -10,6 +11,9 @@ namespace DOF5RobotControl_GUI.ViewModel
     partial class MainViewModel
     {
         Timer? updateStateTimer;
+
+        [ObservableProperty]
+        bool _opcServerIsOn = false;
 
         /***** 机器人控制命令 *****/
 
@@ -107,15 +111,29 @@ namespace DOF5RobotControl_GUI.ViewModel
         }
 
         [RelayCommand]
+        private void ToggleOpcServer()
+        {
+            if (!OpcServerIsOn)
+            {
+                OpcConnect();
+            } else
+            {
+                OpcDisconnect();
+            }
+        }
+
+        [RelayCommand]
         private void OpcConnect()
         {
             _opcService.Connect();
+            OpcServerIsOn = true;
         }
 
         [RelayCommand]
         private void OpcDisconnect()
         {
             _opcService.Disconnect();
+            OpcServerIsOn = false;
         }
 
         [RelayCommand]
@@ -126,7 +144,7 @@ namespace DOF5RobotControl_GUI.ViewModel
 
             for (int i = 0; i < 10; i++)
             {
-                var joints = _robotControlService.GetCurrentState().JointSpace;
+                var joints = _robotControlService.GetCurrentState().JointSpace.Clone();
                 var topFrame = _cameraCtrlService.GetTopFrame();
                 var bottomFrame = _cameraCtrlService.GetBottomFrame();
                 // 根据状态决定行动

@@ -1,16 +1,11 @@
 ﻿using DOF5RobotControl_GUI.Model;
-using System;
-using System.Collections.Generic;
-using System.IO.Ports;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DOF5RobotControl_GUI.Services
 {
     public class CameraControlService : ICameraControlService
     {
         private readonly ICamMotorControlService _camMotorCtrlService;
+        private readonly object _camOpLock = new();
 
         public bool CameraIsOpened { get; private set; } = false;
         public bool CamMotorIsConnected { get; private set; } = false;
@@ -22,16 +17,28 @@ namespace DOF5RobotControl_GUI.Services
 
         public void OpenCamera()
         {
-            TopCamera.Instance.Open(true);
-            BottomCamera.Instance.Open(true);
-            CameraIsOpened = true;
+            lock (_camOpLock)
+            {
+                if (!CameraIsOpened)
+                {
+                    TopCamera.Instance.Open(true);
+                    BottomCamera.Instance.Open(true);
+                    CameraIsOpened = true;
+                }
+            }
         }
 
         public void CloseCamera()
         {
-            TopCamera.Instance.Close();
-            BottomCamera.Instance.Close();
-            CameraIsOpened = false;
+            lock (_camOpLock)
+            {
+                if (CameraIsOpened)
+                {
+                    TopCamera.Instance.Close();
+                    BottomCamera.Instance.Close();
+                    CameraIsOpened = false;
+                }
+            }
         }
 
         /// <summary>

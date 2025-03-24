@@ -6,6 +6,11 @@ namespace DOF5RobotControl_GUI.ViewModel
 {
     public partial class MainViewModel
     {
+        CameraWindow? _camWindow;
+
+        [ObservableProperty]
+        bool _cameraIsOpened = false;
+
         [ObservableProperty]
         private int _topCamMoveDistance = 0;
         [ObservableProperty]
@@ -13,16 +18,39 @@ namespace DOF5RobotControl_GUI.ViewModel
 
         /***** 相机控制命令 *****/
 
+        [RelayCommand]
+        private void ToggleCamera()
+        {
+            if (!CameraIsOpened)
+                OpenCamera();
+            else
+                CloseCamera();
+        }
+
         /// <summary>
         /// 打开相机
         /// </summary>
-        [RelayCommand]
         private void OpenCamera()
         {
             _cameraCtrlService.OpenCamera();
-            CameraWindow window = App.Current.Services.GetRequiredService<CameraWindow>();
-            window.Closed += (sender, e) => _cameraCtrlService.CloseCamera();
-            window.Show();
+
+            _camWindow = App.Current.Services.GetRequiredService<CameraWindow>();
+            _camWindow.Closed += (sender, e) => _cameraCtrlService.CloseCamera();
+            _camWindow.Show();
+            
+            CameraIsOpened = true;
+        }
+
+        /// <summary>
+        /// 关闭相机及其窗口
+        /// </summary>
+        private void CloseCamera()
+        {
+            _camWindow?.Close();
+            if (_cameraCtrlService.CameraIsOpened)
+                _cameraCtrlService.CloseCamera();
+            
+            CameraIsOpened = false;
         }
 
         [RelayCommand]
