@@ -36,6 +36,7 @@ namespace DOF5RobotControl_GUI
             services.AddSingleton<IOpcService, OpcService>();
             services.AddSingleton<IDataRecordService, DataRecordService>();
             services.AddSingleton<IYoloDetectionService, YoloDetectionService>();
+            services.AddSingleton<IGamepadService, GamepadService>();
 #if USE_DUMMY // 使用虚假服务，用于测试代码逻辑
             services.AddSingleton<IRobotControlService, DummyRobotControlService>(); // 虚假类，仅用于测试代码逻辑
             services.AddSingleton<ICameraControlService, DummyCameraControlService>(); // 虚假类，仅用于测试代码逻辑

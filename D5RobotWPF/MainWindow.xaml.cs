@@ -34,6 +34,9 @@ namespace DOF5RobotControl_GUI
         {
             var opc = App.Current.Services.GetService<IOpcService>();
             opc?.Disconnect();
+
+            var teleopService = App.Current.Services.GetService<IGamepadService>();
+            teleopService?.Stop();
         }
 
         /***** UI 事件 *****/

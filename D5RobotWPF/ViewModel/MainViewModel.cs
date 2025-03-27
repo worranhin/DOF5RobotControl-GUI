@@ -42,6 +42,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         private readonly ICameraControlService _cameraCtrlService;
         private readonly IOpcService _opcService;
         private readonly IDataRecordService _dataRecordService;
+        private readonly IGamepadService _gamepadService;
 
         /***** 线程相关字段 *****/
         public Dispatcher Dispatcher { get; private set; }
@@ -137,7 +138,8 @@ namespace DOF5RobotControl_GUI.ViewModel
             IPopUpService popUpService,
             ICameraControlService cameraCtrlService,
             IOpcService opcService,
-            IDataRecordService dataRecordService)
+            IDataRecordService dataRecordService,
+            IGamepadService gamepadService)
         {
             Dispatcher = Application.Current.Dispatcher;
 
@@ -147,6 +149,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             _cameraCtrlService = cameraCtrlService;
             _opcService = opcService;
             _dataRecordService = dataRecordService;
+            _gamepadService = gamepadService;
 
             // 初始化 Serial
             PortsAvailable = SerialPort.GetPortNames();
@@ -190,7 +193,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             cancelSourceList.Remove(waitCancelSource);
         }
 
-
+        
 
         /***** OPC 相关代码 *****/
 
