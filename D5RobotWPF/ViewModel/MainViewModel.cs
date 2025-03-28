@@ -174,27 +174,6 @@ namespace DOF5RobotControl_GUI.ViewModel
             }
         }
 
-        /// <summary>
-        /// 等待直到 CurrentState 与 TargetState 的距离小于一定值
-        /// </summary>
-        /// <param name="CheckDistance">检查距离，小于该值则返回，单位mm</param>
-        /// <param name="CheckPeriod">检查周期，单位ms</param>
-        /// <returns></returns>
-        private async Task WaitForTargetedAsync(double CheckDistance = 0.1, int CheckPeriod = 100)
-        {
-            using CancellationTokenSource waitCancelSource = new();
-            cancelSourceList.Add(waitCancelSource);
-            var token = waitCancelSource.Token;
-            while (!token.IsCancellationRequested && TaskSpace.Distance(CurrentState.TaskSpace, TargetState.TaskSpace) > CheckDistance)
-            {
-                await Task.Delay(CheckPeriod);
-                UpdateCurrentState();
-            }
-            cancelSourceList.Remove(waitCancelSource);
-        }
-
-        
-
         /***** OPC 相关代码 *****/
 
         public void OpcMapMethod(int method)

@@ -1,8 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D5R;
-using DOF5RobotControl_GUI.Model;
-using DOF5RobotControl_GUI.Services;
 using System.Diagnostics;
 using System.Windows;
 
@@ -116,7 +114,8 @@ namespace DOF5RobotControl_GUI.ViewModel
             if (!OpcServerIsOn)
             {
                 OpcConnect();
-            } else
+            }
+            else
             {
                 OpcDisconnect();
             }
@@ -136,30 +135,73 @@ namespace DOF5RobotControl_GUI.ViewModel
             OpcServerIsOn = false;
         }
 
+        /***** 数据记录 *****/
+
+        [ObservableProperty]
+        bool _isRecording = false;
+
+        CancellationTokenSource? recordCancelSource;
+
         [RelayCommand]
-        private async Task DoRecord()
+        private void ToggleRecord()
         {
-            _dataRecordService.Start();
-            Debug.WriteLine("Start recording");
-
-            for (int i = 0; i < 10; i++)
+            if (!IsRecording)
             {
-                var joints = _robotControlService.GetCurrentState().JointSpace.Clone();
-                var topFrame = _cameraCtrlService.GetTopFrame();
-                var bottomFrame = _cameraCtrlService.GetBottomFrame();
-                // 根据状态决定行动
-                JointSpace deltaJoints = new() { P2 = 1 }; // 模拟决策
-
-                _dataRecordService.Record(joints, deltaJoints, topFrame, bottomFrame); // 记录当前状态和对应的动作
-                Debug.WriteLine("Do one record.");
-                
-                TargetState.JointSpace.Add(deltaJoints);
-                _robotControlService.MoveTo(TargetState);
-                await Task.Delay(1000);
+                _ = StartRecord();
             }
+            else
+                StopRecord();
+        }
 
-            _dataRecordService.Stop();
-            Debug.WriteLine("Stop recording.");
+
+        private async Task StartRecord()
+        {
+            const int RecordPeriod = 100;
+
+            if (IsRecording)
+                throw new InvalidOperationException("Data has already been recording.");
+
+            IsRecording = true;
+            recordCancelSource = new();
+            CancellationToken token = recordCancelSource.Token;
+
+            try
+            {
+                _dataRecordService.Start();
+                Debug.WriteLine("Start recording");
+
+                while (!token.IsCancellationRequested)
+                {
+                    var currentJoints = _robotControlService.GetCurrentState().JointSpace.Clone();
+                    var targetJoints = _robotControlService.TargetState.JointSpace.Clone();
+                    var topFrame = _cameraCtrlService.GetTopFrame();
+                    var bottomFrame = _cameraCtrlService.GetBottomFrame();
+
+                    _dataRecordService.Record(currentJoints, targetJoints, topFrame, bottomFrame); // 记录当前状态和对应的动作
+                    Debug.WriteLine("Do one record.");
+
+                    await Task.Delay(RecordPeriod, token);
+                }
+            }
+            catch (TaskCanceledException ex)
+            {
+                Debug.WriteLine(ex.ToString());
+            }
+            finally
+            {
+                _dataRecordService.Stop();
+                Debug.WriteLine("Stop recording.");
+
+                recordCancelSource.Dispose();
+                recordCancelSource = null;
+
+                IsRecording = false;
+            }
+        }
+
+        private void StopRecord()
+        {
+            recordCancelSource?.Cancel();
         }
 
         /// <summary>

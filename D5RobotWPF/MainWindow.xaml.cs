@@ -37,6 +37,8 @@ namespace DOF5RobotControl_GUI
 
             var teleopService = App.Current.Services.GetService<IGamepadService>();
             teleopService?.Stop();
+
+            viewModel.CloseCamera();
         }
 
         /***** UI 事件 *****/

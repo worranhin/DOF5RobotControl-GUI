@@ -39,18 +39,16 @@ namespace DOF5RobotControl_GUI.Services
             sw.WriteLine(jsonStr);
         }
 
-        public void Record(JointSpace currentJoints, JointSpace deltaJoints, CamFrame topFrame, CamFrame bottomFrame)
+        public void Record(JointSpace currentJoints, JointSpace targetJoints, CamFrame topFrame, CamFrame bottomFrame)
         {
             DateTimeOffset currentTime = DateTimeOffset.UtcNow;
             long timestamp_ms = currentTime.ToUnixTimeMilliseconds();
             string topImgStr = "TopImg_" + timestamp_ms.ToString() + ".bmp";
             string bottomImgStr = "BottomImg_" + timestamp_ms.ToString() + ".bmp";
 
-            //throw new NotImplementedException();
-
             // 添加记录
             StateRecord state = new(currentJoints.R1, currentJoints.P2, currentJoints.P3, currentJoints.P4, currentJoints.R5, topImgStr, bottomImgStr);
-            ActionRecord action = new(deltaJoints.R1, deltaJoints.P2, deltaJoints.P3, deltaJoints.P4, deltaJoints.R5);
+            ActionRecord action = new(targetJoints.R1, targetJoints.P2, targetJoints.P3, targetJoints.P4, targetJoints.R5);
             records.Add(new(timestamp_ms, state, action));
 
             // 写入图像

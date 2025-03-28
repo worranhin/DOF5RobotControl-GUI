@@ -44,7 +44,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         /// <summary>
         /// 关闭相机及其窗口
         /// </summary>
-        private void CloseCamera()
+        internal void CloseCamera()
         {
             _camWindow?.Close();
             if (_cameraCtrlService.CameraIsOpened)
