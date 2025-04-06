@@ -263,8 +263,6 @@ namespace DOF5RobotControl_GUI.ViewModel
                     });
                     sw.Stop();
                 }
-
-                _dataRecordService.Stop();
             }
             catch (OperationCanceledException ex)
             {
@@ -272,6 +270,8 @@ namespace DOF5RobotControl_GUI.ViewModel
             }
             finally
             {
+                _dataRecordService.Stop();
+
                 insertCancelSource?.Dispose();
                 insertCancelSource = null;
                 IsInserting = false;
