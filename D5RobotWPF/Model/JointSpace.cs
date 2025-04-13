@@ -12,8 +12,6 @@ namespace DOF5RobotControl_GUI.Model
 {
     public partial class JointSpace : ObservableValidator
     {        
-        public bool IsUpdating { get; private set; }
-
         [ObservableProperty]
         [NotifyDataErrorInfo]
         [Required]

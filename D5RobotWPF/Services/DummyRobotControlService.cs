@@ -16,15 +16,46 @@ namespace DOF5RobotControl_GUI.Services
 
         public RoboticState TargetState { get; private set; } = new();
 
+        private CancellationTokenSource? mockRunCancelSource;
+        private Task? mockRunTask;
+
         public void Connect(string port)
         {
             Debug.WriteLine("Dummy Robot connected.");
             RobotIsConnected = true;
+
+            // 模拟电机运动的线程
+            mockRunCancelSource = new();
+            var token = mockRunCancelSource.Token;
+            mockRunTask = Task.Run(() =>
+            {
+                const double kp = 0.5;
+                while (!token.IsCancellationRequested)
+                {
+                    CurrentState.JointSpace.R1 += (TargetState.JointSpace.R1 - CurrentState.JointSpace.R1) * kp;
+                    CurrentState.JointSpace.P2 += (TargetState.JointSpace.P2 - CurrentState.JointSpace.P2) * kp;
+                    CurrentState.JointSpace.P3 += (TargetState.JointSpace.P3 - CurrentState.JointSpace.P3) * kp;
+                    CurrentState.JointSpace.P4 += (TargetState.JointSpace.P4 - CurrentState.JointSpace.P4) * kp;
+                    CurrentState.JointSpace.R5 += (TargetState.JointSpace.R5 - CurrentState.JointSpace.R5) * kp;
+                    Thread.Sleep(100);
+                }
+            });
         }
 
         public void Disconnect()
         {
             Debug.WriteLine("Dummy robot disconnected.");
+
+            mockRunCancelSource?.Cancel();
+            mockRunCancelSource?.Dispose();
+            mockRunCancelSource = null;
+
+            if (mockRunTask != null)
+            {
+                mockRunTask.Wait();
+                mockRunTask = null;
+            }
+
             RobotIsConnected = false;
         }
 
@@ -38,13 +69,11 @@ namespace DOF5RobotControl_GUI.Services
             var target = CurrentState.Clone();
             target.JointSpace.Add(relative.JointSpace);
             TargetState = target;
-            DummyMove();
         }
 
         public void MoveTo(RoboticState target)
         {
-            TargetState = target;
-            DummyMove();
+            TargetState = target.Clone();
         }
 
         public void SetZero()
@@ -65,22 +94,6 @@ namespace DOF5RobotControl_GUI.Services
         public void StopVibrate()
         {
             throw new NotImplementedException();
-        }
-
-        private void DummyMove()
-        {
-            Task.Run(() =>
-            {
-                while (TaskSpace.Distance(TargetState.TaskSpace, CurrentState.TaskSpace) > 0.1)
-                {
-                    CurrentState.JointSpace.R1 += (TargetState.JointSpace.R1 - CurrentState.JointSpace.R1) * 0.5;
-                    CurrentState.JointSpace.P2 += (TargetState.JointSpace.P2 - CurrentState.JointSpace.P2) * 0.5;
-                    CurrentState.JointSpace.P3 += (TargetState.JointSpace.P3 - CurrentState.JointSpace.P3) * 0.5;
-                    CurrentState.JointSpace.P4 += (TargetState.JointSpace.P4 - CurrentState.JointSpace.P4) * 0.5;
-                    CurrentState.JointSpace.R5 += (TargetState.JointSpace.R5 - CurrentState.JointSpace.R5) * 0.5;
-                }
-                CurrentState.Copy(TargetState);
-            });
         }
     }
 }
