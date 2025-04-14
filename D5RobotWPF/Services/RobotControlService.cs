@@ -12,13 +12,14 @@ namespace DOF5RobotControl_GUI.Services
 {
     public class RobotControlService : IRobotControlService
     {
+        public bool RobotIsConnected { get; private set; } = false;
+        public RoboticState CurrentState { get; private set; } = new();
+        public RoboticState TargetState { get; private set; } = new();
+
         const string natorId = "usb:id:2250716012";
         private D5Robot? robot;
         private CancellationTokenSource? vibrateCancelSource;
 
-        public bool RobotIsConnected { get; private set; } = false;
-        public RoboticState CurrentState { get; private set; } = new();
-        public RoboticState TargetState { get; private set; } = new();
 
         public RobotControlService() { }
 
@@ -118,7 +119,7 @@ namespace DOF5RobotControl_GUI.Services
         /// <summary>
         /// 获取当前状态
         /// </summary>
-        /// <exception cref="InvalidOperationException"></exception>
+        /// <exception cref="InvalidOperationException">Throw when robot is not connected.</exception>
         private void UpdateCurrentState()
         {
             if (robot == null) throw new InvalidOperationException("Robot is not connected, please connect first.");

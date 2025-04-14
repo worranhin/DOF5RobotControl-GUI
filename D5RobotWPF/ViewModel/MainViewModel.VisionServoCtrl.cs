@@ -57,6 +57,8 @@ namespace DOF5RobotControl_GUI.ViewModel
             attachCancelSource = new();
             var cancelToken = attachCancelSource.Token;
 
+            recordTask = StartRecordAsync(10, false);
+
             try
             {
                 try
@@ -115,6 +117,10 @@ namespace DOF5RobotControl_GUI.ViewModel
                 IsAttachingJaw = false;
                 attachCancelSource.Dispose();
                 attachCancelSource = null;
+
+                StopRecord();
+                await recordTask;
+                recordTask = null;
             }
         }
 
@@ -164,7 +170,7 @@ namespace DOF5RobotControl_GUI.ViewModel
 
                 JointSpace deltaJoint = KineHelper.InverseDifferential(error, CurrentState.TaskSpace);
 
-                if (deltaJoint.P4 + CurrentState.JointSpace.P4 > 11)  // 对关节移动量进行安全检查
+                if (deltaJoint.P4 + CurrentState.JointSpace.P4 > 12)  // 对关节移动量进行安全检查
                 {
                     Debug.WriteLine(deltaJoint);
                     throw new InvalidOperationException("前往初始位置时，关节移动量超出安全范围，请检查！");
@@ -215,7 +221,9 @@ namespace DOF5RobotControl_GUI.ViewModel
                 insertCancelSource = new();
                 insertCancelToken = insertCancelSource.Token;
 
-                _dataRecordService.Start();
+                //StartRecordAsync();
+                //IsRecording = true;
+                //_dataRecordService.Start();
 
                 //// 开始振动并插入 ////
                 while (!insertCancelToken.IsCancellationRequested)
@@ -231,7 +239,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                     target.TaskSpace.Px += dx;
                     double x0 = CurrentState.TaskSpace.Px;
                     double xf = target.TaskSpace.Px;
-                    double tf = dx / 0.5; // seconds, 速度为 0.5 mm/s
+                    double tf = dx / FeedVelocity; // seconds, depends on FeedVelocity
                     double trackX(double t) => x0 + t * (xf - x0) / tf;
 
                     double y0 = CurrentState.TaskSpace.Py;
@@ -250,16 +258,20 @@ namespace DOF5RobotControl_GUI.ViewModel
                         {
                             t = sw.ElapsedMilliseconds / 1000.0;
                             TargetState.TaskSpace.Px = trackX(t);
-                            TargetState.TaskSpace.Py = trackY(t);
-                            TargetState.TaskSpace.Pz = trackZ(t);
-                            insertCancelToken.ThrowIfCancellationRequested();
+                            if (IsVibrateHorizontal)
+                                TargetState.TaskSpace.Py = trackY(t);
+                            if (IsVibrateVertical)
+                                TargetState.TaskSpace.Pz = trackZ(t);
+                            //insertCancelToken.ThrowIfCancellationRequested();
                             _robotControlService.MoveTo(TargetState);
 
                             // 记录数据
-                            JointSpace currentJoint = _robotControlService.GetCurrentState().JointSpace;
-                            JointSpace deltaJoint = TargetState.JointSpace.Clone().Minus(currentJoint);
-                            _dataRecordService.Record(currentJoint, deltaJoint, _cameraCtrlService.GetTopFrame(), _cameraCtrlService.GetBottomFrame());
-                        } while (t < tf);
+                            //JointSpace currentJoint = _robotControlService.GetCurrentState().JointSpace.Clone();
+                            //JointSpace targetJoint = _robotControlService.TargetState.JointSpace.Clone();
+                            //_dataRecordService.Record(currentJoint, targetJoint);
+                            //JointSpace deltaJoint = TargetState.JointSpace.Clone().Minus(currentJoint);
+                            //_dataRecordService.Record(currentJoint, deltaJoint, _cameraCtrlService.GetTopFrame(), _cameraCtrlService.GetBottomFrame()); // TODO: 这里的记录过程会影响正常运行，急需解决
+                        } while (t < tf && !insertCancelToken.IsCancellationRequested);
                     });
                     sw.Stop();
                 }
@@ -270,7 +282,8 @@ namespace DOF5RobotControl_GUI.ViewModel
             }
             finally
             {
-                _dataRecordService.Stop();
+                //_dataRecordService.Stop();
+                //IsRecording = false;
 
                 insertCancelSource?.Dispose();
                 insertCancelSource = null;

@@ -144,23 +144,34 @@ namespace DOF5RobotControl_GUI.ViewModel
         bool _isRecording = false;
 
         CancellationTokenSource? recordCancelSource;
+        Task? recordTask;
 
         [RelayCommand]
-        private void ToggleRecord()
+        private async Task ToggleRecord()
         {
             if (!IsRecording)
             {
-                _ = StartRecord();
+                recordTask = StartRecordAsync();
             }
             else
+            {
                 StopRecord();
+
+                if (recordTask != null)
+                {
+                    await recordTask;
+                    recordTask = null;
+                }
+            }
         }
 
-
-        private async Task StartRecord()
+        /// <summary>
+        /// Start record data periodically
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        private async Task StartRecordAsync(int period = 100, bool recordImage = true)
         {
-            const int RecordPeriod = 100;
-
             if (IsRecording)
                 throw new InvalidOperationException("Data has already been recording.");
 
@@ -177,13 +188,20 @@ namespace DOF5RobotControl_GUI.ViewModel
                 {
                     var currentJoints = _robotControlService.GetCurrentState().JointSpace.Clone();
                     var targetJoints = _robotControlService.TargetState.JointSpace.Clone();
-                    var topFrame = _cameraCtrlService.GetTopFrame();
-                    var bottomFrame = _cameraCtrlService.GetBottomFrame();
 
-                    _dataRecordService.Record(currentJoints, targetJoints, topFrame, bottomFrame); // 记录当前状态和对应的动作
-                    Debug.WriteLine("Do one record.");
+                    if (recordImage)
+                    {
+                        var topFrame = _cameraCtrlService.GetTopFrame();
+                        var bottomFrame = _cameraCtrlService.GetBottomFrame();
 
-                    await Task.Delay(RecordPeriod, token);
+                        _dataRecordService.Record(currentJoints, targetJoints, topFrame, bottomFrame); // 记录当前状态和对应的动作
+                    }
+                    else
+                    {
+                        _dataRecordService.Record(currentJoints, targetJoints);
+                    }
+
+                    await Task.Delay(period, token);
                 }
             }
             catch (TaskCanceledException ex)

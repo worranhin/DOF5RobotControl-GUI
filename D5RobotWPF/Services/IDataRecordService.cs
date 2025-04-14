@@ -6,6 +6,7 @@ namespace DOF5RobotControl_GUI.Services
     {
         void Start();
         void Stop();
+        public void Record(JointSpace current, JointSpace target);
         void Record(JointSpace currentJoints, JointSpace deltaJoints, CamFrame topFrame, CamFrame bottomFrame);
     }
 }
