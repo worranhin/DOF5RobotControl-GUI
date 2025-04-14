@@ -1,8 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D5R;
+using DOF5RobotControl_GUI.Model;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using System.Windows;
+using VisionLibrary;
 
 namespace DOF5RobotControl_GUI.ViewModel
 {
@@ -223,6 +226,129 @@ namespace DOF5RobotControl_GUI.ViewModel
                         Debug.WriteLine(exc.Message);
                 }
             });
+        }
+
+        /***** 振动进给实验 *****/
+        [ObservableProperty]
+        private double _feedVelocity = 0.5; // mm/s
+        [ObservableProperty]
+        private double _feedDistance = 5.0; // mm
+        [ObservableProperty]
+        private bool _isFeeding = false;
+
+        private CancellationTokenSource? feedCancelSource;
+        private Task? feedTask;
+        private TaskSpace? positionBeforeFeed;
+
+        [RelayCommand]
+        private async Task ToggleFeed()
+        {
+            if (!IsFeeding)
+                feedTask = StartFeedAsync();
+            else
+            {
+                StopFeed();
+                if (feedTask != null)
+                    await feedTask;
+            }
+        }
+
+        private async Task StartFeedAsync()
+        {
+            IsFeeding = true;
+            feedCancelSource = new();
+            var token = feedCancelSource.Token;
+
+            try
+            {
+                // 定义轨迹
+                UpdateCurrentState();
+                positionBeforeFeed = CurrentState.TaskSpace.Clone();
+                RoboticState target = CurrentState.Clone();
+                target.TaskSpace.Px += FeedDistance;
+                double x0 = CurrentState.TaskSpace.Px;
+                double xf = target.TaskSpace.Px;
+                double tf = FeedDistance / FeedVelocity; // seconds, 速度为 0.5 mm/s
+
+                Func<double, double> trackX;
+                if (IsVibrateFeed)
+                {
+                    trackX = (double t) => x0 + t * FeedVelocity + +VibrateAmplitude * Math.Sin(2 * Math.PI * VibrateFrequency * t);
+                }
+                else
+                {
+                    //double trackX(double t) => x0 + t * FeedVelocity;
+                    trackX = (double t) => x0 + t * FeedVelocity;
+                }
+
+                double y0 = CurrentState.TaskSpace.Py;
+                double trackY(double t) => y0 + VibrateAmplitude * Math.Sin(2 * Math.PI * VibrateFrequency * t);
+
+                double z0 = CurrentState.TaskSpace.Pz;
+                double trackZ(double t) => z0 + VibrateAmplitude * Math.Sin(2 * Math.PI * VibrateFrequency * t);
+
+                double t = 0;
+                TargetState.Copy(CurrentState);
+                Stopwatch sw = Stopwatch.StartNew();
+
+                try
+                {
+                    // 开启一个进给任务
+                    await Task.Run(() =>
+                    {
+                        do
+                        {
+                            t = sw.ElapsedMilliseconds / 1000.0;
+                            TargetState.TaskSpace.Px = trackX(t);
+                            if (IsVibrateHorizontal)
+                                TargetState.TaskSpace.Py = trackY(t);
+                            if (IsVibrateVertical)
+                                TargetState.TaskSpace.Pz = trackZ(t);
+
+                            if (token.IsCancellationRequested)
+                                break;
+
+                            _robotControlService.MoveTo(TargetState);
+                        } while (t < tf);
+                    });
+                }
+                catch (OperationCanceledException ex)
+                {
+                    Debug.WriteLine("Insertion is canceled: " + ex.Message);
+                }
+                finally
+                {
+                    sw.Stop();
+                }
+            }
+            finally
+            {
+                feedCancelSource?.Dispose();
+                feedCancelSource = null;
+                IsFeeding = false;
+            }
+        }
+
+        private void StopFeed()
+        {
+            feedCancelSource?.Cancel();
+        }
+
+        [RelayCommand]
+        private void Retreat()
+        {
+            if (positionBeforeFeed != null)
+            {
+                TargetState.TaskSpace.Copy(positionBeforeFeed);
+            }
+            else
+            {
+                UpdateCurrentState();
+                TargetState.Copy(CurrentState);
+                TargetState.TaskSpace.Px -= FeedDistance;
+            }
+
+            _robotControlService.MoveTo(TargetState);
         }
     }
 }

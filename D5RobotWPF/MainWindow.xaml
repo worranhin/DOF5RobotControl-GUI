@@ -52,6 +52,7 @@
         <cvt:CameraBtnConverter x:Key="CameraBtnConverter"/>
         <cvt:OpcBtnConverter x:Key="OpcBtnConverter"/>
         <cvt:RecordBtnConverter x:Key="RecordBtnConverter"/>
+        <cvt:FeedBtnConverter x:Key="FeedBtnConverter" />
     </Window.Resources>
     <Grid Margin="10">
         <Grid.RowDefinitions>
@@ -333,6 +334,7 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1.2*"/>
                         <ColumnDefinition Width="1.2*"/>
+                        <ColumnDefinition Width="1.2*"/>
                         <ColumnDefinition Width="0.5*"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="0.5*"/>
@@ -348,11 +350,12 @@
                     </Grid.Resources>
                     <CheckBox Grid.Column="0" Content="水平横向振动" IsChecked="{Binding IsVibrateHorizontal}" IsEnabled="{Binding IsVibrating, Converter={StaticResource BoolInverseConverter}}"/>
                     <CheckBox Grid.Column="1" HorizontalAlignment="Center" Content="竖直振动" IsChecked="{Binding IsVibrateVertical}" IsEnabled="{Binding IsVibrating, Converter={StaticResource BoolInverseConverter}}"/>
-                    <TextBlock Grid.Column="2" Text="振幅"/>
-                    <TextBox Grid.Column="3" Text="{Binding VibrateAmplitude}" IsEnabled="{Binding IsVibrating, Converter={StaticResource BoolInverseConverter}}"/>
-                    <TextBlock Grid.Column="4" Text="频率"/>
-                    <TextBox Grid.Column="5" Text="{Binding VibrateFrequency}" IsEnabled="{Binding IsVibrating, Converter={StaticResource BoolInverseConverter}}"/>
-                    <Button Grid.Column="7" Content="{Binding IsVibrating, Converter={StaticResource VibrateBtnConverter}}" Command="{Binding ToggleVibrateCommand}"/>
+                    <CheckBox Grid.Column="2" HorizontalAlignment="Center" Content="进给振动" IsChecked="{Binding IsVibrateFeed}" IsEnabled="{Binding IsVibrating, Converter={StaticResource BoolInverseConverter}}"/>
+                    <TextBlock Grid.Column="3" Text="振幅"/>
+                    <TextBox Grid.Column="4" Text="{Binding VibrateAmplitude}" IsEnabled="{Binding IsVibrating, Converter={StaticResource BoolInverseConverter}}"/>
+                    <TextBlock Grid.Column="5" Text="频率"/>
+                    <TextBox Grid.Column="6" Text="{Binding VibrateFrequency}" IsEnabled="{Binding IsVibrating, Converter={StaticResource BoolInverseConverter}}"/>
+                    <Button Grid.Column="8" Content="{Binding IsVibrating, Converter={StaticResource VibrateBtnConverter}}" Command="{Binding ToggleVibrateCommand}"/>
                 </Grid>
             </mah:MetroHeader>
             <Separator/>
@@ -372,6 +375,17 @@
                             <mah:ProgressRing Width="10" Height="10" HorizontalAlignment="Right" IsActive="{Binding IsAttachingJaw}"/>
                         </Grid>
                     </Button>
+                </UniformGrid>
+            </UniformGrid>
+            <Separator/>
+            <UniformGrid Margin="5" Columns="1">
+                <UniformGrid Rows="1">
+                    <Label Content="进给速度"/>
+                    <TextBox Text="{Binding FeedVelocity}"/>
+                    <Label Content="进给距离"/>
+                    <TextBox Text="{Binding FeedDistance}"/>
+                    <Button Content="{Binding IsFeeding, Converter={StaticResource FeedBtnConverter}}" Command="{Binding ToggleFeedCommand}"/>
+                    <Button Content="退出夹钳" Command="{Binding RetreatCommand}"/>
                 </UniformGrid>
             </UniformGrid>
             <Separator/>

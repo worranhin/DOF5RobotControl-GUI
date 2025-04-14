@@ -18,6 +18,8 @@ namespace DOF5RobotControl_GUI.ViewModel
         [ObservableProperty]
         private bool _isVibrateVertical = false;
         [ObservableProperty]
+        private bool _isVibrateFeed = false;
+        [ObservableProperty]
         private double _vibrateAmplitude = 0.05;
         [ObservableProperty]
         private double _vibrateFrequency = 10.0;
