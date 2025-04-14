@@ -11,7 +11,7 @@
 	- D5RobotController_CLR (C++ / CLR)
 		- Nators SDK lib
 		- RMD 电机驱动
-	- VisionLibrary (C++)
+	- VisionLibrary (C++ / CLR)
 		- Halcon SDK lib 
 		- OpenCV lib
 	- Daheng 相机 SDK

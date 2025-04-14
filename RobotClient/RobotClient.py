@@ -1,7 +1,3 @@
-from typing import Dict
-from urllib.parse import urljoin
-import requests
-import robot_service
 from robot_service import get_target_state, get_current_state, put_target_joint
 
 
