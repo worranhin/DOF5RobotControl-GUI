@@ -30,28 +30,30 @@ namespace DOF5RobotControl_GUI.Model
         }
 
         /// <summary>
-        /// Return a new TaskSpace object with same value as this one.
+        /// Copy values of another TaskSpace to this
         /// </summary>
-        /// <returns></returns>
-        public TaskSpace Clone()
+        /// <param name="taskSpace"></param>
+        /// <returns>this instance</returns>
+        public TaskSpace Copy(TaskSpace taskSpace)
         {
-            return new TaskSpace() { Px = Px, Py = Py, Pz = Pz, Ry = Ry, Rz = Rz };
+            Px = taskSpace.Px;
+            Py = taskSpace.Py;
+            Pz = taskSpace.Pz;
+            Ry = taskSpace.Ry;
+            Rz = taskSpace.Rz;
+
+            return this;
         }
 
         /// <summary>
-        /// Copy the input Taskspace to this
+        /// Return a new TaskSpace with same values of this
         /// </summary>
-        /// <param name="space">Taskspace to copy from</param>
-        /// <returns>return this Taskspace</returns>
-        public TaskSpace Copy(TaskSpace space)
+        /// <returns>An instance clone.</returns>
+        public TaskSpace Clone()
         {
-            Px = space.Px;
-            Py = space.Py;
-            Pz = space.Pz;
-            Ry = space.Ry;
-            Rz = space.Rz;
-
-            return this;
+            TaskSpace taskSpace = new();
+            taskSpace.Copy(this);
+            return taskSpace;
         }
     }
 }

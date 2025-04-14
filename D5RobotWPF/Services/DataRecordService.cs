@@ -13,10 +13,11 @@ namespace DOF5RobotControl_GUI.Services
 
     public class DataRecordService : IDataRecordService
     {
-        private static string RootDir = "Records";
-        private static string ImageDir = "Images";
+        private static readonly string RootDir = "Records";
+        private static readonly string ImageDir = "Images";
         private string rootTimestamp = String.Empty;
         private List<DataRecord> records = [];
+        private Stopwatch stopWatch = new();
 
         public void Start()
         {
@@ -27,6 +28,8 @@ namespace DOF5RobotControl_GUI.Services
             Directory.CreateDirectory(RootDir);
             Directory.CreateDirectory(Path.Combine(RootDir, rootTimestamp));
             Directory.CreateDirectory(Path.Combine(RootDir, rootTimestamp, ImageDir));
+
+            stopWatch.Restart();
         }
 
         public void Stop()
@@ -37,12 +40,15 @@ namespace DOF5RobotControl_GUI.Services
             // 写入文件
             using StreamWriter sw = File.CreateText(jsonPath);
             sw.WriteLine(jsonStr);
+
+            stopWatch.Stop();
         }
 
         public void Record(JointSpace currentJoints, JointSpace targetJoints, CamFrame topFrame, CamFrame bottomFrame)
         {
-            DateTimeOffset currentTime = DateTimeOffset.UtcNow;
-            long timestamp_ms = currentTime.ToUnixTimeMilliseconds();
+            //DateTimeOffset currentTime = DateTimeOffset.UtcNow;
+            //long timestamp_ms = currentTime.ToUnixTimeMilliseconds();
+            long timestamp_ms = stopWatch.ElapsedMilliseconds;
             string topImgStr = "TopImg_" + timestamp_ms.ToString() + ".bmp";
             string bottomImgStr = "BottomImg_" + timestamp_ms.ToString() + ".bmp";
 
@@ -59,6 +65,15 @@ namespace DOF5RobotControl_GUI.Services
 
             Mat.FromPixelData(bottomFrame.Height, bottomFrame.Width, MatType.CV_8UC1, bottomFrame.Buffer)
                 .ImWrite(Path.Combine(imageDir, bottomImgStr));
+        }
+
+        public void Record(JointSpace current, JointSpace target)
+        {
+            long timestamp_ms = stopWatch.ElapsedMilliseconds;
+
+            StateRecord state = new(current.R1, current.P2, current.P3, current.P4, current.R5, string.Empty, string.Empty);
+            ActionRecord action = new(target.R1, target.P2, target.P3, target.P4, target.R5);
+            records.Add(new(timestamp_ms, state, action));
         }
     }
 }

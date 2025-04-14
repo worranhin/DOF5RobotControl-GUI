@@ -37,7 +37,7 @@ namespace NativeVision {
 		_jawLibLine_a = -0.00116294f;
 		_jawLibLine_b = 1718.94f;
 		// 图像与显示映射参数
-		_mapParam = 0.00945084;
+		_mapParam = 0.00945084; // mm/px
 	}
 	VisualController::~VisualController() {}
 

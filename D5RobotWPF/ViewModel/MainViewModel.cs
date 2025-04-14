@@ -55,12 +55,13 @@ namespace DOF5RobotControl_GUI.ViewModel
         /***** 机器人系统相关 *****/
         [ObservableProperty]
         private bool _systemConnected = false;
+
         [ObservableProperty]
-        private string[] _portsAvailable = [];
-        [ObservableProperty]
-        private string _selectedPort = "";
-        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(TargetPx))]
+        [NotifyPropertyChangedFor(nameof(TargetPy))]
+        [NotifyPropertyChangedFor(nameof(TargetPz))]
         private RoboticState _targetState = new(0, 0, 0, 0, 0);
+
         [ObservableProperty]
         private RoboticState _currentState = new(0, 0, 0, 0, 0);
 
@@ -150,17 +151,6 @@ namespace DOF5RobotControl_GUI.ViewModel
             _opcService = opcService;
             _dataRecordService = dataRecordService;
             _gamepadService = gamepadService;
-
-            // 初始化 Serial
-            PortsAvailable = SerialPort.GetPortNames();
-            if (PortsAvailable.Length > 0)
-            {
-                var defaultPort = Properties.Settings.Default.Port; // 获取上次选择的 COM 口
-                if (PortsAvailable.Contains(defaultPort))
-                    SelectedPort = defaultPort;
-                else
-                    SelectedPort = PortsAvailable[0];
-            }
         }
 
         ~MainViewModel()

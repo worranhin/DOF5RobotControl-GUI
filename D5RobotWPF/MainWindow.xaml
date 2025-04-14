@@ -132,15 +132,15 @@
                         <ColumnDefinition Width="2*"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Row="0" Grid.Column="0">R1:</TextBlock>
-                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CurrentState.JointSpace.R1}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CurrentState.JointSpace.R1, StringFormat=F2}"/>
                     <TextBlock Grid.Row="0" Grid.Column="2">P2:</TextBlock>
-                    <TextBlock Grid.Row="0" Grid.Column="3" Text="{Binding CurrentState.JointSpace.P2}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="3" Text="{Binding CurrentState.JointSpace.P2, StringFormat=F4}"/>
                     <TextBlock Grid.Row="0" Grid.Column="4">P3:</TextBlock>
-                    <TextBlock Grid.Row="0" Grid.Column="5" Text="{Binding CurrentState.JointSpace.P3}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="5" Text="{Binding CurrentState.JointSpace.P3, StringFormat=F4}"/>
                     <TextBlock Grid.Row="0" Grid.Column="6">P4:</TextBlock>
-                    <TextBlock Grid.Row="0" Grid.Column="7" Text="{Binding CurrentState.JointSpace.P4}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="7" Text="{Binding CurrentState.JointSpace.P4, StringFormat=F4}"/>
                     <TextBlock Grid.Row="0" Grid.Column="8">R5:</TextBlock>
-                    <TextBlock Grid.Row="0" Grid.Column="9" Text="{Binding CurrentState.JointSpace.R5}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="9" Text="{Binding CurrentState.JointSpace.R5, StringFormat=F2}"/>
                     <Button Grid.Row="0" Grid.Column="10" Grid.ColumnSpan="10" Margin="0" Command="{Binding SetTargetJointsFromCurrentCommand}">设为当前值</Button>
                 </Grid>
             </mah:MetroHeader>
