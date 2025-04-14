@@ -11,8 +11,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VisionLibrary", "VisionLibr
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "解决方案项", "解决方案项", "{84840DF4-5DE4-4B0E-9B44-D0E23F2813A8}"
 	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
 		README.md = README.md
 	EndProjectSection
+EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "RobotClient", "RobotClient\RobotClient.pyproj", "{02A781C5-2872-4012-BC5A-803C4D3DB0A0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -81,6 +84,15 @@ Global
 		{AA75C10A-1138-4EBC-8307-A41E08FBF18C}.Release|x64.Build.0 = Release|x64
 		{AA75C10A-1138-4EBC-8307-A41E08FBF18C}.Release|x86.ActiveCfg = Release|Win32
 		{AA75C10A-1138-4EBC-8307-A41E08FBF18C}.Release|x86.Build.0 = Release|Win32
+		{02A781C5-2872-4012-BC5A-803C4D3DB0A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{02A781C5-2872-4012-BC5A-803C4D3DB0A0}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{02A781C5-2872-4012-BC5A-803C4D3DB0A0}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{02A781C5-2872-4012-BC5A-803C4D3DB0A0}.Dummy_Debug|Any CPU.ActiveCfg = Release|Any CPU
+		{02A781C5-2872-4012-BC5A-803C4D3DB0A0}.Dummy_Debug|x64.ActiveCfg = Release|Any CPU
+		{02A781C5-2872-4012-BC5A-803C4D3DB0A0}.Dummy_Debug|x86.ActiveCfg = Release|Any CPU
+		{02A781C5-2872-4012-BC5A-803C4D3DB0A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{02A781C5-2872-4012-BC5A-803C4D3DB0A0}.Release|x64.ActiveCfg = Release|Any CPU
+		{02A781C5-2872-4012-BC5A-803C4D3DB0A0}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
