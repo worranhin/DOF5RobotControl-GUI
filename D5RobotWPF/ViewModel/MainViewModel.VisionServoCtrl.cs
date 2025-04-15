@@ -57,7 +57,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             attachCancelSource = new();
             var cancelToken = attachCancelSource.Token;
 
-            recordTask = StartRecordAsync(10, false);
+            StartRecord(10, false);
 
             try
             {
@@ -119,7 +119,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                 attachCancelSource = null;
 
                 StopRecord();
-                await recordTask;
+                //await recordTask;
                 recordTask = null;
             }
         }

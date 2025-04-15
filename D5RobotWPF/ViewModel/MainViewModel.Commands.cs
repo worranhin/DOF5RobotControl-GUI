@@ -147,21 +147,15 @@ namespace DOF5RobotControl_GUI.ViewModel
         Task? recordTask;
 
         [RelayCommand]
-        private async Task ToggleRecord()
+        private void ToggleRecord()
         {
             if (!IsRecording)
             {
-                recordTask = StartRecordAsync();
+                StartRecord();
             }
             else
             {
                 StopRecord();
-
-                if (recordTask != null)
-                {
-                    await recordTask;
-                    recordTask = null;
-                }
             }
         }
 
@@ -170,20 +164,21 @@ namespace DOF5RobotControl_GUI.ViewModel
         /// </summary>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
-        private async Task StartRecordAsync(int period = 100, bool recordImage = true)
+        private void StartRecord(int period = 100, bool recordImage = true)
         {
             if (IsRecording)
                 throw new InvalidOperationException("Data has already been recording.");
 
             IsRecording = true;
+
             recordCancelSource = new();
             CancellationToken token = recordCancelSource.Token;
 
-            try
-            {
-                _dataRecordService.Start();
-                Debug.WriteLine("Start recording");
+            _dataRecordService.Start();
+            Debug.WriteLine("Start recording");
 
+            recordTask = Task.Run(() =>
+            {
                 while (!token.IsCancellationRequested)
                 {
                     var currentJoints = _robotControlService.GetCurrentState().JointSpace.Clone();
@@ -201,28 +196,36 @@ namespace DOF5RobotControl_GUI.ViewModel
                         _dataRecordService.Record(currentJoints, targetJoints);
                     }
 
-                    await Task.Delay(period, token);
+                    try
+                    {
+                        Task.Delay(period, token).Wait();
+                    }
+                    catch (AggregateException ex)
+                    {
+                        Debug.WriteLine(ex.Message);                        
+                    }
                 }
-            }
-            catch (TaskCanceledException ex)
-            {
-                Debug.WriteLine(ex.ToString());
-            }
-            finally
-            {
-                _dataRecordService.Stop();
-                Debug.WriteLine("Stop recording.");
-
-                recordCancelSource.Dispose();
-                recordCancelSource = null;
-
-                IsRecording = false;
-            }
+            });
         }
 
         private void StopRecord()
         {
             recordCancelSource?.Cancel();
+
+            _dataRecordService.Stop();
+
+            try
+            {
+                recordTask?.Wait();
+            } catch (AggregateException ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+            recordCancelSource?.Dispose();
+            recordCancelSource = null;
+
+            IsRecording = false;
+            Debug.WriteLine("Stop recording.");
         }
 
         /// <summary>
