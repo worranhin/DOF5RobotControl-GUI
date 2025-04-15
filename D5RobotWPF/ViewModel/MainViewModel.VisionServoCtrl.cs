@@ -159,8 +159,10 @@ namespace DOF5RobotControl_GUI.ViewModel
             try
             {
                 UpdateCurrentState();
-                var topFrame = TopCamera.Instance.LastFrame;
-                var bottomFrame = BottomCamera.Instance.LastFrame;
+                //var topFrame = TopCamera.Instance.LastFrame;
+                //var bottomFrame = BottomCamera.Instance.LastFrame;
+                var topFrame = _cameraCtrlService.GetTopFrame();
+                var bottomFrame = _cameraCtrlService.GetBottomFrame();
 
                 var (x, y, rz) = await ImageProcessor.ProcessTopImgAsync(topFrame.Buffer, topFrame.Width, topFrame.Height, topFrame.Stride, MatchingMode.ROUGH);
                 double pz = await ImageProcessor.ProcessBottomImgAsync(bottomFrame.Buffer, bottomFrame.Width, bottomFrame.Height, bottomFrame.Stride);
@@ -188,15 +190,15 @@ namespace DOF5RobotControl_GUI.ViewModel
 
                 while (!cancelSource.Token.IsCancellationRequested)
                 {
-                    const double VibratePointX = 4;
+                    const double EntrancePointX = 4;
                     UpdateCurrentState();
-                    topFrame = TopCamera.Instance.LastFrame;
+                    topFrame = _cameraCtrlService.GetTopFrame();
                     (x, y, rz) = await ImageProcessor.ProcessTopImgAsync(topFrame.Buffer, topFrame.Width, topFrame.Height, topFrame.Stride, MatchingMode.FINE);
                     Debug.WriteLine($"Fine  x:{x}, y:{y}, z:{rz}");
                     if (Math.Abs(y) < 0.05)
                         break;
 
-                    TargetState.TaskSpace.Px += x - VibratePointX;
+                    TargetState.TaskSpace.Px += x - EntrancePointX;
                     TargetState.TaskSpace.Py += y;
                     TargetState.TaskSpace.Rz = 0; // 将夹钳带动钳口转正
                     _robotControlService.MoveTo(TargetState);
@@ -229,7 +231,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                 while (!insertCancelToken.IsCancellationRequested)
                 {
                     UpdateCurrentState();
-                    var topFrame = TopCamera.Instance.LastFrame;
+                    var topFrame = _cameraCtrlService.GetTopFrame();
                     var (dx, dy, drz) = await ImageProcessor.ProcessTopImgAsync(topFrame.Buffer, topFrame.Width, topFrame.Height, topFrame.Stride, MatchingMode.FINE);
 
                     if (dx < 0.05) // 若误差小于一定值则退出循环
@@ -273,6 +275,8 @@ namespace DOF5RobotControl_GUI.ViewModel
                             //_dataRecordService.Record(currentJoint, deltaJoint, _cameraCtrlService.GetTopFrame(), _cameraCtrlService.GetBottomFrame()); // TODO: 这里的记录过程会影响正常运行，急需解决
                         } while (t < tf && !insertCancelToken.IsCancellationRequested);
                     });
+
+                    _robotControlService.TargetState.TaskSpace.Pz = z0;
                     sw.Stop();
                 }
             }

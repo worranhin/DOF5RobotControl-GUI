@@ -51,8 +51,6 @@ namespace DOF5RobotControl_GUI.ViewModel
             PropertiesNotSaved = true;
         }
 
-        public static bool SystemConnected => SystemState.Instance.SystemConnected;
-
         /// <summary>
         /// 刷新端口
         /// </summary>

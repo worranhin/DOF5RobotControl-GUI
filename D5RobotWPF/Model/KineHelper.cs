@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace DOF5RobotControl_GUI.Model
+﻿namespace DOF5RobotControl_GUI.Model
 {
     /// <summary>
     /// 用于计算运动学正逆解

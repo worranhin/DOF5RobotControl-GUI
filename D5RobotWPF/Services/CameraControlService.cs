@@ -4,11 +4,17 @@ namespace DOF5RobotControl_GUI.Services
 {
     public class CameraControlService : ICameraControlService
     {
+        const string TopCameraMac = "00-21-49-03-4D-95";
+        const string BottomCameraMac = "00-21-49-03-4D-94";
+
         private readonly ICamMotorControlService _camMotorCtrlService;
         private readonly object _camOpLock = new();
 
         public bool CameraIsOpened { get; private set; } = false;
         public bool CamMotorIsConnected { get; private set; } = false;
+
+        public GxCamera TopCamera { get; } = GxCamera.Create(TopCameraMac);
+        public GxCamera BottomCamera { get; } = GxCamera.Create(BottomCameraMac);
 
         public CameraControlService(ICamMotorControlService camMotorCtrlService)
         {
@@ -21,8 +27,8 @@ namespace DOF5RobotControl_GUI.Services
             {
                 if (!CameraIsOpened)
                 {
-                    TopCamera.Instance.Open(true);
-                    BottomCamera.Instance.Open(true);
+                    TopCamera.Open(true);
+                    BottomCamera.Open(true);
                     CameraIsOpened = true;
                 }
             }
@@ -34,8 +40,8 @@ namespace DOF5RobotControl_GUI.Services
             {
                 if (CameraIsOpened)
                 {
-                    TopCamera.Instance.Close();
-                    BottomCamera.Instance.Close();
+                    TopCamera.Close();
+                    BottomCamera.Close();
                     CameraIsOpened = false;
                 }
             }
@@ -48,24 +54,24 @@ namespace DOF5RobotControl_GUI.Services
         /// <param name="BottomFrameReceivedHandler">底部相机接收帧时的回调函数</param>
         public void RegisterCallback(EventHandler<CamFrame> TopFrameReceivedHandler, EventHandler<CamFrame> BottomFrameReceivedHandler)
         {
-            TopCamera.Instance.FrameReceived += TopFrameReceivedHandler;
-            BottomCamera.Instance.FrameReceived += BottomFrameReceivedHandler;
+            TopCamera.FrameReceived += TopFrameReceivedHandler;
+            BottomCamera.FrameReceived += BottomFrameReceivedHandler;
         }
 
         public void UnRegisterCallback(EventHandler<CamFrame> TopFrameReceivedHandler, EventHandler<CamFrame> BottomFrameReceivedHandler)
         {
-            TopCamera.Instance.FrameReceived -= TopFrameReceivedHandler;
-            BottomCamera.Instance.FrameReceived -= BottomFrameReceivedHandler;
+            TopCamera.FrameReceived -= TopFrameReceivedHandler;
+            BottomCamera.FrameReceived -= BottomFrameReceivedHandler;
         }
 
         public CamFrame GetTopFrame()
         {
-            return TopCamera.Instance.LastFrame;
+            return TopCamera.LastFrame;
         }
 
         public CamFrame GetBottomFrame()
         {
-            return BottomCamera.Instance.LastFrame;
+            return BottomCamera.LastFrame;
         }
 
         public void ConnectCamMotor(string port)

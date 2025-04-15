@@ -1,5 +1,6 @@
 ﻿using GxIAPINET;
 using OpenCvSharp;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows.Media;
@@ -7,24 +8,18 @@ using System.Windows.Media.Imaging;
 
 namespace DOF5RobotControl_GUI.Model
 {
-    internal class GxCamera
+    public class GxCamera
     {
-        protected GxCamera(string mac)
-        {
-            this.mac = mac;
-            EnsureInitialized();
-        }
-
-        ~GxCamera()
-        {
-            Close();
-        }
-
         enum CameraSelect
         {
             TopCamera,
             BottomCamera
         };
+
+        public bool IsOpened { get; private set; } = false;
+        public CamFrame LastFrame { get; private set; }
+
+        public event EventHandler<CamFrame>? FrameReceived;
 
         const string TopCameraMac = "00-21-49-03-4D-95";
         const string BottomCameraMac = "00-21-49-03-4D-94";
@@ -38,15 +33,28 @@ namespace DOF5RobotControl_GUI.Model
         private Mat? lastMat;
         private bool usingCallback = false;
 
-        public bool IsOpened { get; private set; } = false;
-        public CamFrame LastFrame { get; private set; }
+        private static readonly ConcurrentDictionary<string, GxCamera> camDict = [];
 
-        public event EventHandler<CamFrame>? FrameReceived;
-
-        private static void EnsureInitialized()
+        private GxCamera(string mac)
         {
-            if (libInitializedEvent.WaitOne(1000) == false)
-                throw new InvalidOperationException("相机库未成功打开，请尝试重启应用。");
+            this.mac = mac;
+            EnsureInitialized();
+        }
+
+        ~GxCamera()
+        {
+            Close();
+        }
+
+        /// <summary>
+        /// Create a new GxCamera instance or an already created one of the given mac. (this function is thread-safe)
+        /// 创建或获取一个给定 mac 的 GxCamera 实例（线程安全）
+        /// </summary>
+        /// <param name="mac">The mac of the camera to be created</param>
+        /// <returns>the GxCamera instance of the given mac</returns>
+        public static GxCamera Create(string mac)
+        {
+            return camDict.GetOrAdd(mac, (mac) => new GxCamera(mac));
         }
 
         public static async Task GxLibInit()
@@ -108,7 +116,13 @@ namespace DOF5RobotControl_GUI.Model
             libInitializedEvent.Reset();
         }
 
-        public void Open(bool useCallback = false)
+        private static void EnsureInitialized()
+        {
+            if (libInitializedEvent.WaitOne(1000) == false)
+                throw new InvalidOperationException("相机库未成功打开，请尝试重启应用。");
+        }
+
+        public void Open(bool useCallback = true)
         {
             lock (camOpLock)
             {
