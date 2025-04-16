@@ -13,6 +13,20 @@ namespace DOF5RobotControl_GUI.Services
     public class RobotControlService : IRobotControlService
     {
         public bool RobotIsConnected { get; private set; } = false;
+
+        public JointSpace CurrentJoints
+        {
+            get
+            {
+                if (robot == null)
+                    throw new InvalidOperationException("Access joints value before robot is connected.");
+                
+                var joints = robot.GetCurrentJoint();
+                JointSpace jointSpace = new(joints);
+                return jointSpace;
+            }
+        }
+
         public RoboticState CurrentState { get; private set; } = new();
         public RoboticState TargetState { get; private set; } = new();
 

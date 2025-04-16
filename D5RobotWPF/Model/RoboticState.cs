@@ -1,6 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using D5R;
-using SharpDX;
 
 namespace DOF5RobotControl_GUI.Model
 {
@@ -85,11 +84,6 @@ namespace DOF5RobotControl_GUI.Model
             return result;
         }
 
-        //public static bool operator < (RoboticState state, double value)
-        //{
-        //    state
-        //}
-
         /// <summary>
         /// 转换为控制用的 struct
         /// </summary>
@@ -120,9 +114,6 @@ namespace DOF5RobotControl_GUI.Model
             if (j.R5 > 18000)
                 j.R5 = -(36000 - j.R5);
 
-            // TODO: 优化这段代码的性能，让它在所有属性更改后再通知 Task 进行正解
-            //isJointUpdating = true;
-            //isTaskUpdating = true;
             IsManuallyUpdating = true;
 
             JointSpace.R1 = j.R1 / 100.0;
@@ -134,8 +125,6 @@ namespace DOF5RobotControl_GUI.Model
             KineHelper.Forward(JointSpace, TaskSpace);
 
             IsManuallyUpdating = false;
-            //isJointUpdating = false;
-            //isTaskUpdating = false;
         }
 
         /// <summary>

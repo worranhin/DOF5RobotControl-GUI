@@ -13,12 +13,14 @@ namespace DOF5RobotControl_GUI.ViewModel
         [ObservableProperty]
         private bool _isAttachingJaw = false;
 
+        private CancellationTokenSource? preAlignCancelSource;
+
         [RelayCommand]
         private async Task MoveToInitialPosition()
         {
             try
             {
-                await MoveToInitialPositionAsync();
+                await PreAlignJawAsync();
             }
             catch (InvalidOperationException ex)
             {
@@ -33,7 +35,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             {
                 try
                 {
-                    await InsertTaskAsync();
+                    await InsertJawAsync();
                 }
                 catch (InvalidOperationException ex)
                 {
@@ -53,10 +55,12 @@ namespace DOF5RobotControl_GUI.ViewModel
         [RelayCommand]
         private async Task AttachJawAsync()
         {
+            // 初始化状态量与任务取消源
             IsAttachingJaw = true;
             attachCancelSource = new();
             var cancelToken = attachCancelSource.Token;
 
+            // 开始记录状态动作数据
             StartRecord(10, false);
 
             try
@@ -64,7 +68,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                 try
                 {
                     cancelToken.ThrowIfCancellationRequested();
-                    await MoveToInitialPositionAsync(); // 前往装钳口初始位置
+                    await PreAlignJawAsync(); // 前往装钳口初始位置
                 }
                 catch (ArgumentOutOfRangeException ex)
                 {
@@ -73,7 +77,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                 }
 
                 cancelToken.ThrowIfCancellationRequested();
-                await InsertTaskAsync(); // 插装钳口
+                await InsertJawAsync(); // 插装钳口
                 await Task.Delay(500); // 插入完成，先停一会
 
                 // 此时应处于插入的状态，接下来将夹钳抬起来
@@ -136,47 +140,36 @@ namespace DOF5RobotControl_GUI.ViewModel
         /// </summary>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
-        private async Task MoveToInitialPositionAsync()
+        private async Task PreAlignJawAsync()
         {
-            // 为了安全，先前往便于视觉检测的位置
-            TargetState.SetFromD5RJoints(PreChangeJawPos);
-            _robotControlService.MoveTo(TargetState);
-            using (CancellationTokenSource cancelSource = new())
-            {
-                cancelSourceList.Add(cancelSource);
-                var token = cancelSource.Token;
-                while (!token.IsCancellationRequested && TaskSpace.Distance(TargetState.TaskSpace, CurrentState.TaskSpace) > 1) // 确保已到位
-                {
-                    Debug.WriteLine(TaskSpace.Distance(TargetState.TaskSpace, CurrentState.TaskSpace));
+            preAlignCancelSource = new();
+            var token = preAlignCancelSource.Token;
 
-                    await Task.Delay(1000);
-                    UpdateCurrentState();
-                }
-                cancelSourceList.Remove(cancelSource);
-            }
-
-            // 下面获取图像信息
             try
             {
+                // 为了安全，先前往便于视觉检测的位置
+                TargetState.SetFromD5RJoints(PreChangeJawPos);
+                _robotControlService.MoveTo(TargetState);
+                await WaitForTargetedAsync(); // 等待到位
+
+                if (token.IsCancellationRequested)
+                    return;
+
+                // 更新关节状态与图像
                 UpdateCurrentState();
-                //var topFrame = TopCamera.Instance.LastFrame;
-                //var bottomFrame = BottomCamera.Instance.LastFrame;
+                var currentPos = _robotControlService.GetCurrentState().TaskSpace.Clone();
                 var topFrame = _cameraCtrlService.GetTopFrame();
                 var bottomFrame = _cameraCtrlService.GetBottomFrame();
 
+                // 处理图像
                 var (x, y, rz) = await ImageProcessor.ProcessTopImgAsync(topFrame.Buffer, topFrame.Width, topFrame.Height, topFrame.Stride, MatchingMode.ROUGH);
                 double pz = await ImageProcessor.ProcessBottomImgAsync(bottomFrame.Buffer, bottomFrame.Width, bottomFrame.Height, bottomFrame.Stride);
 
                 TaskSpace error = new() { Px = x, Py = y, Pz = pz, Ry = 0, Rz = 0 };
-                Debug.WriteLine(error);
-
                 JointSpace deltaJoint = KineHelper.InverseDifferential(error, CurrentState.TaskSpace);
 
                 if (deltaJoint.P4 + CurrentState.JointSpace.P4 > 12)  // 对关节移动量进行安全检查
-                {
-                    Debug.WriteLine(deltaJoint);
-                    throw new InvalidOperationException("前往初始位置时，关节移动量超出安全范围，请检查！");
-                }
+                    throw new InvalidOperationException($"前往初始位置时，关节移动量超出安全范围，请检查！\ndeltaJoint: {deltaJoint}");
 
                 TargetState.JointSpace.Copy(CurrentState.JointSpace).Add(deltaJoint); // 设置目标位置
                 Debug.WriteLine(TargetState.JointSpace);
@@ -206,14 +199,17 @@ namespace DOF5RobotControl_GUI.ViewModel
                 }
                 cancelSourceList.Remove(cancelSource);
             }
-            catch (OverflowException ex)
+            finally
             {
-                Debug.WriteLine("Error in MoveToInitialPosition: " + ex.Message);
-                throw;
+                preAlignCancelSource?.Dispose();
             }
         }
 
-        private async Task InsertTaskAsync()
+        /// <summary>
+        /// 异步地完成振动配合过程
+        /// </summary>
+        /// <returns></returns>
+        private async Task InsertJawAsync()
         {
             object robotMoveLock = new();
 
@@ -222,10 +218,6 @@ namespace DOF5RobotControl_GUI.ViewModel
                 IsInserting = true;
                 insertCancelSource = new();
                 insertCancelToken = insertCancelSource.Token;
-
-                //StartRecordAsync();
-                //IsRecording = true;
-                //_dataRecordService.Start();
 
                 //// 开始振动并插入 ////
                 while (!insertCancelToken.IsCancellationRequested)
@@ -242,7 +234,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                     double x0 = CurrentState.TaskSpace.Px;
                     double xf = target.TaskSpace.Px;
                     double tf = dx / FeedVelocity; // seconds, depends on FeedVelocity
-                    double trackX(double t) => x0 + t * (xf - x0) / tf;
+                    double trackX(double t) => x0 + t * FeedVelocity;
 
                     double y0 = CurrentState.TaskSpace.Py;
                     double trackY(double t) => y0 + VibrateAmplitude * Math.Sin(2 * Math.PI * VibrateFrequency * t);
