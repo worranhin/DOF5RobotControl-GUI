@@ -68,12 +68,14 @@ namespace VisionLibrary {
 			};
 			return managedError;
 		}
-		catch (cv::Exception& exc) {
-			//throw gcnew VisionException(gcnew System::String(exc.what()));
-			throw;
+		catch (const cv::Exception& exc) {
+			throw gcnew VisionException(gcnew System::String(exc.what()));
 		}
-		catch (HalconCpp::HTupleAccessException& ex) {
+		catch (const HalconCpp::HTupleAccessException& ex) {
 			throw gcnew VisionException(gcnew System::String(ex.ErrorMessage().Text()));
+		}
+		catch (const std::exception& ex) {
+			throw gcnew VisionException(gcnew System::String(ex.what()));
 		}
 		catch (InvalidOperationException^) {
 			throw;
@@ -88,11 +90,14 @@ namespace VisionLibrary {
 
 			instance->GetHorizontalLine(mat, 1);
 		}
-		catch (cv::Exception& exc) {
+		catch (const cv::Exception& exc) {
 			throw gcnew VisionException(gcnew System::String(exc.what()));
 		}
-		catch (HalconCpp::HTupleAccessException& ex) {
+		catch (const HalconCpp::HTupleAccessException& ex) {
 			throw gcnew VisionException(gcnew System::String(ex.ErrorMessage().Text()));
+		}
+		catch (const std::exception& ex) {
+			throw gcnew VisionException(gcnew System::String(ex.what()));
 		}
 		catch (InvalidOperationException^) {
 			throw;
@@ -116,16 +121,18 @@ namespace VisionLibrary {
 			instance->GetHorizontalLine(mat, 1);
 			return instance->GetVerticalDistance(mat, 1);
 		}
-		catch (cv::Exception& exc) {
+		catch (const cv::Exception& exc) {
 			throw gcnew VisionException(gcnew System::String(exc.what()));
 		}
-		catch (HalconCpp::HTupleAccessException& ex) {
+		catch (const HalconCpp::HTupleAccessException& ex) {
 			throw gcnew VisionException(gcnew System::String(ex.ErrorMessage().Text()));
+		}
+		catch (const std::exception& ex) {
+			throw gcnew VisionException(gcnew System::String(ex.what()));
 		}
 		catch (InvalidOperationException^) {
 			throw;
 		}
-		return 0.0;
 	}
 }
 

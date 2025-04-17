@@ -183,9 +183,23 @@ namespace NativeVision {
 			img_P.push_back(keyPoints_Img[match.trainIdx].pt);
 		}
 		cv::Mat homography = cv::findHomography(model_P, img_P, cv::RANSAC);
+		if (homography.empty())
+			throw std::runtime_error("Homography matrix is empty or invalid.");
+
 		std::vector<cv::Point2f> pst;
 		std::vector<cv::Point2f> pst_Global;
-		cv::perspectiveTransform(modelPosition, pst, homography);
+		try
+		{
+			cv::perspectiveTransform(modelPosition, pst, homography);
+		}
+		catch (const cv::Exception& ex) 
+		{
+			throw;
+		}
+		catch (const std::exception&)
+		{
+			throw;
+		}
 		for (auto& p : pst) {
 			p.x += _roiPos.x;
 			p.y += _roiPos.y;

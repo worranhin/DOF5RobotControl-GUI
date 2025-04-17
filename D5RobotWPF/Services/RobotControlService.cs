@@ -27,7 +27,8 @@ namespace DOF5RobotControl_GUI.Services
             }
         }
 
-        public RoboticState CurrentState { get; private set; } = new();
+        public RoboticState CurrentState => GetCurrentState();
+
         public RoboticState TargetState { get; private set; } = new();
 
         const string natorId = "usb:id:2250716012";
@@ -130,6 +131,35 @@ namespace DOF5RobotControl_GUI.Services
             return CurrentState;
         }
 
+        public async Task WaitForTargetedAsync(int CheckPeriod = 100, double CheckDistance = 0.1)
+        {
+            while (true)
+            {
+                if (TaskSpace.Distance(CurrentState.TaskSpace, TargetState.TaskSpace) < CheckDistance)
+                    return;
+
+                await Task.Delay(CheckPeriod);
+            }
+        }
+
+        public async Task WaitForTargetedAsync(CancellationToken token, int CheckPeriod = 100, double CheckDistance = 0.1)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                if (TaskSpace.Distance(CurrentState.TaskSpace, TargetState.TaskSpace) < CheckDistance)
+                    break;
+
+                try
+                {
+                    await Task.Delay(CheckPeriod, token);
+                }
+                catch (TaskCanceledException)
+                {
+                    break;
+                }
+            }
+        }
+
         /// <summary>
         /// 获取当前状态
         /// </summary>
@@ -175,7 +205,5 @@ namespace DOF5RobotControl_GUI.Services
             robot.JointsMoveAbsolute(TargetState.ToD5RJoints());
             vibrateCancelSource = null; // 这里 using 语句会自动释放，将字段设为 null 避免重复释放
         }
-
-        
     }
 }

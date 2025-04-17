@@ -8,7 +8,7 @@
         xmlns:vm="clr-namespace:DOF5RobotControl_GUI.ViewModel"
         xmlns:md="clr-namespace:DOF5RobotControl_GUI.Model"
         xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
-        d:DataContext="{d:DesignInstance Type=vm:DesignMainViewModel, IsDesignTimeCreatable=True}"
+        d:DataContext="{d:DesignInstance Type=vm:DesignMainViewModel, IsDesignTimeCreatable=False}"
         mc:Ignorable="d"
         Title="五自由度机械臂控制面板" Height="780" Width="960"
         FontFamily="Microsoft YaHei UI"
@@ -145,6 +145,7 @@
                 </Grid>
             </mah:MetroHeader>
             <Separator/>
+            <!-- 关节控制区 -->
             <mah:MetroHeader Header="关节控制">
                 <StackPanel>
                     <Grid>
@@ -364,17 +365,19 @@
                 <UniformGrid Rows="1">
                     <Button Command="{Binding RobotRunCommand}">运行</Button>
                     <Button Command="{Binding RobotSetZeroCommand}" ToolTip="将当前的位置设为零点">置零</Button>
-                    <Button Command="{Binding RobotStopCommand}">停止</Button>
+                    <Button Command="{Binding RobotStopCommand}" Background="#FFFFDEDE">停止
+                    </Button>
                 </UniformGrid>
                 <UniformGrid Rows="1">
-                    <Button Command="{Binding MoveToInitialPositionCommand}">前往插入预备位</Button>
-                    <Button Command="{Binding ToggleInsertionCommand}" Content="{Binding IsInserting, Converter={StaticResource InsertBtnConverter}}"/>
+                    <Button Command="{Binding PreAlignJawCommand}">前往插入预备位</Button>
+                    <Button Command="{Binding InsertJawCommand}" Content="振动适配"/>
                     <Button Command="{Binding AttachJawCommand}" IsEnabled="{Binding IsAttachingJaw, Converter={StaticResource BoolInverseConverter}}">
-                        <Grid MinWidth="200">
+                        <Grid MinWidth="130">
                             <TextBlock Text="装上钳口" HorizontalAlignment="Center"/>
                             <mah:ProgressRing Width="10" Height="10" HorizontalAlignment="Right" IsActive="{Binding IsAttachingJaw}"/>
                         </Grid>
                     </Button>
+                    <Button Content="取消操作" Command="{Binding CancelTaskCommand}"/>
                 </UniformGrid>
             </UniformGrid>
             <Separator/>
@@ -441,6 +444,7 @@
                 </StackPanel>
             </mah:MetroHeader>
         </StackPanel>
+        <!-- 预存点位 -->
         <mah:MetroHeader Grid.Row="2" Grid.Column="3" Header="预存点位" MinWidth="150">
             <StackPanel>
                 <StackPanel.Resources>

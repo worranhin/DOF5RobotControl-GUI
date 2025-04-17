@@ -95,5 +95,34 @@ namespace DOF5RobotControl_GUI.Services
         {
             throw new NotImplementedException();
         }
+
+        public async Task WaitForTargetedAsync(int CheckPeriod = 100, double CheckDistance = 0.1)
+        {
+            while (true)
+            {
+                if (TaskSpace.Distance(CurrentState.TaskSpace, TargetState.TaskSpace) < CheckDistance)
+                    return;
+
+                await Task.Delay(CheckPeriod);
+            }
+        }
+
+        public async Task WaitForTargetedAsync(CancellationToken token, int CheckPeriod = 100, double CheckDistance = 0.1)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                if (TaskSpace.Distance(CurrentState.TaskSpace, TargetState.TaskSpace) < CheckDistance)
+                    break;
+
+                try
+                {
+                    await Task.Delay(CheckPeriod, token);
+                }
+                catch (TaskCanceledException)
+                {
+                    break;
+                }
+            }
+        }
     }
 }

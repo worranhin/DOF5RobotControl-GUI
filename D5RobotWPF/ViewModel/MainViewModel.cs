@@ -42,9 +42,6 @@ namespace DOF5RobotControl_GUI.ViewModel
 
         /***** 线程相关字段 *****/
         public Dispatcher Dispatcher { get; private set; }
-        private CancellationTokenSource? insertCancelSource;
-        private CancellationToken insertCancelToken;
-        CancellationTokenSource? attachCancelSource;
 
         readonly List<CancellationTokenSource> cancelSourceList = []; // 存储所有的取消源，在 stop 时统一取消
 
