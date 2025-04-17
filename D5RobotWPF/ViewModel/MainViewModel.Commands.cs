@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using D5R;
 using DOF5RobotControl_GUI.Model;
+using OpenCvSharp;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
@@ -151,7 +152,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         {
             if (!IsRecording)
             {
-                StartRecord();
+                StartRecord(10);
             }
             else
             {
@@ -179,53 +180,71 @@ namespace DOF5RobotControl_GUI.ViewModel
 
             recordTask = Task.Run(() =>
             {
+                //Stopwatch sw = Stopwatch.StartNew();
+
                 while (!token.IsCancellationRequested)
                 {
+                    //var t1 = sw.ElapsedMilliseconds;
+
                     var currentJoints = _robotControlService.GetCurrentState().JointSpace.Clone();
                     var targetJoints = _robotControlService.TargetState.JointSpace.Clone();
 
+                    //var t2 = sw.ElapsedMilliseconds;
+
                     if (recordImage)
                     {
+                        //var t21 = sw.ElapsedMilliseconds;
+
                         var topFrame = _cameraCtrlService.GetTopFrame();
                         var bottomFrame = _cameraCtrlService.GetBottomFrame();
 
+                        //var t22 = sw.ElapsedMilliseconds;
+
                         _dataRecordService.Record(currentJoints, targetJoints, topFrame, bottomFrame); // 记录当前状态和对应的动作
+
+                        //var t23 = sw.ElapsedMilliseconds;
+
+                        //Debug.WriteLine($"t21={t21}, t22={t22}, t23={t23}");
                     }
                     else
                     {
                         _dataRecordService.Record(currentJoints, targetJoints);
                     }
 
+                    //var t3 = sw.ElapsedMilliseconds;
+
                     try
                     {
                         Task.Delay(period, token).Wait();
                     }
-                    catch (AggregateException ex)
-                    {
-                        Debug.WriteLine(ex.Message);                        
-                    }
+                    catch (AggregateException) { }
+
+                    //var t4 = sw.ElapsedMilliseconds;
+
+                    //Debug.WriteLine($"t1={t1}, t2={t2}, t3={t3}, t4={t4}");
                 }
             });
         }
 
         private void StopRecord()
         {
+            // 取消记录任务
             recordCancelSource?.Cancel();
-
-            _dataRecordService.Stop();
-
             try
             {
                 recordTask?.Wait();
-            } catch (AggregateException ex)
+            }
+            catch (AggregateException ex)
             {
                 Debug.WriteLine(ex.Message);
             }
             recordCancelSource?.Dispose();
             recordCancelSource = null;
 
+            // 停止 record 服务
+            _dataRecordService.Stop();
+
             IsRecording = false;
-            Debug.WriteLine("Stop recording.");
         }
 
         /// <summary>
@@ -283,6 +302,10 @@ namespace DOF5RobotControl_GUI.ViewModel
             try
             {
                 // 定义轨迹
+                Func<double, double> trackX;
+                Func<double, double> trackY;
+                Func<double, double> trackZ;
+
                 UpdateCurrentState();
                 positionBeforeFeed = CurrentState.TaskSpace.Clone();
                 RoboticState target = CurrentState.Clone();
@@ -291,22 +314,22 @@ namespace DOF5RobotControl_GUI.ViewModel
                 double xf = target.TaskSpace.Px;
                 double tf = FeedDistance / FeedVelocity; // seconds, 速度为 0.5 mm/s
 
-                Func<double, double> trackX;
                 if (IsVibrateFeed)
-                {
-                    trackX = (double t) => x0 + t * FeedVelocity + +VibrateAmplitude * Math.Sin(2 * Math.PI * VibrateFrequency * t);
-                }
+                    trackX = (t) => x0 + t * FeedVelocity + VibrateAmplitude * Math.Sin(2 * Math.PI * VibrateFrequency * t);
                 else
-                {
-                    //double trackX(double t) => x0 + t * FeedVelocity;
-                    trackX = (double t) => x0 + t * FeedVelocity;
-                }
+                    trackX = (t) => x0 + t * FeedVelocity;
 
                 double y0 = CurrentState.TaskSpace.Py;
-                double trackY(double t) => y0 + VibrateAmplitude * Math.Sin(2 * Math.PI * VibrateFrequency * t);
+                if (IsVibrateHorizontal)
+                    trackY = (t) => y0 + VibrateAmplitude * Math.Sin(2 * Math.PI * VibrateFrequency * t);
+                else
+                    trackY = (t) => y0;
 
                 double z0 = CurrentState.TaskSpace.Pz;
-                double trackZ(double t) => z0 + VibrateAmplitude * Math.Sin(2 * Math.PI * VibrateFrequency * t);
+                if (IsVibrateVertical)
+                    trackZ = (t) => z0 + VibrateAmplitude * Math.Sin(2 * Math.PI * VibrateFrequency * t);
+                else
+                    trackZ = (t) => z0;
 
                 double t = 0;
                 TargetState.Copy(CurrentState);
@@ -321,10 +344,8 @@ namespace DOF5RobotControl_GUI.ViewModel
                         {
                             t = sw.ElapsedMilliseconds / 1000.0;
                             TargetState.TaskSpace.Px = trackX(t);
-                            if (IsVibrateHorizontal)
-                                TargetState.TaskSpace.Py = trackY(t);
-                            if (IsVibrateVertical)
-                                TargetState.TaskSpace.Pz = trackZ(t);
+                            TargetState.TaskSpace.Py = trackY(t);
+                            TargetState.TaskSpace.Pz = trackZ(t);
 
                             if (token.IsCancellationRequested)
                                 break;

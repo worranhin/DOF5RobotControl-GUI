@@ -1,14 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging.Messages;
 using D5R;
 using DOF5RobotControl_GUI.Model;
 using DOF5RobotControl_GUI.Services;
-using System.Diagnostics;
-using System.IO.Ports;
 using System.Windows;
 using System.Windows.Threading;
-using VisionLibrary;
 
 namespace DOF5RobotControl_GUI.ViewModel
 {

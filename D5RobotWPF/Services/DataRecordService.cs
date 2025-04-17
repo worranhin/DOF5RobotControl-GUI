@@ -14,7 +14,7 @@ namespace DOF5RobotControl_GUI.Services
 
     public class DataRecordService : IDataRecordService
     {
-        private record ImageRecord(long Time, CamFrame Frame, string Id);
+        private record ImageRecord(CamFrame Frame, string Id);
 
         private static readonly string RootDir = "Records";
         private static readonly string ImageDir = "Images";
@@ -111,8 +111,6 @@ namespace DOF5RobotControl_GUI.Services
         /// <param name="bottomFrame"></param>
         public void Record(JointSpace currentJoints, JointSpace targetJoints, CamFrame topFrame, CamFrame bottomFrame)
         {
-            //DateTimeOffset currentTime = DateTimeOffset.UtcNow;
-            //long timestamp_ms = currentTime.ToUnixTimeMilliseconds();
             long timestamp_ms = stopWatch.ElapsedMilliseconds;
             string topImgStr = "TopImg_" + timestamp_ms.ToString() + ".png";
             string bottomImgStr = "BottomImg_" + timestamp_ms.ToString() + ".png";
@@ -125,18 +123,8 @@ namespace DOF5RobotControl_GUI.Services
             // 添加图像至保存队列
             if (imageSaveQueue == null)
                 throw new InvalidOperationException("`Start` must be called before recording.");
-            imageSaveQueue.Add(new(timestamp_ms, topFrame, "Top"));
-            imageSaveQueue.Add(new(timestamp_ms, bottomFrame, "Bottom"));
-            //string imageDir = Path.Combine(RootDir, rootTimestamp, ImageDir);
-
-
-            //Mat.FromPixelData(topFrame.Height, topFrame.Width, MatType.CV_8UC1, topFrame.Buffer)
-            //    .Resize(new Size(324, 256))
-            //    .ImWrite(Path.Combine(imageDir, topImgStr));
-
-            //Mat.FromPixelData(bottomFrame.Height, bottomFrame.Width, MatType.CV_8UC1, bottomFrame.Buffer)
-            //    .Resize(new Size(324, 256))
-            //    .ImWrite(Path.Combine(imageDir, bottomImgStr));
+            imageSaveQueue.Add(new(topFrame, topImgStr));
+            imageSaveQueue.Add(new(bottomFrame, bottomImgStr));
         }
 
         /// <summary>
@@ -175,15 +163,12 @@ namespace DOF5RobotControl_GUI.Services
                 if (record != null)
                 {
                     var frame = record.Frame;
-                    var time = record.Time;
 
-                    string imgStr = record.Id + time.ToString() + ".png";
+                    string imgStr = record.Id;
 
                     Mat.FromPixelData(frame.Height, frame.Width, MatType.CV_8UC1, frame.Buffer)
                     .Resize(new Size(324, 256))
                     .ImWrite(Path.Combine(imageDir, imgStr));
-
-                    Debug.WriteLine("Saved an image.");
                 }
             }
 

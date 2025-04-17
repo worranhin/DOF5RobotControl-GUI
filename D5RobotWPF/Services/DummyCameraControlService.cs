@@ -13,14 +13,39 @@ namespace DOF5RobotControl_GUI.Services
 {
     internal class DummyCameraControlService : ICameraControlService
     {
-        const string MockTopImgPath = "MockClamp.png";
+        public bool CameraIsOpened { get; private set; }
+        public bool CamMotorIsConnected { get; private set; }
+
+        const string MockTopImgPath = "MockTopImage.png";
+        const string MockBottomImgPath = "MockBottomImage.png";
 
         private event EventHandler<CamFrame>? TopFrameReceived;
         private event EventHandler<CamFrame>? BottomFrameReceived;
-        private CancellationTokenSource? captureCancelSource;          
-        
-        public bool CameraIsOpened { get; private set; }
-        public bool CamMotorIsConnected { get; private set; }
+        private CancellationTokenSource? captureCancelSource;
+
+        private readonly CamFrame lastTopFrame;
+        private readonly CamFrame lastBottomFrame;
+
+        public DummyCameraControlService()
+        {
+            // 读取虚假的图像
+            {
+                Image<L8> img = Image.Load<L8>(MockTopImgPath); // 顶部图像
+                byte[] buffer = new byte[img.Width * img.Height];
+                img.CopyPixelDataTo(buffer);
+                CamFrame frame = new(buffer, img.Width, img.Height);
+                lastTopFrame = frame;
+            }
+
+            {
+                Image<L8> img = Image.Load<L8>(MockBottomImgPath); // 底部图像
+                byte[] buffer = new byte[img.Width * img.Height];
+                img.CopyPixelDataTo(buffer);
+                CamFrame frame = new(buffer, img.Width, img.Height);
+                lastBottomFrame = frame;
+            }
+        }
+
 
         public void ConnectCamMotor(string port)
         {
@@ -36,18 +61,12 @@ namespace DOF5RobotControl_GUI.Services
 
         public CamFrame GetBottomFrame()
         {
-            return GenDummyImg();
+            return lastBottomFrame;
         }
 
         public CamFrame GetTopFrame()
         {
-            Image<L8> img = Image.Load<L8>(MockTopImgPath);
-            byte[] buffer = new byte[img.Width * img.Height];
-            img.CopyPixelDataTo(buffer);
-            CamFrame frame = new(buffer, img.Width, img.Height);
-            return frame;
-
-            //return GenDummyImg();
+            return lastTopFrame;
         }
 
         public void MoveBottomCamera(int angle)
