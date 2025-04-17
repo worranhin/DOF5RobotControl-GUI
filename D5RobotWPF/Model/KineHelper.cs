@@ -60,6 +60,11 @@
             task.Rz = Math.Round(rz, 2);
         }
 
+        /// <summary>
+        /// Forward kinematic
+        /// </summary>
+        /// <param name="joint"></param>
+        /// <returns>A new TaskSpace instance</returns>
         public static TaskSpace Forward(JointSpace joint)
         {
             TaskSpace task = new();
@@ -70,19 +75,19 @@
         /// <summary>
         /// 求逆运动学
         /// </summary>
-        /// <param name="task">任务空间（位姿）</param>
+        /// <param name="pose">任务空间（位姿）</param>
         /// <returns></returns>
-        public static JointSpace Inverse(TaskSpace task, JointSpace joint)
+        public static JointSpace Inverse(TaskSpace pose, JointSpace joint)
         {
             double m1 = l3 + l5 + lty;
             double m2 = l1 + l2 + l4;
             double r1, p2, p3, p4, r5;
 
-            r1 = task.Rz;
-            r5 = -task.Ry;
-            p2 = task.Px * Sind(task.Rz) - task.Py * Cosd(task.Rz) - m1;
-            p3 = task.Px * Cosd(task.Rz) + task.Py * Sind(task.Rz) - ltx * Cosd(-task.Ry) - ltz * Sind(-task.Ry);
-            p4 = -task.Pz + ltx * Sind(-task.Ry) - ltz * Cosd(-task.Ry) - m2;
+            r1 = pose.Rz;
+            r5 = -pose.Ry;
+            p2 = pose.Px * Sind(pose.Rz) - pose.Py * Cosd(pose.Rz) - m1;
+            p3 = pose.Px * Cosd(pose.Rz) + pose.Py * Sind(pose.Rz) - ltx * Cosd(-pose.Ry) - ltz * Sind(-pose.Ry);
+            p4 = -pose.Pz + ltx * Sind(-pose.Ry) - ltz * Cosd(-pose.Ry) - m2;
 
             joint.R1 = Math.Round(r1, 2);
             joint.R5 = Math.Round(r5, 2);
@@ -91,6 +96,18 @@
             joint.P4 = Math.Round(p4, 4);
 
             return joint;
+        }
+
+        /// <summary>
+        /// Solve Inverse Kinematics 求解逆运动学
+        /// </summary>
+        /// <param name="pose">TaskSpace</param>
+        /// <returns>A new JointSpace instance</returns>
+        public static JointSpace Inverse(TaskSpace pose)
+        {
+            JointSpace joints = new();
+            Inverse(pose, joints);
+            return joints;
         }
 
         public static JointSpace InverseDifferential(TaskSpace deltaSpace, TaskSpace currentSpace)

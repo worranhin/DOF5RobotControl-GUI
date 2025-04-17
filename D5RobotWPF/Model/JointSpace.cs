@@ -125,7 +125,7 @@ namespace DOF5RobotControl_GUI.Model
         }
 
         /// <summary>
-        /// 从控制用的 struct 设置当前状态
+        /// 从控制用的 Joints struct 设置当前状态
         /// </summary>
         /// <param name="j"></param>
         public void SetFromD5RJoints(Joints j)
@@ -142,6 +142,24 @@ namespace DOF5RobotControl_GUI.Model
             P3 = j.P3 / 1000000.0;
             P4 = j.P4 / 1000000.0;
             R5 = -j.R5 / 100.0;
+        }
+
+        /// <summary>
+        /// 转换为控制用的 Joints struct
+        /// </summary>
+        /// <returns></returns>
+        public Joints ToD5RJoints()
+        {
+            Joints j = new()
+            {
+                R1 = (int)(R1 * 100),
+                P2 = -(int)(P2 * 1000000),
+                P3 = (int)(P3 * 1000000),
+                P4 = (int)(P4 * 1000000),
+                R5 = -(int)(R5 * 100)
+            };
+
+            return j;
         }
     }
 }
