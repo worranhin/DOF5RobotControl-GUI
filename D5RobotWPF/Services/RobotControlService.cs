@@ -1,11 +1,6 @@
 ﻿using D5R;
 using DOF5RobotControl_GUI.Model;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 
 namespace DOF5RobotControl_GUI.Services
@@ -20,7 +15,7 @@ namespace DOF5RobotControl_GUI.Services
             {
                 if (robot == null)
                     throw new InvalidOperationException("Access joints value before robot is connected.");
-                
+
                 var joints = robot.GetCurrentJoint();
                 JointSpace jointSpace = new(joints);
                 return jointSpace;
@@ -124,11 +119,11 @@ namespace DOF5RobotControl_GUI.Services
         /// <summary>
         /// 获取当前的状态
         /// </summary>
-        /// <returns></returns>
+        /// <returns>当前状态的克隆，更改此对象不会影响原系统</returns>
         public RoboticState GetCurrentState()
         {
             UpdateCurrentState();
-            return CurrentState;
+            return CurrentState.Clone();
         }
 
         public async Task WaitForTargetedAsync(int CheckPeriod = 100, double CheckDistance = 0.1)

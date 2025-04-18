@@ -17,36 +17,189 @@ namespace DOF5RobotControl_GUI.ViewModel
         private CancellationTokenSource? insertCancelSource;
         private CancellationTokenSource? attachCancelSource;
 
+
+        /// <summary>
+        /// 移动到插入初始位置
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         [RelayCommand]
-        private async Task MoveToInitialPosition()
+        private async Task PreAlignJawAsync()
         {
+            preAlignCancelSource = new();
+            var token = preAlignCancelSource.Token;
+
             try
             {
-                await PreAlignJawAsync();
+                // 为了安全，先前往便于视觉检测的位置
+                TargetState.SetFromD5RJoints(PreChangeJawPos);
+                _robotControlService.MoveTo(TargetState);
+                await _robotControlService.WaitForTargetedAsync(token);
+                token.ThrowIfCancellationRequested();
+
+                // 更新关节状态与图像
+                var target = _robotControlService.CurrentState.TaskSpace.Clone();
+                var topFrame = _cameraCtrlService.GetTopFrame();
+                var bottomFrame = _cameraCtrlService.GetBottomFrame();
+
+                // 处理图像
+                var TopProcessTask = ImageProcessor.ProcessTopImgAsync(
+                    topFrame.Buffer, topFrame.Width, topFrame.Height, topFrame.Stride, MatchingMode.ROUGH); // 耗时 2038ms
+                var BottomProcessTask = ImageProcessor.ProcessBottomImgAsync(
+                    bottomFrame.Buffer, bottomFrame.Width, bottomFrame.Height, bottomFrame.Stride); // 耗时 231ms
+                await Task.WhenAll(TopProcessTask, BottomProcessTask); // 同时处理两个图片并等待完成 耗时 2051ms
+                token.ThrowIfCancellationRequested();
+
+                var (x, y, rz) = await TopProcessTask; // 获取处理结果
+                var pz = await BottomProcessTask;
+
+                // 计算目标位置
+                target.Px += x;
+                target.Py += y;
+                target.Pz += pz;
+
+                var targetJoints = KineHelper.Inverse(target); // 求解逆运动学
+                if (targetJoints.P4 > 12) // 安全检查
+                    throw new InvalidOperationException($"前往初始位置时，关节移动量超出安全范围，请检查！\nP4: {targetJoints.P4}");
+                TargetState.JointSpace = targetJoints;
+                _robotControlService.MoveTo(TargetState); // 控制机器人前往目标位置
+                await _robotControlService.WaitForTargetedAsync(token);
+
+                // 进行重复预对准
+                const double EntrancePointX = 4;
+                TargetState.Copy(CurrentState);
+
+                while (!token.IsCancellationRequested)
+                {
+
+                    UpdateCurrentState();
+                    topFrame = _cameraCtrlService.GetTopFrame();
+
+                    (x, y, rz) = await ImageProcessor.ProcessTopImgAsync(topFrame.Buffer, topFrame.Width, topFrame.Height, topFrame.Stride, MatchingMode.FINE);
+                    if (token.IsCancellationRequested) break;
+
+                    //Debug.WriteLine($"Fine  x:{x}, y:{y}, z:{rz}");
+
+                    if (Math.Abs(y) < 0.05) // 已完成预对准
+                        break;
+
+                    TargetState.TaskSpace.Px += x - EntrancePointX;
+                    TargetState.TaskSpace.Py += y;
+                    _robotControlService.MoveTo(TargetState);
+                    await _robotControlService.WaitForTargetedAsync(token, 100, 0.01);
+                }
+            }
+            catch (OperationCanceledException ex)
+            {
+                Debug.WriteLine("Pre-align canceled.\n" + ex.Message);
             }
             catch (InvalidOperationException ex)
             {
-                _popUpService.Show(ex.Message, "Error when go to insertion initial position");
+                _popUpService.Show(ex.Message, "Error in Pre-align");
+            }
+            finally
+            {
+                preAlignCancelSource?.Dispose();
+                preAlignCancelSource = null;
             }
         }
 
+        /// <summary>
+        /// 异步地完成振动配合过程
+        /// </summary>
+        /// <returns></returns>
         [RelayCommand]
-        private async Task ToggleInsertion()
+        private async Task InsertJawAsync()
         {
-            if (!IsInserting)
+            IsInserting = true;
+            insertCancelSource = new();
+            var token = insertCancelSource.Token;
+
+            try
             {
-                try
+                //// 开始振动配合 ////
+                while (!token.IsCancellationRequested)
                 {
-                    await InsertJawAsync();
-                }
-                catch (InvalidOperationException ex)
-                {
-                    _popUpService.Show(ex.Message, "Error When Inserting");
+                    // 更新状态
+                    RoboticState target = _robotControlService.CurrentState;
+                    CurrentState = target.Clone();
+                    var topFrame = _cameraCtrlService.GetTopFrame();
+                    var (dx, dy, drz) = await ImageProcessor.ProcessTopImgAsync(topFrame.Buffer, topFrame.Width, topFrame.Height, topFrame.Stride, MatchingMode.FINE);
+                    if (token.IsCancellationRequested) break;
+
+                    if (dx < 0.05) // 若误差小于一定值则退出循环
+                        break;
+
+                    // 规划进给轨迹
+                    target.TaskSpace.Px += dx;
+                    double x0 = CurrentState.TaskSpace.Px;
+                    double xf = target.TaskSpace.Px;
+                    double tf = dx / FeedVelocity; // seconds, depends on FeedVelocity
+                    double trackX(double t) => x0 + t * FeedVelocity;
+
+                    // 振动轨迹
+                    double y0 = CurrentState.TaskSpace.Py;
+                    double z0 = CurrentState.TaskSpace.Pz;
+                    Func<double, double> trackY;
+                    Func<double, double> trackZ;
+
+                    if (IsVibrateHorizontal)
+                        trackY = (double t) => y0 + VibrateAmplitude * Math.Sin(2 * Math.PI * VibrateFrequency * t);
+                    else
+                        trackY = (t) => y0;
+
+                    if (IsVibrateVertical)
+                        trackZ = (double t) => z0 + VibrateAmplitude * Math.Sin(2 * Math.PI * VibrateFrequency * t);
+                    else
+                        trackZ = (t) => z0;
+
+                    double t = 0;
+                    TargetState.Copy(CurrentState);
+                    Stopwatch sw = Stopwatch.StartNew();
+
+                    await Task.Run(() =>
+                    {
+                        do
+                        {
+                            t = sw.ElapsedMilliseconds / 1000.0;
+
+                            var current = _robotControlService.CurrentState.TaskSpace;
+                            var target = current.Clone();
+                            target.Px = trackX(t);
+                            target.Py = trackY(t);
+                            target.Pz = trackZ(t);
+                            TargetState.TaskSpace = target;
+                            _robotControlService.MoveTo(TargetState);
+
+                            // 记录数据
+                            if (_dataRecordService.IsStarted)
+                                _dataRecordService.Record(
+                                    KineHelper.Inverse(current), KineHelper.Inverse(target),
+                                    _cameraCtrlService.GetTopFrame(), _cameraCtrlService.GetBottomFrame());
+                            //JointSpace Joint = _robotControlService.GetCurrentState().JointSpace.Clone();
+                            //JointSpace targetJoint = _robotControlService.TargetState.JointSpace.Clone();
+                            //_dataRecordService.Record(`Joint, targetJoint);
+                            //JointSpace deltaJoint = TargetState.JointSpace.Clone().Minus(`Joint);
+                            //_dataRecordService.Record(`Joint, deltaJoint, _cameraCtrlService.GetTopFrame(), _cameraCtrlService.GetBottomFrame()); // TODO: 这里的记录过程会影响正常运行，急需解决
+                        } while (t < tf && !token.IsCancellationRequested);
+                    });
+
+                    _robotControlService.TargetState.TaskSpace.Pz = z0;
+                    sw.Stop();
                 }
             }
-            else  // if inserting, then cancel it
+            catch (OperationCanceledException ex)
             {
-                insertCancelSource?.Cancel();
+                Debug.WriteLine("Insertion is canceled: " + ex.Message);
+            }
+            finally
+            {
+                //_dataRecordService.Stop();
+                //IsRecording = false;
+
+                insertCancelSource?.Dispose();
+                insertCancelSource = null;
+                IsInserting = false;
             }
         }
 
@@ -95,18 +248,18 @@ namespace DOF5RobotControl_GUI.ViewModel
                     cancelToken.ThrowIfCancellationRequested();
                     TargetState.TaskSpace.Px = CurrentState.TaskSpace.Px - 1; // 向后退 1mm，避免与台子前方有挤压
                     _robotControlService.MoveTo(TargetState);
-                    await WaitForTargetedAsync();
+                    await _robotControlService.WaitForTargetedAsync();
                 } while (Math.Abs(CurrentState.TaskSpace.Rz) > 0.02); // 若与目标值0相差太多，则说明仍有接触，需继续后退
 
                 cancelToken.ThrowIfCancellationRequested();
                 TargetState.TaskSpace.Pz += 10;  // 向上抬一段距离，避免发生碰撞
                 _robotControlService.MoveTo(TargetState);
-                await WaitForTargetedAsync();
+                await _robotControlService.WaitForTargetedAsync();
 
                 cancelToken.ThrowIfCancellationRequested();
                 TargetState.SetFromD5RJoints(ZeroPos); // 返回零点
                 _robotControlService.MoveTo(TargetState);
-                await WaitForTargetedAsync();
+                await _robotControlService.WaitForTargetedAsync();
             }
             catch (OperationCanceledException)
             {
@@ -124,12 +277,17 @@ namespace DOF5RobotControl_GUI.ViewModel
                 attachCancelSource.Dispose();
                 attachCancelSource = null;
 
-                StopRecord();
+                await StopRecordAsync();
                 //await recordTask;
                 recordTask = null;
             }
         }
 
+        /// <summary>
+        /// 自动将钳口放回钳口库中
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
         [RelayCommand]
         private async Task DetachJawAsync()
         {
@@ -137,178 +295,15 @@ namespace DOF5RobotControl_GUI.ViewModel
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// 取消当前正在进行的任务
+        /// </summary>
         [RelayCommand]
         private void CancelTask()
         {
             preAlignCancelSource?.Cancel();
             insertCancelSource?.Cancel();
             attachCancelSource?.Cancel();
-        }
-
-        /// <summary>
-        /// 移动到插入初始位置
-        /// </summary>
-        /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
-        [RelayCommand]
-        private async Task PreAlignJawAsync()
-        {
-            preAlignCancelSource = new();
-            var token = preAlignCancelSource.Token;
-
-            try
-            {
-                // 为了安全，先前往便于视觉检测的位置
-                TargetState.SetFromD5RJoints(PreChangeJawPos);
-                _robotControlService.MoveTo(TargetState);
-                await _robotControlService.WaitForTargetedAsync(token);
-                token.ThrowIfCancellationRequested();
-
-                // 更新关节状态与图像
-                var target = _robotControlService.CurrentState.TaskSpace.Clone();
-                var topFrame = _cameraCtrlService.GetTopFrame();
-                var bottomFrame = _cameraCtrlService.GetBottomFrame();
-
-                // 处理图像
-                //var (x, y, rz) = await ImageProcessor.ProcessTopImgAsync(topFrame.Buffer, topFrame.Width, topFrame.Height, topFrame.Stride, MatchingMode.ROUGH);
-                //double pz = await ImageProcessor.ProcessBottomImgAsync(bottomFrame.Buffer, bottomFrame.Width, bottomFrame.Height, bottomFrame.Stride);
-                var TopProcessTask = ImageProcessor.ProcessTopImgAsync(topFrame.Buffer, topFrame.Width, topFrame.Height, topFrame.Stride, MatchingMode.ROUGH);
-                var BottomProcessTask = ImageProcessor.ProcessBottomImgAsync(bottomFrame.Buffer, bottomFrame.Width, bottomFrame.Height, bottomFrame.Stride);
-                //await Task.WhenAll([TopProcessTask, BottomProcessTask], token); // 同时处理两个图片并等待完成
-                await Task.WhenAll(TopProcessTask, BottomProcessTask); // 同时处理两个图片并等待完成
-                token.ThrowIfCancellationRequested();
-
-                var (x, y, rz) = await TopProcessTask; // 获取处理结果
-                var pz = await BottomProcessTask;
-
-                // 计算目标位置
-                target.Px += x;
-                target.Py += y;
-                target.Pz += pz;
-
-                var targetJoints = KineHelper.Inverse(target); // 求解逆运动学
-                if (targetJoints.P4 > 12) // 安全检查
-                    throw new InvalidOperationException($"前往初始位置时，关节移动量超出安全范围，请检查！\nP4: {targetJoints.P4}");
-                TargetState.JointSpace = targetJoints;
-                _robotControlService.MoveTo(TargetState); // 控制机器人前往目标位置
-                await _robotControlService.WaitForTargetedAsync(token);
-
-                //// 前往振动开始点 ////
-                TargetState.Copy(CurrentState);
-
-                while (!token.IsCancellationRequested)
-                {
-                    const double EntrancePointX = 4;
-
-                    UpdateCurrentState();
-                    topFrame = _cameraCtrlService.GetTopFrame();
-
-                    (x, y, rz) = await ImageProcessor.ProcessTopImgAsync(topFrame.Buffer, topFrame.Width, topFrame.Height, topFrame.Stride, MatchingMode.FINE);
-                    if (token.IsCancellationRequested) break;
-
-                    Debug.WriteLine($"Fine  x:{x}, y:{y}, z:{rz}");
-
-                    if (Math.Abs(y) < 0.05) // 已完成预对准
-                        break;
-
-                    TargetState.TaskSpace.Px += x - EntrancePointX;
-                    TargetState.TaskSpace.Py += y;
-                    _robotControlService.MoveTo(TargetState);
-                    await _robotControlService.WaitForTargetedAsync(token, 100, 0.01);
-                }
-            }
-            catch (OperationCanceledException ex)
-            {
-                Debug.WriteLine("Pre-align canceled.\n" + ex.Message);
-            }
-            finally
-            {
-                preAlignCancelSource?.Dispose();
-                preAlignCancelSource = null;
-            }
-        }
-
-        /// <summary>
-        /// 异步地完成振动配合过程
-        /// </summary>
-        /// <returns></returns>
-        [RelayCommand]
-        private async Task InsertJawAsync()
-        {
-            object robotMoveLock = new();
-
-            try
-            {
-                IsInserting = true;
-                insertCancelSource = new();
-                var token = insertCancelSource.Token;
-
-                //// 开始振动并插入 ////
-                while (!token.IsCancellationRequested)
-                {
-                    UpdateCurrentState();
-                    var topFrame = _cameraCtrlService.GetTopFrame();
-                    var (dx, dy, drz) = await ImageProcessor.ProcessTopImgAsync(topFrame.Buffer, topFrame.Width, topFrame.Height, topFrame.Stride, MatchingMode.FINE);
-
-                    if (dx < 0.05) // 若误差小于一定值则退出循环
-                        break;
-
-                    RoboticState target = CurrentState.Clone();
-                    target.TaskSpace.Px += dx;
-                    double x0 = CurrentState.TaskSpace.Px;
-                    double xf = target.TaskSpace.Px;
-                    double tf = dx / FeedVelocity; // seconds, depends on FeedVelocity
-                    double trackX(double t) => x0 + t * FeedVelocity;
-
-                    double y0 = CurrentState.TaskSpace.Py;
-                    double trackY(double t) => y0 + VibrateAmplitude * Math.Sin(2 * Math.PI * VibrateFrequency * t);
-
-                    double z0 = CurrentState.TaskSpace.Pz;
-                    double trackZ(double t) => z0 + VibrateAmplitude * Math.Sin(2 * Math.PI * VibrateFrequency * t);
-
-                    double t = 0;
-                    TargetState.Copy(CurrentState);
-                    Stopwatch sw = Stopwatch.StartNew();
-
-                    await Task.Run(() =>
-                    {
-                        do
-                        {
-                            t = sw.ElapsedMilliseconds / 1000.0;
-                            TargetState.TaskSpace.Px = trackX(t);
-                            if (IsVibrateHorizontal)
-                                TargetState.TaskSpace.Py = trackY(t);
-                            if (IsVibrateVertical)
-                                TargetState.TaskSpace.Pz = trackZ(t);
-                            //insertCancelToken.ThrowIfCancellationRequested();
-                            _robotControlService.MoveTo(TargetState);
-
-                            // 记录数据
-                            //JointSpace `Joint = _robotControlService.GetCurrentState().JointSpace.Clone();
-                            //JointSpace targetJoint = _robotControlService.TargetState.JointSpace.Clone();
-                            //_dataRecordService.Record(`Joint, targetJoint);
-                            //JointSpace deltaJoint = TargetState.JointSpace.Clone().Minus(`Joint);
-                            //_dataRecordService.Record(`Joint, deltaJoint, _cameraCtrlService.GetTopFrame(), _cameraCtrlService.GetBottomFrame()); // TODO: 这里的记录过程会影响正常运行，急需解决
-                        } while (t < tf && !token.IsCancellationRequested);
-                    });
-
-                    _robotControlService.TargetState.TaskSpace.Pz = z0;
-                    sw.Stop();
-                }
-            }
-            catch (OperationCanceledException ex)
-            {
-                Debug.WriteLine("Insertion is canceled: " + ex.Message);
-            }
-            finally
-            {
-                //_dataRecordService.Stop();
-                //IsRecording = false;
-
-                insertCancelSource?.Dispose();
-                insertCancelSource = null;
-                IsInserting = false;
-            }
         }
 
         /// <summary>

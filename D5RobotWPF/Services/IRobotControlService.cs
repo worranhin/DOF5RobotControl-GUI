@@ -4,8 +4,16 @@ namespace DOF5RobotControl_GUI.Services
 {
     public interface IRobotControlService
     {
+        /// <summary>
+        /// 指示机器人的连接状态
+        /// </summary>
         bool RobotIsConnected { get; }
+
+        /// <summary>
+        /// 实时获取机器人当前状态
+        /// </summary>
         RoboticState CurrentState { get; }
+
         RoboticState TargetState { get; }
 
         void Connect(string port);

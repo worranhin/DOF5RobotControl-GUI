@@ -148,7 +148,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         Task? recordTask;
 
         [RelayCommand]
-        private void ToggleRecord()
+        private async Task ToggleRecord()
         {
             if (!IsRecording)
             {
@@ -156,7 +156,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             }
             else
             {
-                StopRecord();
+                await StopRecordAsync();
             }
         }
 
@@ -226,7 +226,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             });
         }
 
-        private void StopRecord()
+        private async Task StopRecordAsync()
         {
             // 取消记录任务
             recordCancelSource?.Cancel();
@@ -242,7 +242,8 @@ namespace DOF5RobotControl_GUI.ViewModel
             recordCancelSource = null;
 
             // 停止 record 服务
-            _dataRecordService.Stop();
+            //_dataRecordService.Stop();
+            await _dataRecordService.StopAsync();
 
             IsRecording = false;
         }

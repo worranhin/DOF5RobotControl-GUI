@@ -5,6 +5,11 @@ namespace DOF5RobotControl_GUI.Services
     public interface IDataRecordService
     {
         /// <summary>
+        /// Indicate the record is started or not.
+        /// </summary>
+        bool IsStarted { get; }
+
+        /// <summary>
         /// Do initialization and prepare for record.
         /// </summary>
         void Start();
@@ -12,6 +17,7 @@ namespace DOF5RobotControl_GUI.Services
         /// <summary>
         /// Stop the record, save datas.
         /// </summary>
+        [Obsolete("Use StopAsync when possible.")]
         void Stop();
 
         /// <summary>

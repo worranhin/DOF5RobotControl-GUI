@@ -192,7 +192,7 @@ namespace NativeVision {
 		{
 			cv::perspectiveTransform(modelPosition, pst, homography);
 		}
-		catch (const cv::Exception& ex) 
+		catch (const cv::Exception& ex)
 		{
 			throw;
 		}
@@ -383,6 +383,7 @@ namespace NativeVision {
 			}
 			else
 			{
+				//flag++; // 用这行代码替代该块中下面的代码
 				ReduceDomain(ho_img, ho_init_search_rect, &ho_ImageReduced);
 				FindShapeModel(ho_ImageReduced, _jawMid.temp_dl, hv_start, hv_range, 0.7, 1, 0.5,
 					(HTuple("least_squares").Append("max_deformation 2")), 0, 0.9, &hv_Row_DL,
@@ -405,6 +406,7 @@ namespace NativeVision {
 			}
 			else
 			{
+				//flag++; // 用这行代码替代该块中下面的代码
 				ReduceDomain(ho_img, ho_init_search_rect, &ho_ImageReduced);
 				FindShapeModel(ho_ImageReduced, _jawMid.temp_dr, hv_start, hv_range, 0.7, 1, 0.5,
 					(HTuple("least_squares").Append("max_deformation 2")), 0, 0.9, &hv_Row_DR,

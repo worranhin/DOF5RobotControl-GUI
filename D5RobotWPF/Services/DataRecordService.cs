@@ -14,6 +14,8 @@ namespace DOF5RobotControl_GUI.Services
 
     public class DataRecordService : IDataRecordService
     {
+        public bool IsStarted { get; private set; } = false;
+
         private record ImageRecord(CamFrame Frame, string Id);
 
         private static readonly string RootDir = "Records";
@@ -24,57 +26,78 @@ namespace DOF5RobotControl_GUI.Services
 
         private BlockingCollection<ImageRecord>? imageSaveQueue;
         private Task? saveImageTask;
+        private object startLock = new();
 
         public void Start()
         {
-            // 初始化记录列表
-            records = [];
+            lock (startLock)
+            {
+                if (IsStarted == true)
+                    throw new InvalidOperationException("DataRecordService has already started.");
 
-            // 初始化记录路径并创建文件夹
-            rootTimestamp = DateTimeOffset.UtcNow.ToString("yyMMddHHmmss");
-            Directory.CreateDirectory(RootDir);
-            Directory.CreateDirectory(Path.Combine(RootDir, rootTimestamp));
-            Directory.CreateDirectory(Path.Combine(RootDir, rootTimestamp, ImageDir));
+                // 初始化记录列表
+                records = [];
 
-            // 初始化图像保存队列并开始处理任务
-            imageSaveQueue = new(200);
-            saveImageTask = Task.Run(StartSaveImageTask);
+                // 初始化记录路径并创建文件夹
+                rootTimestamp = DateTimeOffset.UtcNow.ToString("yyMMddHHmmss");
+                Directory.CreateDirectory(RootDir);
+                Directory.CreateDirectory(Path.Combine(RootDir, rootTimestamp));
+                Directory.CreateDirectory(Path.Combine(RootDir, rootTimestamp, ImageDir));
 
-            // 开始计时
-            stopWatch.Restart();
+                // 初始化图像保存队列并开始处理任务
+                imageSaveQueue = new(200);
+                saveImageTask = Task.Run(StartSaveImageTask);
+
+                // 开始计时
+                stopWatch.Restart();
+
+                IsStarted = true;
+            }
         }
 
+        [Obsolete("Use StopAsync when possible.")]
         public void Stop()
         {
-            //StopAsync().Wait();
-            // 停止计时
-            stopWatch.Stop();
+            //StopAsync().Wait(); 若直接调用会导致程序死锁
 
-            // 写入文件
-            var jsonPath = Path.Combine(RootDir, rootTimestamp, "data.json");
-            using (StreamWriter sw = File.CreateText(jsonPath))
+            lock (startLock)
             {
-                string jsonStr = JsonSerializer.Serialize(records);
-                sw.WriteLine(jsonStr);
-            }
+                if (!IsStarted)
+                    throw new InvalidOperationException("DataRecordService has not been started.");
 
-            // 结束图像保存线程
-            if (imageSaveQueue != null)
-            {
-                imageSaveQueue.CompleteAdding();
+                IsStarted = false;
 
-                if (saveImageTask == null)
-                    throw new InvalidOperationException("saveImageTask is null in StopAsync()");
-                saveImageTask.Wait();
-                //saveImageTask.Wait();
+                // 停止计时
+                stopWatch.Stop();
 
-                imageSaveQueue.Dispose();
-                imageSaveQueue = null;
+                // 写入文件
+                var jsonPath = Path.Combine(RootDir, rootTimestamp, "data.json");
+                using (StreamWriter sw = File.CreateText(jsonPath))
+                {
+                    string jsonStr = JsonSerializer.Serialize(records);
+                    sw.WriteLine(jsonStr);
+                }
+
+                // 结束图像保存线程
+                if (imageSaveQueue != null)
+                {
+                    imageSaveQueue.CompleteAdding();
+
+                    if (saveImageTask == null)
+                        throw new InvalidOperationException("saveImageTask is null in StopAsync()");
+                    saveImageTask.Wait();
+
+                    imageSaveQueue.Dispose();
+                    imageSaveQueue = null;
+                }
             }
         }
 
         public async Task StopAsync()
         {
+            // TODO: 线程安全性改进
+            IsStarted = false;
+
             // 停止计时
             stopWatch.Stop();
 
@@ -94,7 +117,6 @@ namespace DOF5RobotControl_GUI.Services
                 if (saveImageTask == null)
                     throw new InvalidOperationException("saveImageTask is null in StopAsync()");
                 await saveImageTask;
-                //saveImageTask.Wait();
 
                 imageSaveQueue.Dispose();
                 imageSaveQueue = null;
