@@ -65,34 +65,37 @@ namespace DOF5RobotControl_GUI.ViewModel
 
         private void TopFrameReceived(object? sender, CamFrame e)
         {
-            PixelFormat pf = PixelFormats.Gray8; // 下面转成 bitmap 格式
-            int rawStride = (e.Width * pf.BitsPerPixel + 7) / 8;
-            dispatcher.Invoke(() =>
-            {
-                BitmapSource bitmap = BitmapSource.Create(e.Width, e.Height, 96, 96, pf, null, e.Buffer, rawStride);
-                TopImageSource = bitmap;
-            });
-            //Image img = yoloDetectionService.Plot(e);
-            //try
+            //PixelFormat pf = PixelFormats.Gray8; // 下面转成 bitmap 格式
+            //int rawStride = (e.Width * pf.BitsPerPixel + 7) / 8;
+            //dispatcher.Invoke(() =>
             //{
-            //    if (img is Image<Rgba32> img32)
-            //    {
-            //        byte[] procRaw = new byte[img.Width * img.Height * 4];
-            //        img32.CopyPixelDataTo(procRaw);
+            //    BitmapSource bitmap = BitmapSource.Create(e.Width, e.Height, 96, 96, pf, null, e.Buffer, rawStride);
+            //    TopImageSource = bitmap;
+            //});
 
-            //        PixelFormat pf = PixelFormats.Bgra32; // 下面转成 bitmap 格式
-            //        int rawStride = (e.Width * pf.BitsPerPixel + 7) / 8;
-            //        dispatcher.Invoke(() =>
-            //        {
-            //            BitmapSource bitmap = BitmapSource.Create(img32.Width, img32.Height, 96, 96, pf, null, procRaw, rawStride);
-            //            TopImageSource = bitmap;
-            //        });
-            //    }
-            //}
-            //finally
-            //{
-            //    img.Dispose();
-            //}
+            //Image img = yoloDetectionService.Plot(e);
+            //var img = yoloDetectionService.PlotTopAsync(e).Result;
+            var img = yoloDetectionService.PlotTop(e);
+            try
+            {
+                if (img is Image<Rgba32> img32)
+                {
+                    byte[] procRaw = new byte[img.Width * img.Height * 4];
+                    img32.CopyPixelDataTo(procRaw);
+
+                    PixelFormat pf = PixelFormats.Bgra32; // 下面转成 bitmap 格式
+                    int rawStride = (e.Width * pf.BitsPerPixel + 7) / 8;
+                    dispatcher.Invoke(() =>
+                    {
+                        BitmapSource bitmap = BitmapSource.Create(img32.Width, img32.Height, 96, 96, pf, null, procRaw, rawStride);
+                        TopImageSource = bitmap;
+                    });
+                }
+            }
+            finally
+            {
+                img.Dispose();
+            }
         }
 
         private void BottomFrameReceived(object? sender, CamFrame e)

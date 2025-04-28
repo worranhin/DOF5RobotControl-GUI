@@ -178,50 +178,29 @@ namespace DOF5RobotControl_GUI.ViewModel
             _dataRecordService.Start();
             Debug.WriteLine("Start recording");
 
-            recordTask = Task.Run(() =>
+            recordTask = Task.Run(async () =>
             {
-                //Stopwatch sw = Stopwatch.StartNew();
-
                 while (!token.IsCancellationRequested)
                 {
-                    //var t1 = sw.ElapsedMilliseconds;
+
+                    Stopwatch sw = Stopwatch.StartNew();
+                    var delayTask = Task.Delay(period, token);
 
                     var currentJoints = _robotControlService.GetCurrentState().JointSpace.Clone();
                     var targetJoints = _robotControlService.TargetState.JointSpace.Clone();
 
-                    //var t2 = sw.ElapsedMilliseconds;
-
                     if (recordImage)
                     {
-                        //var t21 = sw.ElapsedMilliseconds;
-
                         var topFrame = _cameraCtrlService.GetTopFrame();
                         var bottomFrame = _cameraCtrlService.GetBottomFrame();
-
-                        //var t22 = sw.ElapsedMilliseconds;
-
                         _dataRecordService.Record(currentJoints, targetJoints, topFrame, bottomFrame); // 记录当前状态和对应的动作
-
-                        //var t23 = sw.ElapsedMilliseconds;
-
-                        //Debug.WriteLine($"t21={t21}, t22={t22}, t23={t23}");
                     }
                     else
                     {
                         _dataRecordService.Record(currentJoints, targetJoints);
                     }
 
-                    //var t3 = sw.ElapsedMilliseconds;
-
-                    try
-                    {
-                        Task.Delay(period, token).Wait();
-                    }
-                    catch (AggregateException) { }
-
-                    //var t4 = sw.ElapsedMilliseconds;
-
-                    //Debug.WriteLine($"t1={t1}, t2={t2}, t3={t3}, t4={t4}");
+                    await delayTask;
                 }
             });
         }

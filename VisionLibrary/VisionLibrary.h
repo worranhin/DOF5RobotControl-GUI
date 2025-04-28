@@ -40,5 +40,15 @@ namespace VisionLibrary {
 		TaskSpaceError GetTaskSpaceError(IntPtr imgBuffer, int width, int height, int stride, MatchingMode mode);
 		void GetHorizontalLine(IntPtr imgBuffer, int width, int height, int stride);
 		double GetVerticalError(IntPtr imgBuffer, int width, int height, int stride);
+
+		/// <summary>
+		/// 通过 Halcon 算法获取钳口的位姿
+		/// </summary>
+		/// <param name="imgBuffer">存储图像信息的 Buffer 指针，函数退出前请勿释放内存</param>
+		/// <param name="width">图像的宽度</param>
+		/// <param name="height">图像的高度</param>
+		/// <param name="stride">图像单行的字节数</param>
+		/// <returns>表示钳口位姿的元组 (x, y, rz)</returns>
+		System::ValueTuple<double, double, double> GetJawPos(IntPtr imgBuffer, int width, int height, int stride);
 	};
 }

@@ -134,5 +134,33 @@ namespace VisionLibrary {
 			throw;
 		}
 	}
+
+	/// <summary>
+	/// 通过 Halcon 算法获取钳口的位姿
+	/// </summary>
+	/// <param name="imgBuffer">存储图像信息的 Buffer 指针，函数退出前请勿释放内存</param>
+	/// <param name="width">图像的宽度</param>
+	/// <param name="height">图像的高度</param>
+	/// <param name="stride">图像单行的字节数</param>
+	/// <returns>表示钳口位姿的元组 (x, y, rz)</returns>
+	System::ValueTuple<double, double, double> VisionWrapper::GetJawPos(IntPtr imgBuffer, int width, int height, int stride)
+	{
+		try {
+			// 数据转换
+			unsigned char* data = static_cast<unsigned char*>(imgBuffer.ToPointer());
+			cv::Mat mat = cv::Mat(height, width, CV_8U, data, stride);
+			auto hImage = instance->Mat2HImage(mat);
+
+			// 获取钳口位姿
+			auto jawPos = instance->GetJawPos(hImage);
+			return System::ValueTuple<double, double, double>(jawPos.x, jawPos.y, jawPos.angle);
+		}
+		catch (const HalconCpp::HException ex) {
+			throw gcnew VisionException(gcnew System::String(ex.ErrorMessage().Text()));
+		}
+		catch (const std::exception& ex) {
+			throw gcnew VisionException(gcnew System::String(ex.what()));
+		}
+	}
 }
 

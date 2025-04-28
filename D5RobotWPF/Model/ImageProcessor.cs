@@ -57,6 +57,7 @@ namespace DOF5RobotControl_GUI.Model
             int width = 0, height = 0, stride = 0;
             byte[] rawBuffer = [];
 
+            // 从 UI 线程中获取图像
             await Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 width = topBitmap.PixelWidth;
