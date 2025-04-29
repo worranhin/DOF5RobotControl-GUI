@@ -12,41 +12,48 @@ namespace DOF5RobotControl_GUI.Services
         /// <param name="frame">图像帧</param>
         /// <param name="results">返回的检测结果</param>
         /// <returns>检测到的物体数量</returns>
-        int Detect(CamFrame frame, out YoloResult<Detection> results);
+        //int Detect(CamFrame frame, out YoloResult<Detection> results);
 
         /// <summary>
         /// 对图像进行目标检测
         /// </summary>
         /// <param name="frame">图像帧</param>
         /// <returns>检测的结果</returns>
-        Task<YoloResult<Detection>> DetectAsync(CamFrame frame);
+        //Task<YoloResult<Detection>> DetectAsync(CamFrame frame);
 
         /// <summary>
         /// 对传入图像进行目标检测，并返回一个带检测框的图像，调用方需要显式调用返回对象的 Dispose() 方法
         /// </summary>
-        /// <param name="frame"></param>
+        /// <param name="frame">图像帧</param>
         /// <returns>一个 Image 对象，使用完后请调用 Dispose 方法</returns>
-        Image Plot(CamFrame frame);
+        //Image Plot(CamFrame frame);
 
         /// <summary>
         /// 异步地对传入图像进行目标检测，并返回一个带检测框的图像，调用方需要显式调用返回对象的 Dispose() 方法
         /// </summary>
-        /// <param name="frame"></param>
+        /// <param name="frame">图像帧</param>
         /// <returns>一个 Image 对象，使用完后请调用 Dispose 方法</returns>
-        Task<Image> PlotAsync(CamFrame frame);
+        //Task<Image> PlotAsync(CamFrame frame);
 
         /// <summary>
         /// 对传入图像进行 OBB 目标检测，并返回一个带检测框的图像，调用方需要显式调用返回对象的 Dispose() 方法
         /// </summary>
-        /// <param name="frame"></param>
-        /// <returns></returns>
-        Image PlotTop(CamFrame frame);
+        /// <param name="frame">图像帧</param>
+        /// <returns>一个 Image 对象，使用完后请调用 Dispose 方法</returns>
+        Image TopPlot(CamFrame frame);
 
         /// <summary>
         /// 异步地对传入图像进行 OBB 目标检测，并返回一个带检测框的图像，调用方需要显式调用返回对象的 Dispose() 方法
         /// </summary>
-        /// <param name="frame"></param>
-        /// <returns></returns>
-        Task<Image> PlotTopAsync(CamFrame frame);
+        /// <param name="frame">图像帧</param>
+        /// <returns>一个 Image 对象，使用完后请调用 Dispose 方法</returns>
+        Task<Image> TopPlotAsync(CamFrame frame);
+
+        /// <summary>
+        /// 对顶部相机的图像进行一次 OBB 检测
+        /// </summary>
+        /// <param name="frame">顶部图像</param>
+        /// <returns>检测的结果</returns>
+        Task<YoloResult<ObbDetection>> TopObbDetectAsync(CamFrame frame);
     }
 }

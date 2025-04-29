@@ -75,7 +75,7 @@ namespace DOF5RobotControl_GUI.ViewModel
 
             //Image img = yoloDetectionService.Plot(e);
             //var img = yoloDetectionService.PlotTopAsync(e).Result;
-            var img = yoloDetectionService.PlotTop(e);
+            var img = yoloDetectionService.TopPlot(e);
             try
             {
                 if (img is Image<Rgba32> img32)
