@@ -1,27 +1,32 @@
 ﻿#include "pch.h"
 #include "Vision.h"
+#include <filesystem>
 
 namespace NativeVision {
 
-	VisualController::VisualController() {
+	VisualController::VisualController(std::filesystem::path modelBasePath = "./model/") {
+		
+		
 		// topC
 		// 夹钳模板
-		_clamp.img = cv::imread("./model/clampTemplate/clamp.png", 0);
+		_clamp.img = cv::imread((modelBasePath / "clampTemplate/clamp.png").string(), 0);
 		_clamp.center = cv::Point2f(324.0f, 119.0f);
 		_clamp.point = cv::Point2f(328.2f, 212.9f);
-		cv::FileStorage fs1("./model/clampTemplate/KeyPoints_Clamp.yml", cv::FileStorage::READ);
+
+		cv::FileStorage fs1((modelBasePath / "clampTemplate/KeyPoints_Clamp.yml").string(), cv::FileStorage::READ);
 		fs1["keypoints"] >> _clamp.keypoints;
 		fs1.release();
-		cv::FileStorage fs2("./model/clampTemplate/Descriptors_Clamp.yml", cv::FileStorage::READ);
+
+		cv::FileStorage fs2((modelBasePath / "clampTemplate/Descriptors_Clamp.yml").string(), cv::FileStorage::READ);
 		fs2["descriptors"] >> _clamp.descriptors;
 		fs2.release();
 
 		// 中号钳口模板
-		HalconCpp::ReadShapeModel("./model/jawTemplate/shm/Temp_DL.shm", &_jawMid.temp_dl);
-		HalconCpp::ReadShapeModel("./model/jawTemplate/shm/Temp_DR.shm", &_jawMid.temp_dr);
+		HalconCpp::ReadShapeModel((modelBasePath / "jawTemplate/shm/Temp_DL.shm").c_str(), &_jawMid.temp_dl);
+		HalconCpp::ReadShapeModel((modelBasePath / "jawTemplate/shm/Temp_DR.shm").c_str(), &_jawMid.temp_dr);
 
 		// 钳口库定位模板
-		_posTemplate_2 = cv::imread("./model/posTemplate/PosTemple_2.png", 0);
+		_posTemplate_2 = cv::imread((modelBasePath / "posTemplate/PosTemple_2.png").string(), 0);
 
 		// 粗定位点，相对于_roiPos而言
 		_roughPosPoint = cv::Point2f(450, 1050);
@@ -29,7 +34,7 @@ namespace NativeVision {
 
 		// botC
 		// 夹钳模板
-		_clampBot.model = cv::imread("./model/botCTemplate/clamp_bot.png", 0);
+		_clampBot.model = cv::imread((modelBasePath / "botCTemplate/clamp_bot.png").string(), 0);
 		_clampBot.pos.push_back(cv::Point2f(93.9549f, 95.2925f));
 		_clampBot.pos.push_back(cv::Point2f(513.976f, 91.9765f));
 
@@ -60,6 +65,7 @@ namespace NativeVision {
 		delete[] temp;
 		return ho_img;
 	}
+
 	/**
 	 * @brief 将Halcon HObject格式转换为OpenCV Mat格式
 	 * @param img
@@ -188,18 +194,8 @@ namespace NativeVision {
 
 		std::vector<cv::Point2f> pst;
 		std::vector<cv::Point2f> pst_Global;
-		try
-		{
-			cv::perspectiveTransform(modelPosition, pst, homography);
-		}
-		catch (const cv::Exception& ex)
-		{
-			throw;
-		}
-		catch (const std::exception&)
-		{
-			throw;
-		}
+		cv::perspectiveTransform(modelPosition, pst, homography);
+
 		for (auto& p : pst) {
 			p.x += _roiPos.x;
 			p.y += _roiPos.y;

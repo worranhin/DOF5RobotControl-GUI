@@ -35,6 +35,7 @@ namespace VisionLibrary {
 
 	public:
 		VisionWrapper();
+		VisionWrapper(System::String^ modelBasePath);
 		~VisionWrapper();
 		void JawLibSegmentation(IntPtr imgBuffer, int width, int height, int stride);
 		TaskSpaceError GetTaskSpaceError(IntPtr imgBuffer, int width, int height, int stride, MatchingMode mode);
@@ -50,5 +51,10 @@ namespace VisionLibrary {
 		/// <param name="stride">图像单行的字节数</param>
 		/// <returns>表示钳口位姿的元组 (x, y, rz)</returns>
 		System::ValueTuple<double, double, double> GetJawPos(IntPtr imgBuffer, int width, int height, int stride);
+		
+	private:
+		std::string ConvertToStdString(System::String^ managedStr);
 	};
+
+
 }

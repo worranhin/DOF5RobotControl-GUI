@@ -2,11 +2,19 @@
 
 #include "VisionLibrary.h"
 #include "VisionException.h"
+#include <string>
+#include <msclr/marshal.h>
+#include <msclr/marshal_cppstd.h>
 
 namespace VisionLibrary {
-	VisionWrapper::VisionWrapper() {
+	VisionWrapper::VisionWrapper() : VisionWrapper(gcnew System::String("./model/")) {
+		// 无需额外实现，委托给有参构造函数
+	}
+
+	VisionWrapper::VisionWrapper(System::String^ modelBasePath) {
 		try {
-			instance = new NativeVision::VisualController();
+			auto path = ConvertToStdString(modelBasePath);
+			instance = new NativeVision::VisualController(path);
 		}
 		catch (cv::Exception& cvEx) {
 			throw gcnew VisionException(gcnew System::String(cvEx.what()));
@@ -161,6 +169,27 @@ namespace VisionLibrary {
 		catch (const std::exception& ex) {
 			throw gcnew VisionException(gcnew System::String(ex.what()));
 		}
+	}
+
+	/// <summary>
+	/// convert the managed string to std::string
+	/// </summary>
+	/// <param name="managedStr">the managed string to be converted</param>
+	/// <returns></returns>
+	std::string VisionWrapper::ConvertToStdString(System::String^ managedStr)
+	{
+		using namespace System;
+		using namespace System::Runtime::InteropServices;
+		using namespace msclr::interop;
+
+		std::string str = marshal_as<std::string>(managedStr);
+		return str;
+
+		//char* pChar = (char*)(Marshal::StringToHGlobalAnsi(managedStr)).ToPointer();  // Marshal managed string to unmanaged memory
+		//std::string result(pChar);
+		//Marshal::FreeHGlobal(IntPtr(pChar));  // free the unmanaged string.
+
+		//return result;
 	}
 }
 

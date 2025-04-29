@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include <filesystem>
+
 namespace NativeVision {
 
 	struct Clamp {
@@ -52,7 +54,7 @@ namespace NativeVision {
 	class VisualController
 	{
 	public:
-		VisualController();
+		VisualController(std::filesystem::path modelBasePath);
 		~VisualController();
 		HalconCpp::HObject Mat2HImage(cv::Mat img);
 		cv::Mat HImage2Mat(HalconCpp::HObject img);
