@@ -1,9 +1,12 @@
 using Xunit;
 using DOF5RobotControl_GUI.Services;
+using System.Threading.Tasks;
+using System.Diagnostics;
+using Xunit.Abstractions;
 
 namespace UnitTest
 {
-    public class YoloDectectionServiceTests
+    public class YoloDectectionServiceTests(ITestOutputHelper testOutputHelper)
     {
         [Fact]
         public void TestRotatePoint()
@@ -23,6 +26,33 @@ namespace UnitTest
             var point4 = YoloDetectionService.RotatePoint(new(1, -1), new(2, -2), -Math.PI / 2);
             Assert.Equal(0, point4.X, 1e-6);
             Assert.Equal(-2, point4.Y, 1e-6);
+        }
+
+        [Fact]
+        public async Task TestYoloDetect()
+        {
+            var yoloService = new YoloDetectionService();
+            var cameraService = new DummyCameraControlService();
+
+            var frame = cameraService.GetTopFrame();
+
+            const int testTimes = 10;
+            long totalTime = 0;
+            for (int i = 0; i < testTimes; i++)
+            {
+                var sw = Stopwatch.StartNew();
+                var (x, y, rz) = await yoloService.TopDetectTipAsync(frame);
+                var t = sw.ElapsedMilliseconds;
+                totalTime += t;
+                sw.Stop();
+
+                Assert.InRange(x, 1000, 2000);
+                Assert.InRange(y, 1000, 2000);
+                Assert.InRange(rz, -10, 10);
+            }
+
+            var averageTime = (double)totalTime / testTimes;
+            testOutputHelper.WriteLine($"Average run time: {averageTime} ms");
         }
     }
 }

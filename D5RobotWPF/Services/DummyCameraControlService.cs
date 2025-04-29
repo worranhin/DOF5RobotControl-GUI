@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace DOF5RobotControl_GUI.Services
 {
-    internal class DummyCameraControlService : ICameraControlService
+    public class DummyCameraControlService : ICameraControlService
     {
         public bool CameraIsOpened { get; private set; }
         public bool CamMotorIsConnected { get; private set; }

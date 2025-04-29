@@ -187,16 +187,24 @@ namespace DOF5RobotControl_GUI.Services
         /// <returns>旋转后的点</returns>
         public static Point<double> RotatePoint(Point<double> center, Point<double> point, double theta)
         {
-            var x0 = point.X - center.X; // 将旋转点根据旋转中心移至原点
-            var y0 = point.Y - center.Y;
-            var phi0 = Math.Atan2(y0, x0); // 转换为极坐标形式
-            var r0 = Math.Sqrt(x0 * x0 + y0 * y0);
-            var x1 = r0 * Math.Cos(phi0 + theta); // 在极坐标系下旋转 theta 角并转换回 x-y 坐标
-            var y1 = r0 * Math.Sin(phi0 + theta);
-            var x11 = x1 + center.X; // 基于旋转中心将旋转后的点移回原来的位置
-            var y11 = y1 + center.Y;
+            //var x0 = point.X - center.X; // 将旋转点根据旋转中心移至原点
+            //var y0 = point.Y - center.Y;
+            //var phi0 = Math.Atan2(y0, x0); // 转换为极坐标形式
+            //var r0 = Math.Sqrt(x0 * x0 + y0 * y0);
+            //var x1 = r0 * Math.Cos(phi0 + theta); // 在极坐标系下旋转 theta 角并转换回 x-y 坐标
+            //var y1 = r0 * Math.Sin(phi0 + theta);
+            //var x11 = x1 + center.X; // 基于旋转中心将旋转后的点移回原来的位置
+            //var y11 = y1 + center.Y;
 
-            return new(x11, y11);
+            // 将上述计算化简得到如下简化形式
+            var (x0, y0) = (point.X, point.Y);
+            var (xc, yc) = (center.X, center.Y);
+            var Ctheta = Math.Cos(theta);
+            var Stheta = Math.Sin(theta);
+            var x1 = xc + (x0 - xc) * Ctheta - (y0 - yc) * Stheta;
+            var y1 = yc + (y0 - yc) * Ctheta + (x0 - xc) * Stheta;
+
+            return new(x1, y1);
         }
     }
 }
