@@ -130,7 +130,13 @@
     <None Update="Assets\HalconModels\temp_res\PosTemple_2.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\TopC_v0.2_best.onnx">
+    <None Update="Assets\YoloModels\BottomCam_v0.2.onnx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\YoloModels\TopCam_v0.2.onnx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\YoloModels\TopC_v0.2_best.onnx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Assets\TopC_v0.2_best_add_nms.onnx">

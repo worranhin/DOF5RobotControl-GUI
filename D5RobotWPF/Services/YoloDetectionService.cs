@@ -18,19 +18,22 @@ namespace DOF5RobotControl_GUI.Services
 {
     public class YoloDetectionService : IYoloDetectionService
     {
-        const string yoloModelPath = "YoloModel.onnx";
-        const string yoloModelTopPath = "Assets/TopC_v0.2_best.onnx";
+        const string TopModelPath = "Assets/YoloModels/TopCam_v0.2.onnx";
+        const string BottomModelPath = "Assets/YoloModels/BottomCam_v0.2.onnx";
 
         readonly YoloPredictor topPredictor;
+        readonly YoloPredictor bottomPredictor;
 
         public YoloDetectionService()
         {
-            topPredictor = new(yoloModelTopPath);
+            topPredictor = new(TopModelPath);
+            bottomPredictor = new(BottomModelPath);
         }
 
         ~YoloDetectionService()
         {
             topPredictor.Dispose();
+            bottomPredictor.Dispose();
         }
 
         /// <summary>
@@ -38,27 +41,27 @@ namespace DOF5RobotControl_GUI.Services
         /// </summary>
         /// <param name="frame"></param>
         /// <returns></returns>
-        public Image Plot(CamFrame frame)
-        {
-            using var predictor = new YoloPredictor(yoloModelPath);
-            using var image = Image.LoadPixelData<L8>(frame.Buffer, frame.Width, frame.Height);
+        //public Image Plot(CamFrame frame)
+        //{
+        //    using var predictor = new YoloPredictor(yoloModelPath);
+        //    using var image = Image.LoadPixelData<L8>(frame.Buffer, frame.Width, frame.Height);
 
-            var result = predictor.Detect(image);
-            var plotted = result.PlotImage(image);
+        //    var result = predictor.Detect(image);
+        //    var plotted = result.PlotImage(image);
 
-            return plotted;
-        }
+        //    return plotted;
+        //}
 
-        public async Task<Image> PlotAsync(CamFrame frame)
-        {
-            using var predictor = new YoloPredictor(yoloModelPath);
-            using var image = Image.LoadPixelData<L8>(frame.Buffer, frame.Width, frame.Height);
+        //public async Task<Image> PlotAsync(CamFrame frame)
+        //{
+        //    using var predictor = new YoloPredictor(yoloModelPath);
+        //    using var image = Image.LoadPixelData<L8>(frame.Buffer, frame.Width, frame.Height);
 
-            var result = await predictor.DetectAsync(image);
-            var plotted = await result.PlotImageAsync(image);
+        //    var result = await predictor.DetectAsync(image);
+        //    var plotted = await result.PlotImageAsync(image);
 
-            return plotted;
-        }
+        //    return plotted;
+        //}
 
         public Image TopPlot(CamFrame frame)
         {
@@ -84,23 +87,15 @@ namespace DOF5RobotControl_GUI.Services
             return await topPredictor.DetectObbAsync(image); // 大概会花费 59±30 ms
         }
 
-        public int Detect(CamFrame frame, out YoloResult<Detection> results)
+        /// <summary>
+        /// 异步地对底部相机图像进行目标检测
+        /// </summary>
+        /// <param name="frame">底部相机图像</param>
+        /// <returns>检测的结果</returns>
+        public async Task<YoloResult<Detection>> BottomDetectAsync(CamFrame frame)
         {
-            using var predictor = new YoloPredictor(yoloModelPath);
             using var image = Image.LoadPixelData<L8>(frame.Buffer, frame.Width, frame.Height);
-
-            var result = predictor.Detect(image);
-            results = result;
-            return result.Count;
-        }
-
-        public async Task<YoloResult<Detection>> DetectAsync(CamFrame frame)
-        {
-            using var predictor = new YoloPredictor(yoloModelPath);
-            using var image = Image.LoadPixelData<L8>(frame.Buffer, frame.Width, frame.Height);
-
-            var result = await predictor.DetectAsync(image);
-            return result;
+            return await bottomPredictor.DetectAsync(image);
         }
     }
 }

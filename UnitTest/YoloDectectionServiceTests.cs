@@ -30,12 +30,12 @@ namespace UnitTest
         //    Assert.Equal(-2, point4.Y, 1e-6);
         //}
 
-        [Fact]
-        public async Task TestYoloDetect()
-        {
-            var yoloService = new YoloDetectionService();
-            var cameraService = new DummyCameraControlService();
+        readonly YoloDetectionService yoloService = new();
+        readonly DummyCameraControlService cameraService = new();
 
+        [Fact]
+        public async Task TestTopDetect()
+        {     
             var frame = cameraService.GetTopFrame();
 
             const int testTimes = 10;
@@ -56,6 +56,16 @@ namespace UnitTest
 
             var averageTime = (double)totalTime / testTimes;
             testOutputHelper.WriteLine($"Average run time: {averageTime} ms");
+        }
+
+        [Fact]
+        public async Task TestBottomDetect()
+        {
+            var frame = cameraService.GetBottomFrame();
+
+            var result = await yoloService.BottomDetectAsync(frame);
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Count);
         }
     }
 }
