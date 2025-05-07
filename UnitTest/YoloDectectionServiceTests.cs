@@ -5,6 +5,7 @@ using System.Diagnostics;
 using Xunit.Abstractions;
 using DOF5RobotControl_GUI;
 using Microsoft.Extensions.DependencyInjection;
+using System.Drawing;
 
 namespace UnitTest
 {
@@ -66,6 +67,33 @@ namespace UnitTest
             var result = await yoloService.BottomDetectAsync(frame);
             Assert.NotNull(result);
             Assert.Equal(2, result.Count);
+        }
+
+        [Fact]
+        public void TestBottomPose()
+        {
+            var frame = cameraService.GetBottomFrame();
+            var result = yoloService.BottomPose(frame);
+            Assert.NotNull(result);
+            Assert.True(result.Count > 0);
+
+            var result0 = result[0];
+            Assert.Equal(4, result0.Count());
+
+            double x_mean = 0;
+            double y_mean = 0;
+
+            for (int i = 0; i < result0.Count(); i++)
+            {
+                var point = result0[i].Point;
+                x_mean += (point.X - x_mean) / (i + 1);
+                y_mean += (point.Y - y_mean) / (i + 1);
+            }
+
+            testOutputHelper.WriteLine($"Center point is ({x_mean}, {y_mean})");
+
+            Assert.True(result0.Bounds.Left < x_mean && result0.Bounds.Right > x_mean);
+            Assert.True(result0.Bounds.Top < y_mean && result0.Bounds.Bottom > y_mean);
         }
     }
 }

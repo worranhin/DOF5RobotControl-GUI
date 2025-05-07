@@ -1,17 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace OnnxInferenceLibrary
+﻿namespace OnnxInferenceLibrary
 {
     public class ActorPolicy : OnnxInferenceBase
     {
         readonly long[] InputShape = [1, 7];
 
-        public ActorPolicy(): base("policy.onnx")
+        public ActorPolicy() : base("policy.onnx")
         {
         }
 

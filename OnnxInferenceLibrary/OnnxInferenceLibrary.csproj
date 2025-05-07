@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.21.0" />
     <PackageReference Include="System.Numerics.Tensors" Version="9.0.4" />
+    <PackageReference Include="YoloSharp" Version="6.0.3" />
   </ItemGroup>
 
   <ItemGroup>
