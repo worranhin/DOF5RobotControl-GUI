@@ -51,6 +51,12 @@ namespace VisionLibrary {
 		/// <param name="stride">图像单行的字节数</param>
 		/// <returns>表示钳口位姿的元组 (x, y, rz)</returns>
 		System::ValueTuple<double, double, double> GetJawPos(IntPtr imgBuffer, int width, int height, int stride);
+
+		/// <summary>
+		/// 获取钳口库直线，形式为 y = ax + b
+		/// </summary>
+		/// <returns>返回直线参数 (a, b)</returns>
+		System::ValueTuple<double, double> GetJawLibLine();
 		
 	private:
 		std::string ConvertToStdString(System::String^ managedStr);

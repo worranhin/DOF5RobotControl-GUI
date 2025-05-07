@@ -65,14 +65,13 @@ namespace NativeVision {
 		JawPos GetJawPos(HalconCpp::HObject img);
 		TaskSpaceError GetTaskSpaceError(cv::Mat img, MatchingMode m);
 
-
-
-		// ±äÁ¿½Ó¿Ú
+		// 变量接口
 		Clamp GetClamp();
 		Jaw GetJaw();
 		cv::Point2f GetROIPos();
 		cv::Point2f GetRoughPosPoint();
 		double GetMapParam();
+		bool GetJawLibLine(double& a, double& b);
 
 
 	private:

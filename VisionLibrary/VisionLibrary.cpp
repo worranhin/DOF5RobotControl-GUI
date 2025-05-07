@@ -6,7 +6,10 @@
 #include <msclr/marshal.h>
 #include <msclr/marshal_cppstd.h>
 
+
 namespace VisionLibrary {
+	using namespace System;
+	
 	VisionWrapper::VisionWrapper() : VisionWrapper(gcnew System::String("./model/")) {
 		// 无需额外实现，委托给有参构造函数
 	}
@@ -167,6 +170,22 @@ namespace VisionLibrary {
 			throw gcnew VisionException(gcnew System::String(ex.ErrorMessage().Text()));
 		}
 		catch (const std::exception& ex) {
+			throw gcnew VisionException(gcnew System::String(ex.what()));
+		}
+	}
+
+	ValueTuple<double, double> VisionWrapper::GetJawLibLine() 
+	{
+		try
+		{
+			double a, b;
+			if (!instance->GetJawLibLine(a, b))
+				throw gcnew VisionException("GetJawLibLine failed");
+
+			return ValueTuple<double, double>(a, b);
+		}
+		catch (const std::exception& ex)
+		{
 			throw gcnew VisionException(gcnew System::String(ex.what()));
 		}
 	}

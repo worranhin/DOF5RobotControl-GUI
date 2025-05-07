@@ -483,4 +483,18 @@ namespace NativeVision {
 
 	double VisualController::GetMapParam() { return _mapParam; }
 
+	/**
+	 * @brief 获取钳口库直线参数，形式为 y = ax + b
+	 * @param a 参数 a
+	 * @param b 参数 b
+	 * @return 如果成功返回 true
+	 */
+	bool VisualController::GetJawLibLine(double& a, double& b)
+	{		
+		a = _jawLibLine_a;
+		b = _jawLibLine_b;
+		
+		return true;
+	}
+
 } // namespace NativeVision
