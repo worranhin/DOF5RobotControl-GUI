@@ -32,6 +32,7 @@ enum ID_ENTRY {
   ID_01 = (uint8_t)0x01,
   ID_02 = (uint8_t)0x02,
 };
+
 class RMDMotor {
 
 public:
