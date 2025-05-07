@@ -1,0 +1,29 @@
+﻿using DOF5RobotControl_GUI.Model;
+
+namespace DOF5RobotControl_GUI.Services
+{
+    public interface IProcessImageService
+    {
+        /// <summary>
+        /// 对图像作预处理，必须在每次相机移动后调用
+        /// </summary>
+        /// <param name="topFrame">顶部相机图像</param>
+        /// <param name="bottomFrame">底部相机图像</param>
+        void Init(CamFrame topFrame, CamFrame bottomFrame);
+
+        /// <summary>
+        /// 异步地处理底部相机的图像，若移动过相机必须先调用 Init()
+        /// </summary>
+        /// <param name="frame">底部相机图像</param>
+        /// <returns>夹钳到钳口库的竖直方向上的距离，单位 mm</returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        Task<double> ProcessBottomImageAsync(CamFrame frame);
+
+        /// <summary>
+        /// 处理顶部相机的图像，若移动过相机必须先调用 Init()
+        /// </summary>
+        /// <param name="frame">顶部图像帧</param>
+        /// <returns>元组 (error_x, error_y, error_rz) 单位为 mm 和 rad</returns>
+        Task<(double px, double py, double rz)> ProcessTopImgAsync(CamFrame frame);
+    }
+}

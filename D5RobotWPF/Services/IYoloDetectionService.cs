@@ -1,6 +1,7 @@
 ﻿using Compunet.YoloSharp.Data;
 using DOF5RobotControl_GUI.Model;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace DOF5RobotControl_GUI.Services
 {
@@ -55,5 +56,26 @@ namespace DOF5RobotControl_GUI.Services
         /// <param name="frame">顶部图像</param>
         /// <returns>检测的结果</returns>
         Task<YoloResult<ObbDetection>> TopObbDetectAsync(CamFrame frame);
+
+        /// <summary>
+        /// 对底部相机图像进行目标检测
+        /// </summary>
+        /// <param name="frame">底部相机图像</param>
+        /// <returns>检测的结果</returns>
+        YoloResult<Detection> BottomDetect(CamFrame frame);
+
+        /// <summary>
+        /// 异步地对底部相机图像进行目标检测
+        /// </summary>
+        /// <param name="frame">底部相机图像</param>
+        /// <returns>检测的结果</returns>
+        Task<YoloResult<Detection>> BottomDetectAsync(CamFrame frame);
+
+        /// <summary>
+        /// 对底部相机图像进行一次姿态检测
+        /// </summary>
+        /// <param name="frame"></param>
+        /// <returns></returns>
+        YoloResult<Pose> BottomPose(CamFrame frame);
     }
 }

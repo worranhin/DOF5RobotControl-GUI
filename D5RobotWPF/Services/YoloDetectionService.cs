@@ -55,6 +55,17 @@ namespace DOF5RobotControl_GUI.Services
         }
 
         /// <summary>
+        /// 对底部相机图像进行目标检测
+        /// </summary>
+        /// <param name="frame">底部相机图像</param>
+        /// <returns>检测的结果</returns>
+        public YoloResult<Detection> BottomDetect(CamFrame frame)
+        {
+            using var image = Image.LoadPixelData<L8>(frame.Buffer, frame.Width, frame.Height);
+            return bottomPredictor.Detect(image);
+        }
+
+        /// <summary>
         /// 异步地对底部相机图像进行目标检测
         /// </summary>
         /// <param name="frame">底部相机图像</param>
@@ -74,6 +85,17 @@ namespace DOF5RobotControl_GUI.Services
         {
             using var image = Image.LoadPixelData<L8>(frame.Buffer, frame.Width, frame.Height);
             return bottomKeypointPredictor.Pose(image);
+        }
+
+        /// <summary>
+        /// 异步地对底部相机图像进行一次姿态检测
+        /// </summary>
+        /// <param name="frame"></param>
+        /// <returns></returns>
+        public async Task<YoloResult<Pose>> BottomPoseAsync(CamFrame frame)
+        {
+            using var image = Image.LoadPixelData<L8>(frame.Buffer, frame.Width, frame.Height);
+            return await bottomKeypointPredictor.PoseAsync(image);
         }
     }
 }

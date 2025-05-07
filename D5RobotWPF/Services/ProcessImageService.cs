@@ -13,7 +13,7 @@ using static DOF5RobotControl_GUI.Services.YoloDetectionService;
 
 namespace DOF5RobotControl_GUI.Services
 {
-    public class ProcessImageService(IYoloDetectionService yoloService)
+    public class ProcessImageService(IYoloDetectionService yoloService) : IProcessImageService
     {
         public struct Point<T>(T x, T y)
         {
@@ -21,6 +21,7 @@ namespace DOF5RobotControl_GUI.Services
             public T Y { get; set; } = y;
         }
 
+        const double PixelToMMScale = 0.00945084; // 图像像素与物理位置的映射关系 (单位：mm/px)
 
         readonly VisionWrapper vision = new("./Assets/HalconModels/");
 
@@ -70,7 +71,6 @@ namespace DOF5RobotControl_GUI.Services
         /// 处理顶部相机的图像，若移动过相机必须先调用 Init()
         /// </summary>
         /// <param name="frame">顶部图像帧</param>
-        /// <param name="mode">匹配模式</param>
         /// <returns>元组 (error_x, error_y, error_rz) 单位为 mm 和 rad</returns>
         public async Task<(double px, double py, double rz)> ProcessTopImgAsync(CamFrame frame)
         {
@@ -81,7 +81,6 @@ namespace DOF5RobotControl_GUI.Services
             var width = frame.Width;
             var height = frame.Height;
             var stride = frame.Stride;
-
 
             GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
             try
@@ -106,7 +105,6 @@ namespace DOF5RobotControl_GUI.Services
                 double drz = rz_j - rz_g;
 
                 // 将图像坐标转换为机器人坐标
-                const double PixelToMMScale = 0.00945084; // 图像像素与物理位置的映射关系 (单位：mm/px)
                 var err_x = -dy * PixelToMMScale;
                 var err_y = -dx * PixelToMMScale;
                 var err_rz = -drz;
@@ -121,6 +119,56 @@ namespace DOF5RobotControl_GUI.Services
             {
                 handle.Free();
             }
+        }
+
+        /// <summary>
+        /// 处理底部相机的图像，若移动过相机必须先调用 Init()
+        /// </summary>
+        /// <param name="frame">底部相机图像</param>
+        /// <returns>夹钳到钳口库的竖直方向上的距离，单位 mm</returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        public double ProcessBottomImage(CamFrame frame)
+        {
+            var result = yoloService.BottomDetect(frame);
+            if (result.Count != 2)
+                throw new InvalidOperationException($"Detection error occured. Expect 2 results, but got {result.Count}");
+
+            return ProcessBottomYoloResult(result);
+        }
+
+        /// <summary>
+        /// 异步地处理底部相机的图像，若移动过相机必须先调用 Init()
+        /// </summary>
+        /// <param name="frame">底部相机图像</param>
+        /// <returns>夹钳到钳口库的竖直方向上的距离，单位 mm</returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        public async Task<double> ProcessBottomImageAsync(CamFrame frame)
+        {
+            if (!hasInitialized)
+                throw new InvalidOperationException("Init should be called before process image after the camera moved.");
+
+            var result = await yoloService.BottomDetectAsync(frame);
+            if (result.Count != 2)
+                throw new InvalidOperationException($"Detection error occured. Expect 2 results, but got {result.Count}");
+
+            return ProcessBottomYoloResult(result);
+        }
+
+        /// <summary>
+        /// 处理底部图像 YOLO 检测的结果
+        /// </summary>
+        /// <param name="result">YOLO 检测的结果</param>
+        /// <returns>夹钳到钳口库的竖直方向上的距离，单位 mm</returns>
+        private double ProcessBottomYoloResult(YoloResult<Detection> result)
+        {
+            var left = result[0];
+            var right = result[1];
+            var x_mean = (left.Bounds.X + right.Bounds.X) / 2.0;
+            var y_mean = (left.Bounds.Y + right.Bounds.Y) / 2.0;
+            var (a, b) = vision.GetJawLibLine();  // 获取钳口库线的参数 y = ax + b
+            double A = a, B = -1, C = b;  // 转换为标准形式 Ax + By + C = 0
+            double distance_p = Math.Abs(A * x_mean + B * y_mean + C) / Math.Sqrt(A * A + B * B);  // 计算点到直线距离
+            return -distance_p * PixelToMMScale;  // 转换为 mm
         }
 
         /// <summary>
@@ -169,6 +217,16 @@ namespace DOF5RobotControl_GUI.Services
             if (result.Count != 2)
                 throw new InvalidOperationException("Detection error occured. (More than 2 gripper tips are detected.");
 
+            return ProcessTopYoloResult(result);
+        }
+
+        /// <summary>
+        /// 处理顶部图像 YOLO 检测的结果
+        /// </summary>
+        /// <param name="result">YOLO 检测的结果</param>
+        /// <returns>夹钳末端的位姿(x(px), y(px), rz(rad))，注意坐标系为向右为 +x，向下为 +y，顺时针为 +rz</returns>
+        private (double x, double y, double rz) ProcessTopYoloResult(YoloResult<ObbDetection> result)
+        {
             var tip1 = result[0];
             var tip2 = result[1];
 
