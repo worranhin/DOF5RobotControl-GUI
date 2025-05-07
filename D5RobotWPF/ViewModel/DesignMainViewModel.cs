@@ -11,9 +11,9 @@ namespace DOF5RobotControl_GUI.ViewModel
     {
         public DesignMainViewModel()
             : base(
-                  new RobotControlService(),
+                  new DummyRobotControlService(),
                   new PopUpService(),
-                  new CameraControlService(new CamMotorControlService()), 
+                  new DummyCameraControlService(), 
                   new OpcService(), 
                   new DataRecordService(), 
                   new GamepadService()
