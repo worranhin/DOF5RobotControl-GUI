@@ -11,7 +11,8 @@ namespace DOF5RobotControl_GUI.DesignModel
             new DCameraControlService(), 
             new OpcService(), 
             new DataRecordService(), 
-            new GamepadService()
+            new GamepadService(),
+            new DProcessImageService()
             )
         {
         }

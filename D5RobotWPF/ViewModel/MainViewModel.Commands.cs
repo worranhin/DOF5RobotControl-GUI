@@ -1,7 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ControlzEx.Theming;
 using D5R;
 using DOF5RobotControl_GUI.Model;
+using DOF5RobotControl_GUI.Services;
+using Microsoft.Extensions.DependencyInjection;
+using OnnxInferenceLibrary;
 using OpenCvSharp;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -147,6 +151,10 @@ namespace DOF5RobotControl_GUI.ViewModel
         CancellationTokenSource? recordCancelSource;
         Task? recordTask;
 
+        /// <summary>
+        /// 切换数据记录状态
+        /// </summary>
+        /// <returns></returns>
         [RelayCommand]
         private async Task ToggleRecord()
         {
@@ -205,6 +213,11 @@ namespace DOF5RobotControl_GUI.ViewModel
             });
         }
 
+        /// <summary>
+        /// 停止数据记录
+        /// Stop record data
+        /// </summary>
+        /// <returns></returns>
         private async Task StopRecordAsync()
         {
             // 取消记录任务
@@ -225,6 +238,116 @@ namespace DOF5RobotControl_GUI.ViewModel
             await _dataRecordService.StopAsync();
 
             IsRecording = false;
+        }
+
+        CancellationTokenSource? collectRlDataCancelSource = null;
+
+        /// <summary>
+        /// 采集强化学习数据
+        /// </summary>
+        /// <returns></returns>
+        [RelayCommand]
+        private async Task CollectRLDataAsync()
+        {
+            const int period = 50; // ms
+            const int maxTime = 12000; // ms
+
+            collectRlDataCancelSource = new();
+            var token = collectRlDataCancelSource.Token;
+
+            var policy = App.Current.Services.GetRequiredService<ActorPolicy>();
+            var recorder = new RlDataCollecter();
+
+            // 初始化图像处理模块
+            var topImg = _cameraCtrlService.GetTopFrame();
+            var bottomImg = _cameraCtrlService.GetBottomFrame();
+            _imageService.Init(topImg, bottomImg);
+
+            recorder.Start();  // 初始化记录器
+
+            var sw = Stopwatch.StartNew();
+            while(!token.IsCancellationRequested)
+            {
+                // 获取当前位姿状态误差
+                topImg = _cameraCtrlService.GetTopFrame();
+                bottomImg = _cameraCtrlService.GetBottomFrame();
+
+                var topTask = _imageService.ProcessTopImgAsync(topImg);
+                var bottomTask = _imageService.ProcessBottomImageAsync(bottomImg);
+
+                var (x, y, rz) = await topTask; // 单位为 mm 和 rad
+                var z = await bottomTask;
+
+                double halfTheta = rz / 2.0;
+                double w = Math.Cos(halfTheta);  // 计算四元数
+                double qz = Math.Sin(halfTheta);
+                //float[] state = [((float)x), ((float)y), ((float)z), (float)w, 0, 0, (float)qz];  // 转为神经网络的输入形式（位移+四元数误差）
+                float[] state = [((float)x / 1000.0F), ((float)y / 1000.0F), ((float)z / 1000.0F), (float)w, 0, 0, (float)qz]; // 转为神经网络的输入形式（位移+四元数误差） 单位为 m
+
+                // 将误差作为模型的输入获取动作
+                var action = policy.Step(state).ToArray();
+
+                // 拷贝当前状态
+                TargetState.Copy(CurrentState);
+                var joints = TargetState.JointSpace.Clone();
+
+                // 目标关节位置加上网络输出的相对位移量 + 随机高斯噪声
+                const double mean = 0;
+                const double std = 0.01;
+
+                joints.R1rad += action[0] + GenerateGaussianNoise(mean, std);
+                joints.P2 += action[1] * 1000.0 + GenerateGaussianNoise(mean, std);  // 策略网络的输出单位为 m，控制时转换为 mm
+                joints.P3 += action[2] * 1000.0 + GenerateGaussianNoise(mean, std);
+                joints.P4 += action[3] * 1000.0 + GenerateGaussianNoise(mean, std);
+                joints.R5rad += action[4] + GenerateGaussianNoise(mean, std);
+
+                // 执行动作
+                TargetState.JointSpace = joints;
+                _robotControlService.MoveTo(TargetState);
+
+                // 记录 state, action
+                recorder.Record(state, action);
+
+                // 若达到最大时间，则停止
+                var t = sw.ElapsedMilliseconds;
+                if (t > maxTime) break;
+
+                // 等待一个控制周期时间
+                try
+                {
+                    await Task.Delay(period, token);
+                }
+                catch (TaskCanceledException)
+                {
+                    Debug.WriteLine("Collect RL data is canceled.");
+                }
+            }
+
+            recorder.Stop();
+        }
+
+        [RelayCommand]
+        private void StopCollectRlData()
+        {
+            collectRlDataCancelSource?.Cancel();
+            collectRlDataCancelSource?.Dispose();
+            collectRlDataCancelSource = null;
+        }
+
+        /// <summary>
+        /// 生成高斯噪声
+        /// </summary>
+        /// <param name="mean"></param>
+        /// <param name="stdDev"></param>
+        /// <returns></returns>
+        private static double GenerateGaussianNoise(double mean = 0, double stdDev = 1)
+        {
+            Random random = new();
+            // 使用 Box-Muller 变换生成高斯分布的随机数
+            double u1 = 1.0 - random.NextDouble(); // [0,1) -> (0,1]
+            double u2 = 1.0 - random.NextDouble();
+            double randStdNormal = Math.Sqrt(-2.0 * Math.Log(u1)) * Math.Sin(2.0 * Math.PI * u2); // 标准正态分布
+            return mean + stdDev * randStdNormal; // 调整为指定均值和标准差
         }
 
         /// <summary>

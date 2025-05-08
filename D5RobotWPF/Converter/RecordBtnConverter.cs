@@ -12,7 +12,7 @@ namespace DOF5RobotControl_GUI.Converter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return (bool)value ? "停止采集数据" : "开始采集数据";
+            return (bool)value ? "停止采集数据" : "开始周期性采集数据";
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

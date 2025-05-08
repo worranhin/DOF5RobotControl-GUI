@@ -33,6 +33,29 @@ namespace DOF5RobotControl_GUI.Model
         [Range(-90, 90, ErrorMessage = "Value of {0} must be between {1} and {2}.")]
         private double _r5 = 0.0;
 
+        public double R1rad
+        {   get
+            {
+                return R1 * Math.PI / 180.0;
+            }
+            set
+            {
+                R1 = value * 180.0 / Math.PI;
+            }
+        }
+
+        public double R5rad
+        {
+            get
+            {
+                return R5 * Math.PI / 180.0;
+            }
+            set
+            {
+                R5 = value * 180.0 / Math.PI;
+            }
+        }
+
         public JointSpace() { }
 
         public JointSpace(Joints joints)

@@ -39,6 +39,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         private readonly IOpcService _opcService;
         private readonly IDataRecordService _dataRecordService;
         private readonly IGamepadService _gamepadService;
+        private readonly IProcessImageService _imageService;
 
         /***** 线程相关字段 *****/
         public Dispatcher Dispatcher { get; private set; }
@@ -133,7 +134,8 @@ namespace DOF5RobotControl_GUI.ViewModel
             ICameraControlService cameraCtrlService,
             IOpcService opcService,
             IDataRecordService dataRecordService,
-            IGamepadService gamepadService)
+            IGamepadService gamepadService,
+            IProcessImageService processImageService)
         {
             Dispatcher = Application.Current.Dispatcher;
 
@@ -144,6 +146,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             _opcService = opcService;
             _dataRecordService = dataRecordService;
             _gamepadService = gamepadService;
+            _imageService = processImageService;
         }
 
         ~MainViewModel()

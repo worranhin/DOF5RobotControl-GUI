@@ -90,6 +90,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\D5RobotController_CLR\D5RobotController_CLR.vcxproj" />
+    <ProjectReference Include="..\OnnxInferenceLibrary\OnnxInferenceLibrary.csproj" />
     <ProjectReference Include="..\VisionLibrary\VisionLibrary.vcxproj" />
   </ItemGroup>
 

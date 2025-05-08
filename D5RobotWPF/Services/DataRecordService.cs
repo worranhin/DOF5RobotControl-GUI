@@ -21,12 +21,13 @@ namespace DOF5RobotControl_GUI.Services
         private static readonly string RootDir = "Records";
         private static readonly string ImageDir = "Images";
         private readonly Stopwatch stopWatch = new();
+        private readonly object startLock = new();
+
         private string rootTimestamp = string.Empty;
         private List<DataRecord> records = [];
 
         private BlockingCollection<ImageRecord>? imageSaveQueue;
         private Task? saveImageTask;
-        private object startLock = new();
 
         public void Start()
         {
