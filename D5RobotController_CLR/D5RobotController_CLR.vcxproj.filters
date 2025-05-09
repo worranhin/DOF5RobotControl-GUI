@@ -51,6 +51,9 @@
     <ClInclude Include="include\SerialPort.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="NatorsController.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp">
@@ -69,6 +72,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\SerialPort.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="NatorsController.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

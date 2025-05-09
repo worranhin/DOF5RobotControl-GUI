@@ -135,7 +135,7 @@ namespace D5R {
 		j->R5 = botRMDMotor->GetSingleAngle_s();
 
 		NTU_Point np;
-		this->natorMotor->GetPosition(&np);
+		this->natorMotor->GetAllPosition(&np);
 		j->P2 = np.x;
 		j->P3 = np.y;
 		j->P4 = np.z;

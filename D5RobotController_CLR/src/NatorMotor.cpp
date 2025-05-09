@@ -27,58 +27,58 @@ namespace D5R {
 	}
 	NatorMotor::~NatorMotor() { NT_CloseSystem(_handle); }
 
-    // 初始化------------------------------------------
-    bool NatorMotor::Init() {
-					using namespace msclr::interop;
+	// 初始化------------------------------------------
+	bool NatorMotor::Init() {
+		using namespace msclr::interop;
 
-					auto res = NT_OK;
+		auto res = NT_OK;
 
-					if (String::IsNullOrEmpty(_id))
-						throw gcnew InvalidOperationException("Id should not be null or empty");
+		if (String::IsNullOrEmpty(_id))
+			throw gcnew InvalidOperationException("Id should not be null or empty");
 
-					// Convert System::String^ to const char*
-					marshal_context^ context = gcnew marshal_context();
-					const char* id_cstr = context->marshal_as<const char*>(_id);
+		// Convert System::String^ to const char*
+		marshal_context^ context = gcnew marshal_context();
+		const char* id_cstr = context->marshal_as<const char*>(_id);
 
-					pin_ptr<NT_INDEX> pHandle = &_handle;
-					res = NT_OpenSystem(pHandle, id_cstr, "sync");
-					if (res != NT_OK) {
-						std::cerr << "Failed to init device, error status: " << res << std::endl;
-						return false;
-					}
-					res = NT_SetHCMEnabled(_handle, NT_HCM_ENABLED);
-					if (res != NT_OK) {
-						std::cerr << "Failed to set HCM enabled, error status: " << res
-							<< std::endl;
-						return false;
-					}
-					res = NT_SetSensorEnabled_S(_handle, NT_SENSOR_ENABLED);
-					if (res != NT_OK) {
-						std::cerr << "Failed to set sensor enabled, error status: " << res
-							<< std::endl;
-						return false;
-					}
-					res = NT_SetAccumulateRelativePositions_S(_handle, NTU_AXIS_X, NT_NO_ACCUMULATE_RELATIVE_POSITIONS);
-					if (res != NT_OK) {
-						std::cerr << "Failed to set relative move accumulation, error status: " << res
-							<< std::endl;
-						return false;
-					}
-					res = NT_SetAccumulateRelativePositions_S(_handle, NTU_AXIS_Y, NT_NO_ACCUMULATE_RELATIVE_POSITIONS);
-					if (res != NT_OK) {
-						std::cerr << "Failed to set relative move accumulation, error status: " << res
-							<< std::endl;
-						return false;
-					}
-					res = NT_SetAccumulateRelativePositions_S(_handle, NTU_AXIS_Z, NT_NO_ACCUMULATE_RELATIVE_POSITIONS);
-					if (res != NT_OK) {
-						std::cerr << "Failed to set relative move accumulation, error status: " << res
-							<< std::endl;
-						return false;
-					}
-					_isInit = true;
-					return true;
-    }
+		pin_ptr<NT_INDEX> pHandle = &_handle;
+		res = NT_OpenSystem(pHandle, id_cstr, "sync");
+		if (res != NT_OK) {
+			std::cerr << "Failed to init device, error status: " << res << std::endl;
+			return false;
+		}
+		res = NT_SetHCMEnabled(_handle, NT_HCM_ENABLED);
+		if (res != NT_OK) {
+			std::cerr << "Failed to set HCM enabled, error status: " << res
+				<< std::endl;
+			return false;
+		}
+		res = NT_SetSensorEnabled_S(_handle, NT_SENSOR_ENABLED);
+		if (res != NT_OK) {
+			std::cerr << "Failed to set sensor enabled, error status: " << res
+				<< std::endl;
+			return false;
+		}
+		res = NT_SetAccumulateRelativePositions_S(_handle, NTU_AXIS_X, NT_NO_ACCUMULATE_RELATIVE_POSITIONS);
+		if (res != NT_OK) {
+			std::cerr << "Failed to set relative move accumulation, error status: " << res
+				<< std::endl;
+			return false;
+		}
+		res = NT_SetAccumulateRelativePositions_S(_handle, NTU_AXIS_Y, NT_NO_ACCUMULATE_RELATIVE_POSITIONS);
+		if (res != NT_OK) {
+			std::cerr << "Failed to set relative move accumulation, error status: " << res
+				<< std::endl;
+			return false;
+		}
+		res = NT_SetAccumulateRelativePositions_S(_handle, NTU_AXIS_Z, NT_NO_ACCUMULATE_RELATIVE_POSITIONS);
+		if (res != NT_OK) {
+			std::cerr << "Failed to set relative move accumulation, error status: " << res
+				<< std::endl;
+			return false;
+		}
+		_isInit = true;
+		return true;
+	}
 
 	// 判断初始化成功------------------------------------
 	bool NatorMotor::IsInit() { return _isInit; }
@@ -108,7 +108,7 @@ namespace D5R {
 	}
 
 	// 获取当前位置
-	bool NatorMotor::GetPosition(NTU_Point* p) {
+	bool NatorMotor::GetAllPosition(NTU_Point* p) {
 		auto res = NT_OK;
 		res = NT_GetPosition_S(_handle, NTU_AXIS_X, &(p->x));
 		if (res != NT_OK) {
@@ -129,6 +129,24 @@ namespace D5R {
 			return false;
 		}
 		return true;
+	}
+
+	/// <summary>
+	/// 查询 NanoMotor 的位置
+	/// </summary>
+	/// <param name="axis">轴，从基座到末端为 1-3</param>
+	/// <returns>位置值，单位为纳米</returns>
+	int NatorMotor::GetPosition(int axis)
+	{
+		auto channel = MapAxisToChannel(axis);
+		int position = 0;
+		auto result = NT_GetPosition_S(_handle, channel, &position);
+
+		if (result != NT_OK)
+			throw gcnew InvalidOperationException(
+				String::Format("Failed to get axis position, error code: {}", result));
+
+		return position;
 	}
 
 	// 绝对移动------------------------------------------
@@ -203,32 +221,46 @@ namespace D5R {
 		return true;
 	}
 
+	/// <summary>
+	/// 步进运动
+	/// </summary>
+	/// <param name="axis">运动的轴 1-3</param>
+	/// <param name="steps">运动步数</param>
+	/// <param name="amplitude">幅值</param>
+	/// <param name="frequency">频率</param>
 	void NatorMotor::StepMove(unsigned int axis, signed int steps, unsigned int amplitude, unsigned int frequency)
 	{
-		NT_INDEX channel;
-
-		switch (axis)
-		{
-		case 2:
-			channel = NTU_AXIS_X;
-			break;
-		case 3:
-			channel = NTU_AXIS_Y;
-			break;
-		case 4:
-			channel = NTU_AXIS_Z;
-			break;
-		default:
-			throw gcnew ArgumentOutOfRangeException("axis", "axis should be 2-4");
-		}
+		NT_INDEX channel = MapAxisToChannel(axis);
 
 		auto status = NT_StepMove_S(_handle, channel, steps, amplitude, frequency);
-		
+
 		if (status != NT_OK)
 		{
 			String^ message = String::Format("Failed to step move, error status: {}", status);
 			throw gcnew InvalidOperationException(message);
 		}
+	}
+
+	/// <summary>
+	/// 获取运动状态
+	/// </summary>
+	/// <param name="axis"></param>
+	/// <returns></returns>
+	unsigned int NatorMotor::GetStatus(int axis)
+	{
+		NT_INDEX channel = MapAxisToChannel(axis);
+
+		unsigned int status = 0;
+		auto result = NT_GetStatus_S(_handle, channel, &status);
+
+		if (result != NT_OK)
+		{
+			if (result != NT_OK)
+				throw gcnew InvalidOperationException(
+					String::Format("Failed to get status, error code: {}", result));
+		}
+
+		return status;
 	}
 
 	// 急停------------------------------------------------
@@ -250,5 +282,26 @@ namespace D5R {
 			return false;
 		}
 		return true;
+	}
+
+	NT_INDEX NatorMotor::MapAxisToChannel(int axis) {
+		NT_INDEX channel;
+
+		switch (axis)
+		{
+		case 1:
+			channel = NTU_AXIS_X;
+			break;
+		case 2:
+			channel = NTU_AXIS_Y;
+			break;
+		case 3:
+			channel = NTU_AXIS_Z;
+			break;
+		default:
+			throw gcnew ArgumentOutOfRangeException("axis", "axis should be 1-3");
+		}
+
+		return channel;
 	}
 } // namespace D5R

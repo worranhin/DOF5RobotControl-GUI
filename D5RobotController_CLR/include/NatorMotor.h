@@ -35,17 +35,22 @@ namespace D5R {
 		bool Init();
 		bool SetZero();
 		bool IsInit();
-		bool GetPosition(NTU_Point* p);
+		bool GetAllPosition(NTU_Point* p);
+		int GetPosition(int axis);
 		bool GoToPoint_A(NTU_Point p);
 		void WaitUtilPositioned();
 		bool GoToPoint_R(NTU_Point p);
 		void StepMove(unsigned int axis, signed int steps, unsigned int amplitude, unsigned int frequency);
+		unsigned int GetStatus(int axis);
 		bool Stop();
 
 	private:
-		const int NTU_AXIS_X = 1 - 1;
-		const int NTU_AXIS_Y = 2 - 1;
-		const int NTU_AXIS_Z = 3 - 1;
+		static NT_INDEX MapAxisToChannel(int axis);
+
+	private:
+		static const int NTU_AXIS_X = 1 - 1;
+		static const int NTU_AXIS_Y = 2 - 1;
+		static const int NTU_AXIS_Z = 3 - 1;
 
 		NT_INDEX _handle;
 		String^ _id;
