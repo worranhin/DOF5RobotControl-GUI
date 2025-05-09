@@ -75,7 +75,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         {
             try
             {
-                _robotControlService.MoveTo(TargetState);
+                _robotControlService.MoveAbsolute(TargetState);
             }
             catch (InvalidOperationException ex)
             {
@@ -186,7 +186,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                     Stopwatch sw = Stopwatch.StartNew();
                     var delayTask = Task.Delay(period, token);
 
-                    var currentJoints = _robotControlService.GetCurrentState().JointSpace.Clone();
+                    var currentJoints = _robotControlService.CurrentState.JointSpace.Clone();
                     var targetJoints = _robotControlService.TargetState.JointSpace.Clone();
 
                     if (recordImage)
@@ -232,7 +232,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         /// </summary>
         private void UpdateCurrentState()
         {
-            var currentState = _robotControlService.GetCurrentState();
+            var currentState = _robotControlService.CurrentState;
 
             Dispatcher.Invoke(() =>
             {
@@ -330,7 +330,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                             if (token.IsCancellationRequested)
                                 break;
 
-                            _robotControlService.MoveTo(TargetState);
+                            _robotControlService.MoveAbsolute(TargetState);
                         } while (t < tf);
                     });
                 }
@@ -370,7 +370,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                 TargetState.TaskSpace.Px -= FeedDistance;
             }
 
-            _robotControlService.MoveTo(TargetState);
+            _robotControlService.MoveAbsolute(TargetState);
         }
     }
 }

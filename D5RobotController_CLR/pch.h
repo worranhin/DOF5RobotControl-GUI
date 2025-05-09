@@ -22,5 +22,7 @@
 #include <cmath>
 #include <limits>
 #include <numbers>
+#include <msclr/marshal.h>
+#include <msclr/marshal_cppstd.h>
 
 #endif //PCH_H

@@ -1,11 +1,4 @@
-﻿using Compunet.YoloSharp.Data;
-using System;
-using System.Collections.Generic;
-using System.IO.Ports;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Windows.Media.Devices;
+﻿using System.IO.Ports;
 
 namespace DOF5RobotControl_GUI.Model
 {
@@ -16,28 +9,17 @@ namespace DOF5RobotControl_GUI.Model
         public Int16 Velocity { get; private set; } = 0;  // 转速，单位 1dps
         public UInt16 Encoder { get; private set; } = 0;  // 编码器位置，范围 0~16383
 
-        SerialPort port;
-        byte id;
+        readonly SerialPort port;
+        readonly byte id;
 
         public RmdMotor(SerialPort port, byte id)
         {
-            //port = new SerialPort(portName)
-            //{
-            //    BaudRate = 115200,
-            //    DataBits = 8,
-            //    Parity = Parity.None,
-            //    StopBits = StopBits.One,
-            //    Handshake = Handshake.None,
-            //    ReadTimeout = 500,
-            //    WriteTimeout = 500
-            //};
-
-            //port.Open();
             this.port = port;
             this.id = id;
+
+            if (!port.IsOpen)
+                port.Open();
         }
-
-
 
         /// <summary>
         /// 获取多圈角度
@@ -68,6 +50,10 @@ namespace DOF5RobotControl_GUI.Model
             return motorAngle;
         }
 
+        /// <summary>
+        /// 读取单圈角度
+        /// </summary>
+        /// <returns>单圈角度，单位 0.01deg</returns>
         public UInt16 GetSingleAngle()
         {
             const byte commandByte = 0x94;
@@ -88,6 +74,23 @@ namespace DOF5RobotControl_GUI.Model
             }
 
             return angle;
+        }
+
+        /// <summary>
+        /// 将当前位置设为零点
+        /// </summary>
+        public void SetZero()
+        {
+            const byte commandByte = 0x19;
+
+            const int bytesToWrite = 5;
+            const byte sendDataLength = 0;
+
+            const int bytesToRead = 5;
+            const byte receiveDataLength = 0;
+
+            SendCommand(bytesToWrite, commandByte, sendDataLength);
+            ReceiveResponse(bytesToRead, commandByte, receiveDataLength);
         }
 
         /// <summary>
@@ -163,6 +166,57 @@ namespace DOF5RobotControl_GUI.Model
             const byte receiveDataLength = 0x07;
 
             byte[] sendData = BitConverter.GetBytes(velocity);
+            SendCommand(bytesToWrite, commandByte, sendDataLength, sendData);
+            var data = ReceiveResponse(bytesToRead, commandByte, receiveDataLength);
+
+            Temperature = data[0];
+            Power = BitConverter.ToInt16(data, 1);
+            Velocity = BitConverter.ToInt16(data, 3);
+            Encoder = BitConverter.ToUInt16(data, 5);
+        }
+
+        /// <summary>
+        /// 多圈位置闭环控制
+        /// </summary>
+        /// <param name="angle">角度，单位 0.01deg</param>
+        public void MultiAngleControl(Int64 angle)
+        {
+            const byte commandByte = 0xA3;
+
+            const int bytesToWrite = 14;
+            const byte sendDataLength = 0x08;
+
+            const int bytesToRead = 13;
+            const byte receiveDataLength = 0x07;
+
+            byte[] sendData = BitConverter.GetBytes(angle);
+            SendCommand(bytesToWrite, commandByte, sendDataLength, sendData);
+            var data = ReceiveResponse(bytesToRead, commandByte, receiveDataLength);
+
+            Temperature = data[0];
+            Power = BitConverter.ToInt16(data, 1);
+            Velocity = BitConverter.ToInt16(data, 3);
+            Encoder = BitConverter.ToUInt16(data, 5);
+        }
+
+        /// <summary>
+        /// 多圈位置闭环控制
+        /// </summary>
+        /// <param name="angle">角度，单位 0.01deg</param>
+        /// <param name="maxSpeed">最大速度，单位 0.01dps</param>
+        public void MultiAngleControl(Int64 angle, UInt32 maxSpeed)
+        {
+            const byte commandByte = 0xA4;
+
+            const int bytesToWrite = 18;
+            const byte sendDataLength = 0x0C;
+
+            const int bytesToRead = 13;
+            const byte receiveDataLength = 0x07;
+
+            byte[] sendData = new byte[sendDataLength];
+            BitConverter.GetBytes(angle).CopyTo(sendData, 0);
+            BitConverter.GetBytes(maxSpeed).CopyTo(sendData, 8);
             SendCommand(bytesToWrite, commandByte, sendDataLength, sendData);
             var data = ReceiveResponse(bytesToRead, commandByte, receiveDataLength);
 

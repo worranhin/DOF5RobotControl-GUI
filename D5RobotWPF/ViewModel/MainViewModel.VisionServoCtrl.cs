@@ -33,7 +33,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             {
                 // 为了安全，先前往便于视觉检测的位置
                 TargetState.SetFromD5RJoints(PreChangeJawPos);
-                _robotControlService.MoveTo(TargetState);
+                _robotControlService.MoveAbsolute(TargetState);
                 await _robotControlService.WaitForTargetedAsync(token);
                 token.ThrowIfCancellationRequested();
 
@@ -62,7 +62,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                 if (targetJoints.P4 > 12) // 安全检查
                     throw new InvalidOperationException($"前往初始位置时，关节移动量超出安全范围，请检查！\nP4: {targetJoints.P4}");
                 TargetState.JointSpace = targetJoints;
-                _robotControlService.MoveTo(TargetState); // 控制机器人前往目标位置
+                _robotControlService.MoveAbsolute(TargetState); // 控制机器人前往目标位置
                 await _robotControlService.WaitForTargetedAsync(token);
 
                 // 进行重复预对准
@@ -85,7 +85,7 @@ namespace DOF5RobotControl_GUI.ViewModel
 
                     TargetState.TaskSpace.Px += x - EntrancePointX;
                     TargetState.TaskSpace.Py += y;
-                    _robotControlService.MoveTo(TargetState);
+                    _robotControlService.MoveAbsolute(TargetState);
                     await _robotControlService.WaitForTargetedAsync(token, 100, 0.01);
                 }
             }
@@ -169,7 +169,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                             target.Py = trackY(t);
                             target.Pz = trackZ(t);
                             TargetState.TaskSpace = target;
-                            _robotControlService.MoveTo(TargetState);
+                            _robotControlService.MoveAbsolute(TargetState);
 
                             // 记录数据
                             if (_dataRecordService.IsStarted)
@@ -240,25 +240,25 @@ namespace DOF5RobotControl_GUI.ViewModel
                 TargetState.Copy(CurrentState);
                 TargetState.TaskSpace.Rz = 0; // 将 Rz 转正用于检测是否接触
                 TargetState.TaskSpace.Pz += 1; // 抬起一点距离，使其与底座脱离接触
-                _robotControlService.MoveTo(TargetState);
+                _robotControlService.MoveAbsolute(TargetState);
                 await Task.Delay(500);
 
                 do
                 {
                     cancelToken.ThrowIfCancellationRequested();
                     TargetState.TaskSpace.Px = CurrentState.TaskSpace.Px - 1; // 向后退 1mm，避免与台子前方有挤压
-                    _robotControlService.MoveTo(TargetState);
+                    _robotControlService.MoveAbsolute(TargetState);
                     await _robotControlService.WaitForTargetedAsync();
                 } while (Math.Abs(CurrentState.TaskSpace.Rz) > 0.02); // 若与目标值0相差太多，则说明仍有接触，需继续后退
 
                 cancelToken.ThrowIfCancellationRequested();
                 TargetState.TaskSpace.Pz += 10;  // 向上抬一段距离，避免发生碰撞
-                _robotControlService.MoveTo(TargetState);
+                _robotControlService.MoveAbsolute(TargetState);
                 await _robotControlService.WaitForTargetedAsync();
 
                 cancelToken.ThrowIfCancellationRequested();
                 TargetState.SetFromD5RJoints(ZeroPos); // 返回零点
-                _robotControlService.MoveTo(TargetState);
+                _robotControlService.MoveAbsolute(TargetState);
                 await _robotControlService.WaitForTargetedAsync();
             }
             catch (OperationCanceledException)

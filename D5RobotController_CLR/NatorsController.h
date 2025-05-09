@@ -2,7 +2,6 @@
 
 #include "NTControl.h"
 
-
 namespace D5R {
 	using namespace System;
 	public ref class NatorsController
@@ -26,7 +25,17 @@ namespace D5R {
 		/// <returns>位置值，单位为纳米</returns>
 		int GetPosition(int axis);
 
+		/// <summary>
+		/// 获取状态
+		/// </summary>
+		/// <param name="axis">选择的轴，从基座到末端为 1-3</param>
+		/// <returns></returns>
 		unsigned int GetStatus(int axis);
+
+		/// <summary>
+		/// 获取通道数
+		/// </summary>
+		/// <returns>通道数</returns>
 		unsigned int GetChannelCount();
 
 		/// <summary>
@@ -35,7 +44,19 @@ namespace D5R {
 		/// <param name="axis">选择设置的轴，范围 1-3</param>
 		/// <param name="position">定义当前位置为该值</param>
 		void SetPosition(int axis, signed int position);
+
+		/// <summary>
+		/// 绝对移动
+		/// </summary>
+		/// <param name="axis">移动的轴，从基座到末端为 1-3</param>
+		/// <param name="position">移动的位置</param>
 		void MoveAbsolute(int axis, int position);
+
+		/// <summary>
+		/// 相对移动
+		/// </summary>
+		/// <param name="axis">移动的轴，从基座到末端为 1-3</param>
+		/// <param name="diff">相对移动的位置</param>
 		void MoveRelative(int axis, int diff);
 
 		/// <summary>

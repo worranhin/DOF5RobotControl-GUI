@@ -204,7 +204,6 @@
     <ClInclude Include="include\TaskSpace.hpp" />
     <ClInclude Include="NatorsController.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="Resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp" />
@@ -221,12 +220,6 @@
     <ClCompile Include="src\NatorMotor.cpp" />
     <ClCompile Include="src\RMDMotor.cpp" />
     <ClCompile Include="src\SerialPort.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="app.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="app.ico" />
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>

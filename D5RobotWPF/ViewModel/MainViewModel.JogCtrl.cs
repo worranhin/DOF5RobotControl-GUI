@@ -86,8 +86,8 @@ namespace DOF5RobotControl_GUI.ViewModel
                         break;
                 }
 
-                if (!TargetState.JointSpace.HasErrors && _robotControlService.RobotIsConnected)
-                    _robotControlService.MoveTo(TargetState);
+                if (!TargetState.JointSpace.HasErrors && _robotControlService.IsConnected)
+                    _robotControlService.MoveAbsolute(TargetState);
             }
         }
 
@@ -162,7 +162,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                 try
                 {
                     updateJointAction();
-                    _robotControlService.MoveTo(TargetState);
+                    _robotControlService.MoveAbsolute(TargetState);
                 }
                 catch (ArgumentException exc)
                 {

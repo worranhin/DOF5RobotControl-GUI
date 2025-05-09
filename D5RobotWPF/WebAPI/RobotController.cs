@@ -46,7 +46,7 @@ namespace DOF5RobotControl_GUI.WebAPI
             try
             {
                 _robotCtrlService.Connect(portName);
-                return Ok(new { robotConnected = _robotCtrlService.RobotIsConnected });
+                return Ok(new { robotConnected = _robotCtrlService.IsConnected });
             }
             catch (InvalidOperationException ex)
             {
@@ -60,7 +60,7 @@ namespace DOF5RobotControl_GUI.WebAPI
             try
             {
                 _robotCtrlService.Connect(Properties.Settings.Default.RmdPort);
-                return Ok(new { robotConnected = _robotCtrlService.RobotIsConnected });
+                return Ok(new { robotConnected = _robotCtrlService.IsConnected });
             }
             catch (InvalidOperationException ex)
             {

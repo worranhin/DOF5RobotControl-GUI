@@ -21,7 +21,7 @@ namespace DOF5RobotControl_GUI
 
         public IServiceProvider Services { get; }
 
-        private Task? gxLibInitTask;
+        private Task? gxLibInitTask = null;
 
         public App()
         {
