@@ -21,8 +21,6 @@ namespace DOF5RobotControl_GUI
 
         public IServiceProvider Services { get; }
 
-        private Task? gxLibInitTask = null;
-
         public App()
         {
             var builder = WebApplication.CreateBuilder();
@@ -56,11 +54,6 @@ namespace DOF5RobotControl_GUI
         {
             base.OnStartup(e);
 
-            // 在后台线程中调用 GxLibInit
-#if !USE_DUMMY
-            gxLibInitTask = Task.Run(GxCamera.GxLibInit);
-#endif
-
             var mainWindow = Services.GetRequiredService<MainWindow>();
             mainWindow.Show();
             MainWindow = mainWindow;
@@ -68,9 +61,6 @@ namespace DOF5RobotControl_GUI
 
         protected override void OnExit(ExitEventArgs e)
         {
-            // 调用 GxLibUninit
-            gxLibInitTask?.Wait();
-            GxCamera.GxLibUninit();
 
             base.OnExit(e);
         }
