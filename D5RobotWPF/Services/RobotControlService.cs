@@ -288,6 +288,19 @@ namespace DOF5RobotControl_GUI.Services
             JointMoveAbsolute(5, joint.R5);
         }
 
+        public async Task MoveAbsoluteAsync(RoboticState target, CancellationToken token = default)
+        {
+            TargetState = target;
+            var joint = target.JointSpace;
+            JointMoveAbsolute(1, joint.R1);
+            JointMoveAbsolute(2, joint.P2);
+            JointMoveAbsolute(3, joint.P3);
+            JointMoveAbsolute(4, joint.P4);
+            JointMoveAbsolute(5, joint.R5);
+
+            await WaitForTargetedAsync(token);
+        }
+
         /// <summary>
         /// 相对运动各关节
         /// </summary>
@@ -309,6 +322,19 @@ namespace DOF5RobotControl_GUI.Services
             JointMoveRelative(5, diff.R5);
 
             TargetState.JointSpace.Add(diff);
+        }
+
+        public async Task MoveRelativeAsync(JointSpace diff, CancellationToken token = default)
+        {
+            TargetState.JointSpace = CurrentJoints.Add(diff);
+
+            JointMoveRelative(1, diff.R1);
+            JointMoveRelative(2, diff.P2);
+            JointMoveRelative(3, diff.P3);
+            JointMoveRelative(4, diff.P4);
+            JointMoveRelative(5, diff.R5);
+
+            await WaitForTargetedAsync(token);
         }
 
         /// <summary>
@@ -382,16 +408,8 @@ namespace DOF5RobotControl_GUI.Services
             MoveAbsolute(new() { JointSpace = origin });
         }
 
-        public async Task WaitForTargetedAsync(int CheckPeriod = 100, double CheckDistance = 0.1)
-        {
-            while (true)
-            {
-                if (TaskSpace.Distance(CurrentState.TaskSpace, TargetState.TaskSpace) < CheckDistance)
-                    return;
-
-                await Task.Delay(CheckPeriod);
-            }
-        }
+        public Task WaitForTargetedAsync(int CheckPeriod = 100, double CheckDistance = 0.1) => 
+            WaitForTargetedAsync(default, CheckPeriod, CheckDistance);
 
         public async Task WaitForTargetedAsync(CancellationToken token, int CheckPeriod = 100, double CheckDistance = 0.1)
         {
@@ -409,6 +427,6 @@ namespace DOF5RobotControl_GUI.Services
                     break;
                 }
             }
-        }        
+        }
     }
 }

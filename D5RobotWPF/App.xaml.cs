@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using OnnxInferenceLibrary;
 using System.Windows;
 
@@ -26,29 +27,32 @@ namespace DOF5RobotControl_GUI
 
         public App()
         {
-            var builder = WebApplication.CreateBuilder();
+            //var builder = WebApplication.CreateBuilder();
 
             // Add services to the container.
-            ConfigureServices(builder.Services);
+            //ConfigureServices(builder.Services);
 
-            builder.WebHost.UseUrls("http://localhost:5162");
+            //builder.WebHost.UseUrls("http://localhost:5162");
 
-            var app = builder.Build();
+            //var app = builder.Build();
 
             // Configure the HTTP request pipeline.
             //if (app.Environment.IsDevelopment())
             //{
-            app.UseSwagger();
-            app.UseSwaggerUI();
+            //    app.UseSwagger();
+            //    app.UseSwaggerUI();
             //}
 
-            app.UseAuthorization();
-            app.MapControllers();
+            //app.UseAuthorization();
+            //app.MapControllers();
 
-            app.RunAsync();
+            //app.RunAsync();
 
             // 引用 ServiceProvider 以便于使用
-            Services = app.Services;
+            //Services = app.Services;
+
+            var service = ConfigureServices();
+            Services = service.BuildServiceProvider();
 
             InitializeComponent();
         }
@@ -76,9 +80,9 @@ namespace DOF5RobotControl_GUI
             base.OnExit(e);
         }
 
-        private IServiceCollection ConfigureServices(IServiceCollection services)
+        private static IServiceCollection ConfigureServices(IServiceCollection? services = null)
         {
-            //var services = new ServiceCollection();
+            services ??= new ServiceCollection();
 
             // 注册服务
             services.AddSingleton<IRobotControlService, RobotControlService>();

@@ -1,10 +1,5 @@
 ﻿using DOF5RobotControl_GUI.Model;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DOF5RobotControl_GUI.Services
 {
@@ -64,6 +59,17 @@ namespace DOF5RobotControl_GUI.Services
             return CurrentState;
         }
 
+        public void MoveAbsolute(RoboticState target)
+        {
+            TargetState = target.Clone();
+        }
+
+        public async Task MoveAbsoluteAsync(RoboticState target, CancellationToken token = default)
+        {
+            MoveAbsolute(target);
+            await WaitForTargetedAsync(token);
+        }
+
         public void MoveRelative(JointSpace relative)
         {
             var target = CurrentState.Clone();
@@ -71,9 +77,10 @@ namespace DOF5RobotControl_GUI.Services
             TargetState = target;
         }
 
-        public void MoveAbsolute(RoboticState target)
+        public async Task MoveRelativeAsync(JointSpace diff, CancellationToken token = default)
         {
-            TargetState = target.Clone();
+            MoveRelative(diff);
+            await WaitForTargetedAsync(token);
         }
 
         public void SetZero()

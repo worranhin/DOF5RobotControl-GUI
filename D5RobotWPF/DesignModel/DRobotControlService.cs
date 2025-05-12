@@ -41,7 +41,17 @@ namespace DOF5RobotControl_GUI.DesignModel
             throw new NotImplementedException();
         }
 
+        public Task MoveAbsoluteAsync(RoboticState target, CancellationToken token = default)
+        {
+            throw new NotImplementedException();
+        }
+
         public void MoveRelative(JointSpace relative)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task MoveRelativeAsync(JointSpace diff, CancellationToken token = default)
         {
             throw new NotImplementedException();
         }

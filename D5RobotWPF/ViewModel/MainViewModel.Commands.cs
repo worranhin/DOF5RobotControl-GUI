@@ -249,7 +249,6 @@ namespace DOF5RobotControl_GUI.ViewModel
         [RelayCommand]
         private async Task CollectRLDataAsync()
         {
-            const int period = 50; // ms
             const int maxTime = 12000; // ms
 
             collectRlDataCancelSource = new();
@@ -268,6 +267,50 @@ namespace DOF5RobotControl_GUI.ViewModel
             var sw = Stopwatch.StartNew();
             while(!token.IsCancellationRequested)
             {
+                // 获取当前状态
+                float[] state = await GetState();
+
+                // 将误差作为模型的输入获取动作
+                const float kp = 0.3f;
+                var action = policy.Step(state);
+
+                for (int i = 0; i < action.Length; i++)
+                {
+                    action[i] = action[i] * kp; // 将动作缩放到合理范围
+                }
+
+                // 目标关节位置加上网络输出的相对位移量 + 随机高斯噪声
+                const double mean = 0;
+                const double std = 0.01;
+
+                JointSpace error = new()
+                {
+                    R1rad = action[0] + GenerateGaussianNoise(mean, action[0] * std),
+                    P2 = action[1] * 1000.0 + GenerateGaussianNoise(mean, action[1] * std),  // 策略网络的输出单位为 m，控制时转换为 mm
+                    P3 = action[2] * 1000.0 + GenerateGaussianNoise(mean, action[2] * std),
+                    P4 = action[3] * 1000.0 + GenerateGaussianNoise(mean, action[3] * std),
+                    R5rad = action[4] + GenerateGaussianNoise(mean, action[4] * std),
+                };
+
+                Debug.WriteLine(error);
+
+                // 执行动作
+                await _robotControlService.MoveRelativeAsync(error, token);
+
+                // 记录 state, action
+                recorder.Record(state, action);
+
+                // 若达到最大时间，则停止
+                var t = sw.ElapsedMilliseconds;
+                if (t > maxTime) break;
+            }
+
+            recorder.Stop();
+            
+            // 本地方法定义
+            async Task<float[]> GetState()
+            {
+                CamFrame topImg, bottomImg;
                 // 获取当前位姿状态误差
                 topImg = _cameraCtrlService.GetTopFrame();
                 bottomImg = _cameraCtrlService.GetBottomFrame();
@@ -283,47 +326,8 @@ namespace DOF5RobotControl_GUI.ViewModel
                 double qz = Math.Sin(halfTheta);
                 //float[] state = [((float)x), ((float)y), ((float)z), (float)w, 0, 0, (float)qz];  // 转为神经网络的输入形式（位移+四元数误差）
                 float[] state = [((float)x / 1000.0F), ((float)y / 1000.0F), ((float)z / 1000.0F), (float)w, 0, 0, (float)qz]; // 转为神经网络的输入形式（位移+四元数误差） 单位为 m
-
-                // 将误差作为模型的输入获取动作
-                var action = policy.Step(state).ToArray();
-
-                // 拷贝当前状态
-                TargetState.Copy(CurrentState);
-                var joints = TargetState.JointSpace.Clone();
-
-                // 目标关节位置加上网络输出的相对位移量 + 随机高斯噪声
-                const double mean = 0;
-                const double std = 0.01;
-
-                joints.R1rad += action[0] + GenerateGaussianNoise(mean, std);
-                joints.P2 += action[1] * 1000.0 + GenerateGaussianNoise(mean, std);  // 策略网络的输出单位为 m，控制时转换为 mm
-                joints.P3 += action[2] * 1000.0 + GenerateGaussianNoise(mean, std);
-                joints.P4 += action[3] * 1000.0 + GenerateGaussianNoise(mean, std);
-                joints.R5rad += action[4] + GenerateGaussianNoise(mean, std);
-
-                // 执行动作
-                TargetState.JointSpace = joints;
-                _robotControlService.MoveTo(TargetState);
-
-                // 记录 state, action
-                recorder.Record(state, action);
-
-                // 若达到最大时间，则停止
-                var t = sw.ElapsedMilliseconds;
-                if (t > maxTime) break;
-
-                // 等待一个控制周期时间
-                try
-                {
-                    await Task.Delay(period, token);
-                }
-                catch (TaskCanceledException)
-                {
-                    Debug.WriteLine("Collect RL data is canceled.");
-                }
+                return state;
             }
-
-            recorder.Stop();
         }
 
         [RelayCommand]

@@ -37,11 +37,28 @@ namespace DOF5RobotControl_GUI.Services
         void MoveAbsolute(RoboticState target);
 
         /// <summary>
+        /// 异步绝对运动
+        /// </summary>
+        /// <param name="target"></param>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        Task MoveAbsoluteAsync(RoboticState target, CancellationToken token = default);
+
+        /// <summary>
         /// 相对运动
         /// </summary>
-        /// <param name="relative"></param>
-        void MoveRelative(JointSpace relative);
-        
+        /// <param name="diff"></param>
+        void MoveRelative(JointSpace diff);
+
+        /// <summary>
+        /// 异步相对运动
+        /// </summary>
+        /// <param name="diff"></param>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        Task MoveRelativeAsync(JointSpace diff, CancellationToken token = default);
+
+
         /// <summary>
         /// 停止运动
         /// </summary>
@@ -92,5 +109,6 @@ namespace DOF5RobotControl_GUI.Services
         /// <exception cref="InvalidOperationException"></exception>
         /// <exception cref="ArgumentOutOfRangeException"></exception>
         double GetJointValue(int axis);
+        
     }
 }
