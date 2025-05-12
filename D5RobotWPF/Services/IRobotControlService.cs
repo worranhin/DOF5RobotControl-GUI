@@ -7,24 +7,64 @@ namespace DOF5RobotControl_GUI.Services
         /// <summary>
         /// 指示机器人的连接状态
         /// </summary>
-        bool RobotIsConnected { get; }
+        bool IsConnected { get; }
 
         /// <summary>
-        /// 实时获取机器人当前状态
+        /// 机器人的当前状态
         /// </summary>
         RoboticState CurrentState { get; }
 
+        /// <summary>
+        /// 机器人的目标状态
+        /// </summary>
         RoboticState TargetState { get; }
 
+        /// <summary>
+        /// 建立连接
+        /// </summary>
+        /// <param name="port">RMD 电机的串口名</param>
         void Connect(string port);
+
+        /// <summary>
+        /// 断开连接
+        /// </summary>
         void Disconnect();
-        void MoveRelative(RoboticState relative);
-        void MoveTo(RoboticState target);
+
+        /// <summary>
+        /// 绝对运动
+        /// </summary>
+        /// <param name="target"></param>
+        void MoveAbsolute(RoboticState target);
+
+        /// <summary>
+        /// 相对运动
+        /// </summary>
+        /// <param name="relative"></param>
+        void MoveRelative(JointSpace relative);
+        
+        /// <summary>
+        /// 停止运动
+        /// </summary>
         void Stop();
+
+        /// <summary>
+        /// 设置当前状态为零点
+        /// </summary>
         void SetZero();
+
+        /// <summary>
+        /// 开始振动
+        /// </summary>
+        /// <param name="vibrateHorizontal">是否水平振动</param>
+        /// <param name="vibrateVertical">是否竖直振动</param>
+        /// <param name="amplitude">振幅（mm）</param>
+        /// <param name="frequency">频率（Hz）</param>
         void StartVibrate(bool vibrateHorizontal, bool vibrateVertical, double amplitude, double frequency);
+
+        /// <summary>
+        /// 停止振动
+        /// </summary>
         void StopVibrate();
-        RoboticState GetCurrentState();
 
         /// <summary>
         /// 等待直到到达目标位置
@@ -43,5 +83,14 @@ namespace DOF5RobotControl_GUI.Services
         /// <param name="CheckDistance">检查阈值</param>
         /// <returns></returns>
         public Task WaitForTargetedAsync(CancellationToken token, int CheckPeriod = 100, double CheckDistance = 0.1);
+
+        /// <summary>
+        /// 获取指定关节的值
+        /// </summary>
+        /// <param name="axis">指定关节，范围 1-5</param>
+        /// <returns>关节值，单位为 mm 或 deg</returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
+        double GetJointValue(int axis);
     }
 }

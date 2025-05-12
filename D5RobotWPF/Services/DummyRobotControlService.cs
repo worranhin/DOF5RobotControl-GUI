@@ -10,7 +10,7 @@ namespace DOF5RobotControl_GUI.Services
 {
     public class DummyRobotControlService : IRobotControlService
     {
-        public bool RobotIsConnected { get; private set; }
+        public bool IsConnected { get; private set; }
 
         public RoboticState CurrentState { get; private set; } = new();
 
@@ -22,7 +22,7 @@ namespace DOF5RobotControl_GUI.Services
         public void Connect(string port)
         {
             Debug.WriteLine("Dummy Robot connected.");
-            RobotIsConnected = true;
+            IsConnected = true;
 
             // 模拟电机运动的线程
             mockRunCancelSource = new();
@@ -56,7 +56,7 @@ namespace DOF5RobotControl_GUI.Services
                 mockRunTask = null;
             }
 
-            RobotIsConnected = false;
+            IsConnected = false;
         }
 
         public RoboticState GetCurrentState()
@@ -64,14 +64,14 @@ namespace DOF5RobotControl_GUI.Services
             return CurrentState;
         }
 
-        public void MoveRelative(RoboticState relative)
+        public void MoveRelative(JointSpace relative)
         {
             var target = CurrentState.Clone();
-            target.JointSpace.Add(relative.JointSpace);
+            target.JointSpace.Add(relative);
             TargetState = target;
         }
 
-        public void MoveTo(RoboticState target)
+        public void MoveAbsolute(RoboticState target)
         {
             TargetState = target.Clone();
         }
@@ -123,6 +123,11 @@ namespace DOF5RobotControl_GUI.Services
                     break;
                 }
             }
+        }
+
+        public double GetJointValue(int axis)
+        {
+            throw new NotImplementedException();
         }
     }
 }

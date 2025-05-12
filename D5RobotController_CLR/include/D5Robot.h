@@ -39,12 +39,12 @@ namespace D5R {
 		bool _isInit;
 
 	public:
-		NatorMotor* natorMotor;
+		NatorMotor^ natorMotor;
 		RMDMotor* topRMDMotor;
 		RMDMotor* botRMDMotor;
 
 	public:
-		D5Robot(const char* serialPort, std::string natorID, uint8_t topRMDID,
+		D5Robot(const char* serialPort, String^ natorID, uint8_t topRMDID,
 			uint8_t botRMDID);
 		D5Robot(String^ portName, String^ natorID, byte topRMDId, byte bottomRMDId);
 		~D5Robot();

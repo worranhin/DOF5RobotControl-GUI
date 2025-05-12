@@ -10,7 +10,7 @@ namespace DOF5RobotControl_GUI.DesignModel
 {
     class DRobotControlService : IRobotControlService
     {
-        public bool RobotIsConnected => false;
+        public bool IsConnected => false;
 
         public RoboticState CurrentState { get; } = new();
 
@@ -31,12 +31,17 @@ namespace DOF5RobotControl_GUI.DesignModel
             throw new NotImplementedException();
         }
 
-        public void MoveRelative(RoboticState relative)
+        public double GetJointValue(int axis)
         {
             throw new NotImplementedException();
         }
 
-        public void MoveTo(RoboticState target)
+        public void MoveAbsolute(RoboticState target)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void MoveRelative(JointSpace relative)
         {
             throw new NotImplementedException();
         }

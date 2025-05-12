@@ -182,6 +182,9 @@ namespace DOF5RobotControl_GUI.Model
                 R5 = -(int)(R5 * 100)
             };
 
+            j.R1 = j.R1 < 0 ? 36000 + j.R1 : j.R1;
+            j.R5 = j.R5 < 0 ? 36000 + j.R5 : j.R5;
+
             return j;
         }
     }

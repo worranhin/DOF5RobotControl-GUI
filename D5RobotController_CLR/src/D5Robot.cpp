@@ -3,10 +3,17 @@
 #include "D5Robot.h"
 
 namespace D5R {
-	D5Robot::D5Robot(const char* serialPort, std::string natorID, uint8_t topRMDID,
+	/// <summary>
+	/// D5Robot constructor
+	/// </summary>
+	/// <param name="serialPort">串口类实例</param>
+	/// <param name="natorID">Nator 驱动器 id</param>
+	/// <param name="topRMDID">顶部 RMD 电机的 ID</param>
+	/// <param name="botRMDID">底部 RMD 电机的 ID</param>
+	D5Robot::D5Robot(const char* serialPort, String^ natorID, uint8_t topRMDID,
 		uint8_t botRMDID) {
 		_port = new SerialPort(serialPort);
-		natorMotor = new NatorMotor(natorID);
+		natorMotor = gcnew NatorMotor(natorID);
 		topRMDMotor = new RMDMotor(std::ref(*_port), topRMDID);
 		botRMDMotor = new RMDMotor(std::ref(*_port), botRMDID);
 
@@ -15,14 +22,22 @@ namespace D5R {
 			throw gcnew RobotException(ErrorCode::CreateInstanceError);
 		}
 	}
+
+	/// <summary>
+	/// D5Robot constructor
+	/// </summary>
+	/// <param name="portName">端口名，如 "COM7"</param>
+	/// <param name="natorID">Nator 驱动器 id</param>
+	/// <param name="topRMDId">顶部 RMD 电机的 ID</param>
+	/// <param name="bottomRMDId">底部 RMD 电机的 ID</param>
 	D5Robot::D5Robot(String^ portName, String^ natorID, byte topRMDId, byte bottomRMDId)
 	{
 		using namespace System::Runtime::InteropServices;
 		auto portName_c = (char*)Marshal::StringToHGlobalAnsi(portName).ToPointer();
-		auto natorId_c = (char*)Marshal::StringToHGlobalAnsi(natorID).ToPointer();
+		//auto natorId_c = (char*)Marshal::StringToHGlobalAnsi(natorID).ToPointer();
 		try {
 			_port = new SerialPort(portName_c);
-			natorMotor = new NatorMotor(natorId_c);
+			natorMotor = gcnew NatorMotor(natorID);
 			topRMDMotor = new RMDMotor(std::ref(*_port), topRMDId);
 			botRMDMotor = new RMDMotor(std::ref(*_port), bottomRMDId);
 
@@ -33,7 +48,7 @@ namespace D5R {
 		}
 		finally {
 			Marshal::FreeHGlobal((IntPtr)portName_c);
-			Marshal::FreeHGlobal((IntPtr)natorId_c);
+			//Marshal::FreeHGlobal((IntPtr)natorId_c);
 		}
 	}
 	D5Robot::~D5Robot() {
@@ -120,7 +135,7 @@ namespace D5R {
 		j->R5 = botRMDMotor->GetSingleAngle_s();
 
 		NTU_Point np;
-		this->natorMotor->GetPosition(&np);
+		this->natorMotor->GetAllPosition(&np);
 		j->P2 = np.x;
 		j->P3 = np.y;
 		j->P4 = np.z;
