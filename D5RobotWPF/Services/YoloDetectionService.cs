@@ -99,5 +99,13 @@ namespace DOF5RobotControl_GUI.Services
             using var image = Image.LoadPixelData<L8>(frame.Buffer, frame.Width, frame.Height);
             return await bottomKeypointPredictor.PoseAsync(image);
         }
+
+        public Image BottomPlot(CamFrame frame)
+        {
+            using var image = Image.LoadPixelData<L8>(frame.Buffer, frame.Width, frame.Height);
+            var result = bottomPredictor.Detect(image);
+            return result.PlotImage(image);
+
+        }
     }
 }

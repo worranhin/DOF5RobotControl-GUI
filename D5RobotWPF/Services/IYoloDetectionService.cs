@@ -77,5 +77,12 @@ namespace DOF5RobotControl_GUI.Services
         /// <param name="frame"></param>
         /// <returns></returns>
         YoloResult<Pose> BottomPose(CamFrame frame);
+
+        /// <summary>
+        /// 对传入图像进行目标检测，并返回一个带检测框的图像，调用方需要显式调用返回对象的 Dispose() 方法
+        /// </summary>
+        /// <param name="frame"></param>
+        /// <returns></returns>
+        Image BottomPlot(CamFrame frame);
     }
 }

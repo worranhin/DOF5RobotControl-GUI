@@ -49,6 +49,9 @@ namespace DOF5RobotControl_GUI.ViewModel
         [ObservableProperty]
         double _dRz = double.NaN;
 
+        [ObservableProperty]
+        bool _isDisplayYoloBox = false;
+
 
         public CameraViewModel(ICameraControlService cameraControlService, IYoloDetectionService yoloDetectionService)
         {
@@ -61,52 +64,6 @@ namespace DOF5RobotControl_GUI.ViewModel
         ~CameraViewModel()
         {
             cameraControlService.UnRegisterCallback(TopFrameReceived, BottomFrameReceived);
-        }
-
-        private void TopFrameReceived(object? sender, CamFrame e)
-        {
-            //PixelFormat pf = PixelFormats.Gray8; // 下面转成 bitmap 格式
-            //int rawStride = (e.Width * pf.BitsPerPixel + 7) / 8;
-            //dispatcher.Invoke(() =>
-            //{
-            //    BitmapSource bitmap = BitmapSource.Create(e.Width, e.Height, 96, 96, pf, null, e.Buffer, rawStride);
-            //    TopImageSource = bitmap;
-            //});
-
-            //Image img = yoloDetectionService.Plot(e);
-            //var img = yoloDetectionService.PlotTopAsync(e).Result;
-            var img = yoloDetectionService.TopPlot(e);
-            try
-            {
-                if (img is Image<Rgba32> img32)
-                {
-                    byte[] procRaw = new byte[img.Width * img.Height * 4];
-                    img32.CopyPixelDataTo(procRaw);
-
-                    PixelFormat pf = PixelFormats.Bgra32; // 下面转成 bitmap 格式
-                    int rawStride = (e.Width * pf.BitsPerPixel + 7) / 8;
-                    dispatcher.Invoke(() =>
-                    {
-                        BitmapSource bitmap = BitmapSource.Create(img32.Width, img32.Height, 96, 96, pf, null, procRaw, rawStride);
-                        TopImageSource = bitmap;
-                    });
-                }
-            }
-            finally
-            {
-                img.Dispose();
-            }
-        }
-
-        private void BottomFrameReceived(object? sender, CamFrame e)
-        {
-            PixelFormat pf = PixelFormats.Gray8; // 下面转成 bitmap 格式
-            int rawStride = (e.Width * pf.BitsPerPixel + 7) / 8;
-            dispatcher.Invoke(() =>
-            {
-                BitmapSource bitmap = BitmapSource.Create(e.Width, e.Height, 96, 96, pf, null, e.Buffer, rawStride);
-                BottomImageSource = bitmap;
-            });
         }
 
         [RelayCommand]
@@ -131,6 +88,70 @@ namespace DOF5RobotControl_GUI.ViewModel
             }
 
             IsProcessingImg = false;
+        }
+
+        private void TopFrameReceived(object? sender, CamFrame e)
+        {
+            if (IsDisplayYoloBox)
+            {
+                using var img = yoloDetectionService.TopPlot(e);
+
+                if (img is Image<Rgba32> img32)
+                {
+                    byte[] procRaw = new byte[img.Width * img.Height * 4];
+                    img32.CopyPixelDataTo(procRaw);
+
+                    PixelFormat pf = PixelFormats.Bgra32; // 下面转成 bitmap 格式
+                    int rawStride = (e.Width * pf.BitsPerPixel + 7) / 8;
+                    dispatcher.Invoke(() =>
+                    {
+                        BitmapSource bitmap = BitmapSource.Create(img32.Width, img32.Height, 96, 96, pf, null, procRaw, rawStride);  // 这个 Bitmap 需要在 UI 线程创建
+                        TopImageSource = bitmap;
+                    });
+                }
+            }
+            else
+            {
+                PixelFormat pf = PixelFormats.Gray8; // 下面转成 bitmap 格式
+                int rawStride = (e.Width * pf.BitsPerPixel + 7) / 8;
+                dispatcher.Invoke(() =>
+                {
+                    BitmapSource bitmap = BitmapSource.Create(e.Width, e.Height, 96, 96, pf, null, e.Buffer, rawStride);
+                    TopImageSource = bitmap;
+                });
+            }
+        }
+
+        private void BottomFrameReceived(object? sender, CamFrame e)
+        {
+            if (IsDisplayYoloBox)
+            {
+                using var img = yoloDetectionService.BottomPlot(e);
+
+                if (img is Image<Rgba32> img32)
+                {
+                    byte[] procRaw = new byte[img.Width * img.Height * 4];
+                    img32.CopyPixelDataTo(procRaw);
+
+                    PixelFormat pf = PixelFormats.Bgra32; // 下面转成 bitmap 格式
+                    int rawStride = (e.Width * pf.BitsPerPixel + 7) / 8;
+                    dispatcher.Invoke(() =>
+                    {
+                        BitmapSource bitmap = BitmapSource.Create(img32.Width, img32.Height, 96, 96, pf, null, procRaw, rawStride);
+                        BottomImageSource = bitmap;
+                    });
+                }
+            }
+            else
+            {
+                PixelFormat pf = PixelFormats.Gray8; // 下面转成 bitmap 格式
+                int rawStride = (e.Width * pf.BitsPerPixel + 7) / 8;
+                dispatcher.Invoke(() =>
+                {
+                    BitmapSource bitmap = BitmapSource.Create(e.Width, e.Height, 96, 96, pf, null, e.Buffer, rawStride);
+                    BottomImageSource = bitmap;
+                });
+            }
         }
     }
 }

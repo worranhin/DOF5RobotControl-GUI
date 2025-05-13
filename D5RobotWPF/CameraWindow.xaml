@@ -21,7 +21,8 @@
                     <Setter Property="VerticalAlignment" Value="Center"/>
                 </Style>
             </UniformGrid.Resources>
-                <StackPanel Orientation="Horizontal">
+            <mah:ToggleSwitch Content="显示检测框" IsOn="{Binding IsDisplayYoloBox}"/>
+            <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Px:"/>
                     <TextBlock Text="{Binding DPx}"/>                    
                 </StackPanel>
