@@ -150,7 +150,7 @@ namespace DOF5RobotControl_GUI.Services
                     if (ntMotor3 == null)
                         throw new InvalidOperationException("Robot is not connected.");
 
-                    value = -ntMotor3.Position * 1e-6;
+                    value = ntMotor3.Position * 1e-6;
                     return value;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(axis), "Axis should be of 1-5");
