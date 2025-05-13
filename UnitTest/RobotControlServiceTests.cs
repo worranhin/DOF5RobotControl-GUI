@@ -23,7 +23,13 @@ namespace UnitTest
         public async Task TestGetJointValue()
         {
             //TryConnect();
-            robotService.Connect("COM16");
+            try
+            {
+                robotService.Connect("COM16");
+            } catch (FileNotFoundException)
+            {
+                return;
+            }
             Assert.True(robotService.IsConnected, "Fail to connect robot");
 
             double value = robotService.GetJointValue(1);

@@ -1,15 +1,8 @@
 ﻿using Compunet.YoloSharp.Data;
 using DOF5RobotControl_GUI.Model;
-using SixLabors.ImageSharp.PixelFormats;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using VisionLibrary;
-using static DOF5RobotControl_GUI.Services.YoloDetectionService;
 
 namespace DOF5RobotControl_GUI.Services
 {
@@ -210,13 +203,6 @@ namespace DOF5RobotControl_GUI.Services
         private async Task<(double x, double y, double rz)> GetGripperPoseAsync(CamFrame frame)
         {
             var result = await yoloService.TopObbDetectAsync(frame);
-
-            if (result.Count < 2)
-                throw new InvalidOperationException("(Part of) gripper not detected.");
-
-            if (result.Count != 2)
-                throw new InvalidOperationException("Detection error occured. (More than 2 gripper tips are detected.");
-
             return ProcessTopYoloResult(result);
         }
 
@@ -227,8 +213,55 @@ namespace DOF5RobotControl_GUI.Services
         /// <returns>夹钳末端的位姿(x(px), y(px), rz(rad))，注意坐标系为向右为 +x，向下为 +y，顺时针为 +rz</returns>
         private (double x, double y, double rz) ProcessTopYoloResult(YoloResult<ObbDetection> result)
         {
-            var tip1 = result[0];
-            var tip2 = result[1];
+            ObbDetection[] goodResults;
+
+            // 如果初始检测结果小于 2 个，则丢出异常
+            if (result.Count < 2)
+                throw new InvalidOperationException("(Part of) gripper not detected.");
+
+            // 如果初始检测结果大于 2 个，做后续处理
+            if (result.Count > 2)
+            {
+                var thresholdQuery = from item in result
+                                     where item.Confidence > 0.8
+                                     select item;
+
+                Debug.Assert(thresholdQuery.Count() <= 2, "More than 2 result where confidence greater than threshold, threshold can be set larger.");
+
+                if (thresholdQuery.Count() == 2)  // 如果去除置信度低的结果数刚好为 2 则直接取这个结果
+                    goodResults = [.. thresholdQuery];
+                else  // 否则使用分类的方法
+                {
+                    SortedSet<ObbDetection> res1 = new(new DetectionComparer());
+                    SortedSet<ObbDetection> res2 = new(new DetectionComparer());
+
+                    foreach (var detection in result)
+                    {
+                        // 首次迭代的情况
+                        if (res1.Count == 0)
+                        {
+                            res1.Add(detection);
+                            continue;
+                        }
+
+                        var detection1 = res1.First();
+                        if (Math.Abs(detection.Bounds.X - detection1.Bounds.X) < detection1.Bounds.Width / 2 &&
+                            Math.Abs(detection.Bounds.Y - detection1.Bounds.Y) < detection1.Bounds.Height / 2)
+                            res1.Add(detection);
+                        else
+                            res2.Add(detection);
+                    }
+
+                    if (res1.Max is not null && res2.Max is not null)
+                        goodResults = [res1.Max, res2.Max];
+                }
+            }
+
+            goodResults = [.. result];
+
+            Debug.Assert(goodResults.Length == 2);
+            var tip1 = goodResults[0];
+            var tip2 = goodResults[1];
 
             ObbDetection leftTip, rightTip;
             if (tip1.Bounds.X < tip2.Bounds.X)
@@ -255,6 +288,21 @@ namespace DOF5RobotControl_GUI.Services
             double rz = Math.Atan2(rightPoint.Y - leftPoint.Y, rightPoint.X - leftPoint.X);
 
             return (midPoint.X, midPoint.Y, rz);
+        }
+
+        class DetectionComparer : IComparer<ObbDetection>
+        {
+            public int Compare(ObbDetection? x, ObbDetection? y)
+            {
+                if (x != null && y != null)
+                    return (int)(x.Confidence * 100) - (int)(y.Confidence * 100);
+                else if (x == null && y != null)
+                    return -1;
+                else if (x != null && y == null)
+                    return 1;
+                else
+                    return 0;
+            }
         }
     }
 }

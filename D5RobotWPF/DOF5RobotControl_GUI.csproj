@@ -143,6 +143,9 @@
     <None Update="Assets\YoloModels\TopCam_v0.2.onnx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Assets\YoloModels\TopCam_v0.3.onnx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Assets\YoloModels\TopC_v0.2_best.onnx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

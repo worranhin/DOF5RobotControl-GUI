@@ -9,7 +9,7 @@ namespace DOF5RobotControl_GUI.Services
 {
     public class YoloDetectionService : IYoloDetectionService
     {
-        const string TopModelPath = "Assets/YoloModels/TopCam_v0.2.onnx";
+        const string TopModelPath = "Assets/YoloModels/TopCam_v0.3.onnx";
         const string BottomModelPath = "Assets/YoloModels/BottomCam_v0.3.onnx";
         const string BottomKeypointPath = "Assets/YoloModels/BottomKeypoint_v0.2.onnx";
 
@@ -51,6 +51,8 @@ namespace DOF5RobotControl_GUI.Services
         public async Task<YoloResult<ObbDetection>> TopObbDetectAsync(CamFrame frame)
         {
             using var image = Image.LoadPixelData<L8>(frame.Buffer, frame.Width, frame.Height);
+
+            var config = new YoloConfiguration() { Confidence = 0.75F };
             return await topPredictor.DetectObbAsync(image); // 大概会花费 59±30 ms
         }
 
