@@ -1,12 +1,6 @@
-﻿using DOF5RobotControl_GUI.Model;
-using DOF5RobotControl_GUI.Services;
+﻿using DOF5RobotControl_GUI.Services;
 using DOF5RobotControl_GUI.ViewModel;
-using DOF5RobotControl_GUI.WebAPI;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 using OnnxInferenceLibrary;
 using System.Windows;
 
@@ -30,7 +24,7 @@ namespace DOF5RobotControl_GUI
 
             InitializeComponent();
         }
-        
+
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
@@ -42,7 +36,6 @@ namespace DOF5RobotControl_GUI
 
         protected override void OnExit(ExitEventArgs e)
         {
-
             base.OnExit(e);
         }
 

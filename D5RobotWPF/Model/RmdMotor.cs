@@ -1,4 +1,5 @@
-﻿using System.IO.Ports;
+﻿using System.Diagnostics;
+using System.IO.Ports;
 
 namespace DOF5RobotControl_GUI.Model
 {
@@ -37,16 +38,11 @@ namespace DOF5RobotControl_GUI.Model
             const byte receiveDataLength = 0x08;
 
             // 发送命令，接收回复数据
-            SendCommand(bytesToWrite, commandByte, sendDataLength);
-            //Thread.Sleep(2);
-            var data = ReceiveResponse(bytesToRead, commandByte, receiveDataLength);
+            var data = WriteAndRead(commandByte, bytesToWrite, bytesToRead, 
+                sendDataLength, receiveDataLength);
 
             // 解析接收到的数据
-            Int64 motorAngle = 0;
-            for (int i = 0; i < receiveDataLength; i++)
-            {
-                motorAngle |= ((Int64)data[i]) << (8 * i);
-            }
+            var motorAngle = BitConverter.ToInt64(data, 0);
 
             return motorAngle;
         }
@@ -65,14 +61,10 @@ namespace DOF5RobotControl_GUI.Model
             const int bytesToRead = 8;
             const byte receiveDataLength = 0x02;
 
-            SendCommand(bytesToWrite, commandByte, sendDataLength);
-            var data = ReceiveResponse(bytesToRead, commandByte, receiveDataLength);
+            var data = WriteAndRead(commandByte, bytesToWrite, bytesToRead,
+                sendDataLength, receiveDataLength);
 
-            UInt16 angle = 0;
-            for (int i = 0; i < receiveDataLength; i++)
-            {
-                angle |= (UInt16)(((UInt16)data[i]) << (8 * i));
-            }
+            UInt16 angle = BitConverter.ToUInt16(data);
 
             return angle;
         }
@@ -90,8 +82,8 @@ namespace DOF5RobotControl_GUI.Model
             const int bytesToRead = 5;
             const byte receiveDataLength = 0;
 
-            SendCommand(bytesToWrite, commandByte, sendDataLength);
-            ReceiveResponse(bytesToRead, commandByte, receiveDataLength);
+            WriteAndRead(commandByte, bytesToWrite, bytesToRead, 
+                sendDataLength, receiveDataLength);
         }
 
         /// <summary>
@@ -107,8 +99,8 @@ namespace DOF5RobotControl_GUI.Model
             const int bytesToRead = 5;
             const byte receiveDataLength = 0;
 
-            SendCommand(bytesToWrite, commandByte, sendDataLength);
-            ReceiveResponse(bytesToRead, commandByte, receiveDataLength);
+            WriteAndRead(commandByte, bytesToWrite, bytesToRead,
+                sendDataLength, receiveDataLength);
         }
 
         /// <summary>
@@ -124,8 +116,8 @@ namespace DOF5RobotControl_GUI.Model
             const int bytesToRead = 5;
             const byte receiveDataLength = 0;
 
-            SendCommand(bytesToWrite, commandByte, sendDataLength);
-            ReceiveResponse(bytesToRead, commandByte, receiveDataLength);
+            WriteAndRead(commandByte, bytesToWrite, bytesToRead,
+                sendDataLength, receiveDataLength);
         }
 
         /// <summary>
@@ -143,8 +135,8 @@ namespace DOF5RobotControl_GUI.Model
             const byte receiveDataLength = 0x07;
 
             byte[] sendData = BitConverter.GetBytes(power);
-            SendCommand(bytesToWrite, commandByte, sendDataLength, sendData);
-            var data = ReceiveResponse(bytesToRead, commandByte, receiveDataLength);
+            var data = WriteAndRead(commandByte, bytesToWrite, bytesToRead,
+                sendDataLength, receiveDataLength, sendData);
 
             Temperature = data[0];
             Power = BitConverter.ToInt16(data, 1);
@@ -167,8 +159,8 @@ namespace DOF5RobotControl_GUI.Model
             const byte receiveDataLength = 0x07;
 
             byte[] sendData = BitConverter.GetBytes(velocity);
-            SendCommand(bytesToWrite, commandByte, sendDataLength, sendData);
-            var data = ReceiveResponse(bytesToRead, commandByte, receiveDataLength);
+            var data = WriteAndRead(commandByte, bytesToWrite, bytesToRead,
+                sendDataLength, receiveDataLength, sendData);
 
             Temperature = data[0];
             Power = BitConverter.ToInt16(data, 1);
@@ -191,8 +183,8 @@ namespace DOF5RobotControl_GUI.Model
             const byte receiveDataLength = 0x07;
 
             byte[] sendData = BitConverter.GetBytes(angle);
-            SendCommand(bytesToWrite, commandByte, sendDataLength, sendData);
-            var data = ReceiveResponse(bytesToRead, commandByte, receiveDataLength);
+            var data = WriteAndRead(commandByte, bytesToWrite, bytesToRead,
+                sendDataLength, receiveDataLength, sendData);
 
             Temperature = data[0];
             Power = BitConverter.ToInt16(data, 1);
@@ -218,8 +210,8 @@ namespace DOF5RobotControl_GUI.Model
             byte[] sendData = new byte[sendDataLength];
             BitConverter.GetBytes(angle).CopyTo(sendData, 0);
             BitConverter.GetBytes(maxSpeed).CopyTo(sendData, 8);
-            SendCommand(bytesToWrite, commandByte, sendDataLength, sendData);
-            var data = ReceiveResponse(bytesToRead, commandByte, receiveDataLength);
+            var data = WriteAndRead(commandByte, bytesToWrite, bytesToRead,
+                sendDataLength, receiveDataLength, sendData);
 
             Temperature = data[0];
             Power = BitConverter.ToInt16(data, 1);
@@ -248,8 +240,8 @@ namespace DOF5RobotControl_GUI.Model
             Array.Copy(BitConverter.GetBytes(angle), 0, sendData, 1, 2);
             sendData[3] = 0x00;
 
-            SendCommand(bytesToWrite, commandByte, sendDataLength, sendData);
-            var data = ReceiveResponse(bytesToRead, commandByte, receiveDataLength);
+            var data = WriteAndRead(commandByte, bytesToWrite, bytesToRead,
+                sendDataLength, receiveDataLength, sendData);
 
             // 解析接收到的数据
             Temperature = data[0];
@@ -281,8 +273,8 @@ namespace DOF5RobotControl_GUI.Model
             sendData[3] = 0x00;
             BitConverter.GetBytes(maxSpeed).CopyTo(sendData, 4);
 
-            SendCommand(bytesToWrite, commandByte, sendDataLength, sendData);
-            var data = ReceiveResponse(bytesToRead, commandByte, receiveDataLength);
+            var data = WriteAndRead(commandByte, bytesToWrite, bytesToRead,
+                sendDataLength, receiveDataLength, sendData);
 
             // 解析接收到的数据
             Temperature = data[0];
@@ -308,8 +300,8 @@ namespace DOF5RobotControl_GUI.Model
             // 准备数据
             byte[] sendData = BitConverter.GetBytes(increment);
 
-            SendCommand(bytesToWrite, commandByte, sendDataLength, sendData);
-            var data = ReceiveResponse(bytesToRead, commandByte, receiveDataLength);
+            var data = WriteAndRead(commandByte, bytesToWrite, bytesToRead,
+                sendDataLength, receiveDataLength, sendData);
 
             // 解析接收到的数据
             Temperature = data[0];
@@ -338,8 +330,8 @@ namespace DOF5RobotControl_GUI.Model
             BitConverter.GetBytes(increment).CopyTo(sendData, 0);
             BitConverter.GetBytes(maxSpeed).CopyTo(sendData, 4);
 
-            SendCommand(bytesToWrite, commandByte, sendDataLength, sendData);
-            var data = ReceiveResponse(bytesToRead, commandByte, receiveDataLength);
+            var data = WriteAndRead(commandByte, bytesToWrite, bytesToRead,
+                sendDataLength, receiveDataLength, sendData);
 
             // 解析接收到的数据
             Temperature = data[0];
@@ -379,6 +371,7 @@ namespace DOF5RobotControl_GUI.Model
 
             try
             {
+                port.DiscardInBuffer();
                 port.Write(writeBuf, 0, byteCount);
             }
             catch (TimeoutException ex)
@@ -395,20 +388,23 @@ namespace DOF5RobotControl_GUI.Model
         /// <param name="dataLength">数据长度</param>
         /// <returns>长度为 dataLength 的数据数组</returns>
         /// <exception cref="InvalidOperationException"></exception>
-        private byte[] ReceiveResponse(int byteCount, byte commandByte, byte dataLength)
+        private byte[] ReceiveResponse(int byteCount, byte commandByte, byte dataLength, int timeout = 100)
         {
             const byte headByte = 0x3E;
 
             byte[] readBuf = new byte[byteCount];
-            try
+            var sw = Stopwatch.StartNew();
+
+            // 检查接收到的字节是否足够
+            while (port.BytesToRead < byteCount)
             {
-                while (port.BytesToRead < byteCount) ;
-                port.Read(readBuf, 0, byteCount);
+                if (sw.ElapsedMilliseconds > timeout)
+                    throw new TimeoutException("timeout when receiving response.");
+
+                Thread.Sleep(1);
             }
-            catch (TimeoutException ex)
-            {
-                throw new InvalidOperationException("timeout when reading serial ports", ex);
-            }
+
+            port.Read(readBuf, 0, byteCount);
 
             // Check received format
             if (readBuf[0] != headByte ||
@@ -435,7 +431,20 @@ namespace DOF5RobotControl_GUI.Model
             }
             else
                 return [];
+        }
 
+        private byte[] WriteAndRead(byte commandByte, int bytesToWrite, int bytesToRead, 
+            byte writeDataLength = 0, byte readDataLength = 0, byte[]? writeData = null, int timeout = 100)
+        {
+
+            byte[] readData;
+            lock (port)  // 确保同一个串口不会被多线程同时访问，为了数据不会混乱
+            {
+                SendCommand(bytesToWrite, commandByte, writeDataLength, writeData);
+                readData = ReceiveResponse(bytesToRead, commandByte, readDataLength, timeout);
+            }
+
+            return readData;
         }
 
         /// <summary>

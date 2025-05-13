@@ -50,11 +50,11 @@ namespace DOF5RobotControl_GUI.ViewModel
                     StartUpdateState();
                     SystemConnected = true;
                 }
-                catch (InvalidOperationException exc)
+                catch (InvalidOperationException ex)
                 {
                     _robotControlService.Disconnect();
                     _cameraCtrlService.DisconnectCamMotor();
-                    _popUpService.Show(exc.Message);
+                    _popUpService.Show(ex.Message);
                     throw;
                 }
             }
@@ -414,6 +414,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         }
 
         /***** 振动进给实验 *****/
+
         [ObservableProperty]
         private double _feedVelocity = 0.5; // mm/s
         [ObservableProperty]
