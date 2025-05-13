@@ -38,7 +38,6 @@ namespace DOF5RobotControl_GUI.Model
         private GxCamera(string mac)
         {
             this.mac = mac;
-            EnsureInitialized();
         }
 
         ~GxCamera()
@@ -124,6 +123,8 @@ namespace DOF5RobotControl_GUI.Model
 
         public void Open(bool useCallback = true)
         {
+            EnsureInitialized();
+
             lock (camOpLock)
             {
 

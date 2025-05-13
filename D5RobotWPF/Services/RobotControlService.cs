@@ -15,20 +15,16 @@ namespace DOF5RobotControl_GUI.Services
         {
             get
             {
-                if (rmdMotor1 == null || rmdMotor2 == null || ntMotor1 == null || ntMotor2 == null || ntMotor3 == null)
-                    throw new InvalidOperationException("Robot is not initialized.");
-
-                Joints joint = new()
+                JointSpace joint = new()
                 {
-                    R1 = rmdMotor1.GetSingleAngle(),
-                    R5 = rmdMotor2.GetSingleAngle(),
-                    P2 = ntMotor1.Position,
-                    P3 = ntMotor2.Position,
-                    P4 = ntMotor3.Position
+                    R1 = GetJointValue(1),
+                    P2 = GetJointValue(2),
+                    P3 = GetJointValue(3),
+                    P4 = GetJointValue(4),
+                    R5 = GetJointValue(5)
                 };
-                
-                JointSpace jointSpace = new(joint);  // 将电机驱动的单位换算成 mm
-                return jointSpace;
+
+                return joint;
             }
         }
 
@@ -61,7 +57,9 @@ namespace DOF5RobotControl_GUI.Services
                 BaudRate = 115200,
                 DataBits = 8,
                 Parity = Parity.None,
-                StopBits = StopBits.One
+                StopBits = StopBits.One,
+                ReadTimeout = 1000,
+                WriteTimeout = 1000
             };
 
             try
@@ -85,14 +83,14 @@ namespace DOF5RobotControl_GUI.Services
 
         public void Disconnect()
         {
-            rmdMotor1?.Stop();
-            rmdMotor2?.Stop();
+            //rmdMotor1?.Stop();
+            //rmdMotor2?.Stop();
             rmdMotor1 = null;
             rmdMotor2 = null;
 
-            ntMotor1?.Stop();
-            ntMotor2?.Stop();
-            ntMotor3?.Stop();
+            //ntMotor1?.Stop();
+            //ntMotor2?.Stop();
+            //ntMotor3?.Stop();
             ntMotor1 = null;
             ntMotor2 = null;
             ntMotor3 = null;
@@ -101,6 +99,8 @@ namespace DOF5RobotControl_GUI.Services
             ntController = null;
 
             serial?.Close();
+            serial?.Dispose();
+            serial = null;
 
             IsConnected = false;
         }

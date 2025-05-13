@@ -16,8 +16,6 @@ namespace DOF5RobotControl_GUI.ViewModel
 {
     partial class MainViewModel
     {
-        Timer? updateStateTimer;
-
         [ObservableProperty]
         bool _opcServerIsOn = false;
 
@@ -38,9 +36,9 @@ namespace DOF5RobotControl_GUI.ViewModel
         {
             if (SystemConnected)  // 如果目前系统已连接，则断开连接
             {
+                StopUpdateState();
                 _robotControlService.Disconnect();
                 _cameraCtrlService.DisconnectCamMotor();
-                updateStateTimer?.Dispose();
                 SystemConnected = false;
             }
             else  // 系统未连接，则建立连接
@@ -49,15 +47,55 @@ namespace DOF5RobotControl_GUI.ViewModel
                 {
                     _robotControlService.Connect(Properties.Settings.Default.RmdPort);
                     _cameraCtrlService.ConnectCamMotor(Properties.Settings.Default.CamMotorPort);
+                    StartUpdateState();
                     SystemConnected = true;
-                    updateStateTimer = new(state => UpdateCurrentState(), null, 500, 1000);
                 }
                 catch (InvalidOperationException exc)
                 {
                     _robotControlService.Disconnect();
                     _cameraCtrlService.DisconnectCamMotor();
                     _popUpService.Show(exc.Message);
+                    throw;
                 }
+            }
+        }
+
+        /***** 更新状态任务 *****/
+
+        CancellationTokenSource? updateCancelSource;
+        Task? updateTask;
+
+        private void StartUpdateState()
+        {
+            updateCancelSource = new();
+            var token = updateCancelSource.Token;
+
+            updateTask = Task.Run(async () =>
+            {
+                while(!token.IsCancellationRequested)
+                {
+                    UpdateCurrentState();
+                    await Task.Delay(1000, token);
+                }
+            });
+        }
+
+        private void StopUpdateState()
+        {
+            updateCancelSource?.Cancel();
+            updateCancelSource?.Dispose();
+
+            try
+            {
+
+            }
+            catch (AggregateException ex)
+            {
+                updateTask?.Wait();
+                if (ex.InnerException is TaskCanceledException)
+                    Debug.WriteLine("Update state task canceled");
+                else
+                    throw;
             }
         }
 

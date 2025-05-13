@@ -11,6 +11,7 @@ namespace D5R {
 		using namespace msclr::interop;
 
 		auto res = NT_OK;
+		_id = id;
 
 		if (String::IsNullOrEmpty(_id))
 			throw gcnew InvalidOperationException("Id should not be null or empty");

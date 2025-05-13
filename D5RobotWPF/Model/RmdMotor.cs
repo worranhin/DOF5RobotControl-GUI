@@ -38,6 +38,7 @@ namespace DOF5RobotControl_GUI.Model
 
             // 发送命令，接收回复数据
             SendCommand(bytesToWrite, commandByte, sendDataLength);
+            //Thread.Sleep(2);
             var data = ReceiveResponse(bytesToRead, commandByte, receiveDataLength);
 
             // 解析接收到的数据
@@ -401,6 +402,7 @@ namespace DOF5RobotControl_GUI.Model
             byte[] readBuf = new byte[byteCount];
             try
             {
+                while (port.BytesToRead < byteCount) ;
                 port.Read(readBuf, 0, byteCount);
             }
             catch (TimeoutException ex)
