@@ -16,143 +16,10 @@ namespace DOF5RobotControl_GUI.ViewModel
 {
     partial class MainViewModel
     {
+        /// OPC 相关代码
+
         [ObservableProperty]
         bool _opcServerIsOn = false;
-
-        /***** 机器人控制命令 *****/
-
-        [RelayCommand]
-        private static void OpenConfigWindow()
-        {
-            ConfigWindow window = new()
-            {
-                Owner = Application.Current.MainWindow
-            };
-            window.Show();
-        }
-
-        [RelayCommand]
-        private void ToggleConnect()
-        {
-            if (SystemConnected)  // 如果目前系统已连接，则断开连接
-            {
-                StopUpdateState();
-                _robotControlService.Disconnect();
-                _cameraCtrlService.DisconnectCamMotor();
-                SystemConnected = false;
-            }
-            else  // 系统未连接，则建立连接
-            {
-                try
-                {
-                    _robotControlService.Connect(Properties.Settings.Default.RmdPort);
-                    _cameraCtrlService.ConnectCamMotor(Properties.Settings.Default.CamMotorPort);
-                    StartUpdateState();
-                    SystemConnected = true;
-                }
-                catch (InvalidOperationException ex)
-                {
-                    _robotControlService.Disconnect();
-                    _cameraCtrlService.DisconnectCamMotor();
-                    _popUpService.Show(ex.Message);
-                    throw;
-                }
-            }
-        }
-
-        /***** 更新状态任务 *****/
-
-        CancellationTokenSource? updateCancelSource;
-        Task? updateTask;
-
-        private void StartUpdateState()
-        {
-            updateCancelSource = new();
-            var token = updateCancelSource.Token;
-
-            updateTask = Task.Run(async () =>
-            {
-                while(!token.IsCancellationRequested)
-                {
-                    UpdateCurrentState();
-                    await Task.Delay(1000, token);
-                }
-            });
-        }
-
-        private void StopUpdateState()
-        {
-            updateCancelSource?.Cancel();
-            updateCancelSource?.Dispose();
-
-            try
-            {
-
-            }
-            catch (AggregateException ex)
-            {
-                updateTask?.Wait();
-                if (ex.InnerException is TaskCanceledException)
-                    Debug.WriteLine("Update state task canceled");
-                else
-                    throw;
-            }
-        }
-
-        [RelayCommand]
-        private void SetTargetJoints(Joints joints)
-        {
-            TargetState.SetFromD5RJoints(joints);
-        }
-
-        [RelayCommand]
-        private void SetTargetJointsFromCurrent()
-        {
-            var joints = CurrentState.ToD5RJoints();
-            TargetState.SetFromD5RJoints(joints);
-        }
-
-        [RelayCommand]
-        private void RobotRun()
-        {
-            try
-            {
-                _robotControlService.MoveAbsolute(TargetState);
-            }
-            catch (InvalidOperationException ex)
-            {
-                _popUpService.Show(ex.Message, "Error when running");
-            }
-            catch (ArgumentException ex)
-            {
-                _popUpService.Show(ex.Message, "Error when running");
-            }
-            catch (RobotException ex)
-            {
-                _popUpService.Show($"Error code: {ex.Code}\nError Message: {ex.Message}", "Robot error occurs while running");
-            }
-        }
-
-        [RelayCommand]
-        private void RobotStop()
-        {
-            // 取消异步任务
-            insertCancelSource?.Cancel();
-            attachCancelSource?.Cancel();
-
-            foreach (var cancelSource in cancelSourceList)
-            {
-                cancelSource?.Cancel();
-            }
-
-            _robotControlService.Stop();
-        }
-
-        [RelayCommand]
-        private void RobotSetZero()
-        {
-            _robotControlService.SetZero();
-        }
 
         [RelayCommand]
         private void ToggleOpcServer()
@@ -167,27 +34,47 @@ namespace DOF5RobotControl_GUI.ViewModel
             }
         }
 
-        [RelayCommand]
         private void OpcConnect()
         {
             _opcService.Connect();
             OpcServerIsOn = true;
         }
 
-        [RelayCommand]
         private void OpcDisconnect()
         {
             _opcService.Disconnect();
             OpcServerIsOn = false;
         }
 
-        /***** 数据记录 *****/
+        public void OpcMapMethod(int method)
+        {
+            // 创建一个 EventArgs 实例来传递给 ButtonClicked 方法
+            switch (method)
+            {
+                case 1: break;
+                case 2: ToggleConnectCommand.Execute(null); break;
+                case 3: SetTargetJointsCommand.Execute(ZeroPos); break;
+                case 4: SetTargetJointsCommand.Execute(IdlePos); break;
+                case 5: SetTargetJointsCommand.Execute(PreChangeJawPos); break;
+                case 6: SetTargetJointsCommand.Execute(ChangeJawPos); break;
+                case 7: SetTargetJointsCommand.Execute(AssemblePos1); break;
+                case 8: SetTargetJointsCommand.Execute(AssemblePos2); break;
+                case 9: SetTargetJointsCommand.Execute(AssemblePos3); break;
+                case 10: SetTargetJointsCommand.Execute(PreFetchRingPos); break;
+                case 11: SetTargetJointsCommand.Execute(FetchRingPos); break;
+                case 12: RobotRunCommand.Execute(null); break;
+                case 13: RobotStopCommand.Execute(null); break;
+                case 14: RobotSetZeroCommand.Execute(null); break;
+            }
+        }
+
+        /***** 数据采集相关代码 *****/
 
         [ObservableProperty]
         bool _isRecording = false;
 
-        CancellationTokenSource? recordCancelSource;
         Task? recordTask;
+        CancellationTokenSource? recordCancelSource;
 
         /// <summary>
         /// 切换数据记录状态
@@ -411,132 +298,6 @@ namespace DOF5RobotControl_GUI.ViewModel
                         Debug.WriteLine(exc.Message);
                 }
             });
-        }
-
-        /***** 振动进给实验 *****/
-
-        [ObservableProperty]
-        private double _feedVelocity = 0.5; // mm/s
-        [ObservableProperty]
-        private double _feedDistance = 5.0; // mm
-        [ObservableProperty]
-        private bool _isFeeding = false;
-
-        private CancellationTokenSource? feedCancelSource;
-        private Task? feedTask;
-        private TaskSpace? positionBeforeFeed;
-
-        [RelayCommand]
-        private async Task ToggleFeed()
-        {
-            if (!IsFeeding)
-                feedTask = StartFeedAsync();
-            else
-            {
-                StopFeed();
-                if (feedTask != null)
-                    await feedTask;
-            }
-        }
-
-        private async Task StartFeedAsync()
-        {
-            IsFeeding = true;
-            feedCancelSource = new();
-            var token = feedCancelSource.Token;
-
-            try
-            {
-                // 定义轨迹
-                Func<double, double> trackX;
-                Func<double, double> trackY;
-                Func<double, double> trackZ;
-
-                UpdateCurrentState();
-                positionBeforeFeed = CurrentState.TaskSpace.Clone();
-                RoboticState target = CurrentState.Clone();
-                target.TaskSpace.Px += FeedDistance;
-                double x0 = CurrentState.TaskSpace.Px;
-                double xf = target.TaskSpace.Px;
-                double tf = FeedDistance / FeedVelocity; // seconds, 速度为 0.5 mm/s
-
-                if (IsVibrateFeed)
-                    trackX = (t) => x0 + t * FeedVelocity + VibrateAmplitude * Math.Sin(2 * Math.PI * VibrateFrequency * t);
-                else
-                    trackX = (t) => x0 + t * FeedVelocity;
-
-                double y0 = CurrentState.TaskSpace.Py;
-                if (IsVibrateHorizontal)
-                    trackY = (t) => y0 + VibrateAmplitude * Math.Sin(2 * Math.PI * VibrateFrequency * t);
-                else
-                    trackY = (t) => y0;
-
-                double z0 = CurrentState.TaskSpace.Pz;
-                if (IsVibrateVertical)
-                    trackZ = (t) => z0 + VibrateAmplitude * Math.Sin(2 * Math.PI * VibrateFrequency * t);
-                else
-                    trackZ = (t) => z0;
-
-                double t = 0;
-                TargetState.Copy(CurrentState);
-                Stopwatch sw = Stopwatch.StartNew();
-
-                try
-                {
-                    // 开启一个进给任务
-                    await Task.Run(() =>
-                    {
-                        do
-                        {
-                            t = sw.ElapsedMilliseconds / 1000.0;
-                            TargetState.TaskSpace.Px = trackX(t);
-                            TargetState.TaskSpace.Py = trackY(t);
-                            TargetState.TaskSpace.Pz = trackZ(t);
-
-                            if (token.IsCancellationRequested)
-                                break;
-
-                            _robotControlService.MoveAbsolute(TargetState);
-                        } while (t < tf);
-                    });
-                }
-                catch (OperationCanceledException ex)
-                {
-                    Debug.WriteLine("Insertion is canceled: " + ex.Message);
-                }
-                finally
-                {
-                    sw.Stop();
-                }
-            }
-            finally
-            {
-                feedCancelSource?.Dispose();
-                feedCancelSource = null;
-                IsFeeding = false;
-            }
-        }
-
-        private void StopFeed()
-        {
-            feedCancelSource?.Cancel();
-        }
-
-        [RelayCommand]
-        private void Retreat()
-        {
-            if (positionBeforeFeed != null)
-            {
-                TargetState.TaskSpace.Copy(positionBeforeFeed);
-            }
-            else
-            {
-                UpdateCurrentState();
-                TargetState.Copy(CurrentState);
-                TargetState.TaskSpace.Px -= FeedDistance;
-            }
-
-            _robotControlService.MoveAbsolute(TargetState);
         }
     }
 }

@@ -11,12 +11,12 @@ namespace DOF5RobotControl_GUI.ViewModel
         DateTime lastTeleMoveTime = DateTime.Now;
 
         [ObservableProperty]
-        private bool _enableGamepad = false;
+        private bool _isGamepadEnabled = false;
 
         [RelayCommand]
         private void ToggleTeleop()
         {
-            if (EnableGamepad)
+            if (IsGamepadEnabled)  // 这里绑定的控件是先更改了 IsGamepadEnabled 的值，所以不必取反
                 EnableTeleop();
             else
                 DisableTeleop();
@@ -31,8 +31,6 @@ namespace DOF5RobotControl_GUI.ViewModel
             _gamepadService.SpeedDownRequested += HandleSpeedDownRequest;
             _gamepadService.Start();
         }
-
-
 
         private void DisableTeleop()
         {
@@ -124,7 +122,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         private void HandleErrorOccured(object? sender, ErrorOcurredEventArgs e)
         {
             _popUpService.Show(e.Error);
-            EnableGamepad = false;
+            IsGamepadEnabled = false;
             DisableTeleop();
         }
     }

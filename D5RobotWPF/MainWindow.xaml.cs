@@ -52,7 +52,6 @@ namespace DOF5RobotControl_GUI
 
         private void BtnR1JogDown_N(object sender, MouseButtonEventArgs e)
         {
-
             JogParams param = new()
             {
                 Joint = JointSelect.R1,
