@@ -23,34 +23,8 @@ namespace DOF5RobotControl_GUI
 
         public IServiceProvider Services { get; }
 
-        private Task? gxLibInitTask = null;
-
         public App()
         {
-            //var builder = WebApplication.CreateBuilder();
-
-            // Add services to the container.
-            //ConfigureServices(builder.Services);
-
-            //builder.WebHost.UseUrls("http://localhost:5162");
-
-            //var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
-            //if (app.Environment.IsDevelopment())
-            //{
-            //    app.UseSwagger();
-            //    app.UseSwaggerUI();
-            //}
-
-            //app.UseAuthorization();
-            //app.MapControllers();
-
-            //app.RunAsync();
-
-            // 引用 ServiceProvider 以便于使用
-            //Services = app.Services;
-
             var service = ConfigureServices();
             Services = service.BuildServiceProvider();
 
@@ -61,11 +35,6 @@ namespace DOF5RobotControl_GUI
         {
             base.OnStartup(e);
 
-            // 在后台线程中调用 GxLibInit
-#if !USE_DUMMY
-            gxLibInitTask = Task.Run(GxCamera.GxLibInit);
-#endif
-
             var mainWindow = Services.GetRequiredService<MainWindow>();
             mainWindow.Show();
             MainWindow = mainWindow;
@@ -73,9 +42,6 @@ namespace DOF5RobotControl_GUI
 
         protected override void OnExit(ExitEventArgs e)
         {
-            // 调用 GxLibUninit
-            gxLibInitTask?.Wait();
-            GxCamera.GxLibUninit();
 
             base.OnExit(e);
         }
@@ -105,12 +71,6 @@ namespace DOF5RobotControl_GUI
             services.AddSingleton(sp => new MainWindow(sp.GetRequiredService<MainViewModel>()));
             services.AddTransient<CameraViewModel>();
             services.AddTransient(sp => new CameraWindow() { DataContext = sp.GetRequiredService<CameraViewModel>() });
-
-            // 注册 Web API 相关服务
-            services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-            services.AddEndpointsApiExplorer();
-            services.AddSwaggerGen();
 
             return services;
         }

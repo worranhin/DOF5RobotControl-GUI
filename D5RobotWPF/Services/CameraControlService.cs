@@ -9,16 +9,28 @@ namespace DOF5RobotControl_GUI.Services
 
         private readonly ICamMotorControlService _camMotorCtrlService;
         private readonly object _camOpLock = new();
+        private Task libInitTask;
 
         public bool CameraIsOpened { get; private set; } = false;
         public bool CamMotorIsConnected { get; private set; } = false;
 
-        public GxCamera TopCamera { get; } = GxCamera.Create(TopCameraMac);
-        public GxCamera BottomCamera { get; } = GxCamera.Create(BottomCameraMac);
+        public GxCamera TopCamera { get; }
+        public GxCamera BottomCamera { get; }
 
         public CameraControlService(ICamMotorControlService camMotorCtrlService)
         {
             _camMotorCtrlService = camMotorCtrlService;
+
+            libInitTask = Task.Run(GxCamera.GxLibInit);  // 在后台线程中调用 GxLibInit，避免死锁
+
+            TopCamera = GxCamera.Create(TopCameraMac);
+            BottomCamera = GxCamera.Create(BottomCameraMac);
+        }
+
+        ~CameraControlService()
+        {
+            libInitTask.Wait();
+            GxCamera.GxLibUninit();
         }
 
         public void OpenCamera()

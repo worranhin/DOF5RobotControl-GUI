@@ -317,7 +317,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                     action[i] = action[i] * kp; // 将动作缩放到合理范围
                 }
 
-                // 目标关节位置加上网络输出的相对位移量 + 随机高斯噪声
+                // 设置相对移动量 + 随机高斯噪声
                 const double mean = 0;
                 const double std = 0.02 * 1000; // 转为 mm
 
