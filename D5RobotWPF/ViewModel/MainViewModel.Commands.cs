@@ -281,15 +281,15 @@ namespace DOF5RobotControl_GUI.ViewModel
 
                 // 目标关节位置加上网络输出的相对位移量 + 随机高斯噪声
                 const double mean = 0;
-                const double std = 0.01;
+                const double std = 0.02 * 1000; // 转为 mm
 
                 JointSpace error = new()
                 {
-                    R1rad = action[0] + GenerateGaussianNoise(mean, action[0] * std),
-                    P2 = action[1] * 1000.0 + GenerateGaussianNoise(mean, action[1] * std),  // 策略网络的输出单位为 m，控制时转换为 mm
-                    P3 = action[2] * 1000.0 + GenerateGaussianNoise(mean, action[2] * std),
-                    P4 = action[3] * 1000.0 + GenerateGaussianNoise(mean, action[3] * std),
-                    R5rad = action[4] + GenerateGaussianNoise(mean, action[4] * std),
+                    R1rad = action[0] + GenerateGaussianNoise(mean, Math.Abs(action[0] * std)),
+                    P2 = action[1] * 1000.0 + GenerateGaussianNoise(mean, Math.Abs(action[1] * std)),  // 策略网络的输出单位为 m，控制时转换为 mm
+                    P3 = action[2] * 1000.0 + GenerateGaussianNoise(mean, Math.Abs(action[2] * std)),
+                    P4 = action[3] * 1000.0 + GenerateGaussianNoise(mean, Math.Abs(action[3] * std)),
+                    R5rad = action[4] + GenerateGaussianNoise(mean, Math.Abs(action[4] * std)),
                 };
 
                 Debug.WriteLine(error);
