@@ -26,6 +26,7 @@
         </Grid.ColumnDefinitions>
         <StackPanel Grid.ColumnSpan="2" Margin="0 0 0 8" Orientation="Horizontal">
             <mah:ToggleSwitch Content="显示检测框" IsOn="{Binding IsDisplayYoloBox}"/>
+            <mah:ToggleSwitch Content="显示误差" IsOn="{Binding IsDisplayError}" Command="{Binding ToggleDisplayErrorCommand}"/>
             <StackPanel Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center">
                 <UniformGrid Rows="1" Grid.Column="1" Width="480">
                     <UniformGrid.Resources>
@@ -74,13 +75,7 @@
             <StackPanel>
 
                 <UniformGrid Rows="1" Margin="0 8 0 0" Height="32">
-                    <Button Margin="0 0 4 0" Command="{Binding GetErrorCommand}" IsEnabled="{Binding IsProcessingImg, Converter={StaticResource BoolInverseConverter}}">
-                        <Grid HorizontalAlignment="Stretch" Width="160">
-                            <TextBlock Text="获取误差" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            <mah:ProgressRing Width="10" HorizontalAlignment="Right" IsActive="{Binding IsProcessingImg}"/>
-                        </Grid>
-                    </Button>
-                    <Button Margin="4 0 4 0" Content="前往钳口库位置" Command="{Binding CameraGotoJawVaultCommand}"/>
+                    <Button Margin="0 0 4 0" Content="前往钳口库位置" Command="{Binding CameraGotoJawVaultCommand}"/>
                     <Button Margin="4 0 0 0" Content="前往零件库位置" Command="{Binding CameraGotoPartsVaultCommand}"/>
                 </UniformGrid>
                 <UniformGrid Rows="1" Margin="0 8 0 0" Height="32">

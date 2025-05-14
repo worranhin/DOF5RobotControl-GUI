@@ -361,12 +361,13 @@
             </mah:MetroHeader>
             <Separator/>
             <!-- 机械臂控制按钮阵列 -->
-            <UniformGrid Columns="1">
+            <StackPanel Orientation="Vertical">
                 <UniformGrid Rows="1">
                     <Button Command="{Binding RobotRunCommand}">运行</Button>
                     <Button Command="{Binding RobotSetZeroCommand}" ToolTip="将当前的位置设为零点">置零</Button>
                     <Button Command="{Binding RobotStopCommand}" Background="#FFFFDEDE">停止</Button>
                 </UniformGrid>
+                <Frame/> 
                 <UniformGrid Rows="1" Margin="0 4 0 0">
                     <Button Command="{Binding PreAlignJawCommand}">前往插入预备位</Button>
                     <Button Command="{Binding InsertJawCommand}" Content="振动适配"/>
@@ -378,7 +379,7 @@
                     </Button>
                     <Button Content="取消操作" Command="{Binding CancelTaskCommand}"/>
                 </UniformGrid>
-            </UniformGrid>
+            </StackPanel>
             <Separator/>
             <UniformGrid Columns="1">
                 <UniformGrid Rows="1">

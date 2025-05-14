@@ -6,6 +6,7 @@ using GxIAPINET;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -51,6 +52,9 @@ namespace DOF5RobotControl_GUI.ViewModel
         bool _isDisplayYoloBox = false;
 
         [ObservableProperty]
+        private bool _isDisplayError = false;
+
+        [ObservableProperty]
         private int _topCamMoveDistance = 0;
         [ObservableProperty]
         private int _bottomCamMoveAngle = 0;
@@ -78,34 +82,14 @@ namespace DOF5RobotControl_GUI.ViewModel
         }
 
         [RelayCommand]
-        private async Task GetErrorAsync()
+        private void ToggleDisplayError()
         {
-            IsProcessingImg = true;
-
-            if (TopImageSource is not BitmapSource topBitmap || BottomImageSource is not BitmapSource bottomBitmap)
-            {
-                Debug.WriteLine("ImageSource is not right.");
-                return;
-            }
-
-            try
+            if (IsDisplayError)
             {
                 var topImg = cameraControlService.GetTopFrame();
                 var bottomImg = cameraControlService.GetBottomFrame();
-                
-                processImageService.Init(topImg, bottomImg);                
-                var topTask = processImageService.ProcessTopImgAsync(topImg);
-                var bottomTask = processImageService.ProcessBottomImageAsync(bottomImg);
-                
-                (DPx, DPy, DRz) = await topTask;
-                DPz = await bottomTask;
+                processImageService.Init(topImg, bottomImg);
             }
-            catch (InvalidOperationException ex)
-            {
-                MessageBox.Show(ex.Message, "Error when get error");
-            }
-
-            IsProcessingImg = false;
         }
 
         [RelayCommand]
@@ -164,7 +148,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             }
         }
 
-        private void TopFrameReceived(object? sender, CamFrame e)
+        private async void TopFrameReceived(object? sender, CamFrame e)
         {
             if (IsDisplayYoloBox)
             {
@@ -194,9 +178,22 @@ namespace DOF5RobotControl_GUI.ViewModel
                     TopImageSource = bitmap;
                 });
             }
+
+            if (IsDisplayError)
+            {
+                try
+                {
+                    (DPx, DPy, DRz) = await processImageService.ProcessTopImgAsync(e);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    popUpService.Show(ex.ToString(), "Error when get error");
+                    IsDisplayError = false;
+                }
+            }
         }
 
-        private void BottomFrameReceived(object? sender, CamFrame e)
+        private async void BottomFrameReceived(object? sender, CamFrame e)
         {
             if (IsDisplayYoloBox)
             {
@@ -225,6 +222,18 @@ namespace DOF5RobotControl_GUI.ViewModel
                     BitmapSource bitmap = BitmapSource.Create(e.Width, e.Height, 96, 96, pf, null, e.Buffer, rawStride);
                     BottomImageSource = bitmap;
                 });
+            }
+
+            if (IsDisplayError)
+            {
+                try
+                {
+                    DPz = await processImageService.ProcessBottomImageAsync(e);
+                } catch (InvalidOperationException ex)
+                {
+                    popUpService.Show(ex.ToString(), "Error when get error");
+                    IsDisplayError = false;
+                }
             }
         }
     }
