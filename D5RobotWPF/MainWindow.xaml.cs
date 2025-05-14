@@ -28,8 +28,22 @@ namespace DOF5RobotControl_GUI
             viewModel = vm;
             DataContext = viewModel;
 
+            viewModel.LogLines.CollectionChanged += LogLines_CollectionChanged;
+
             // 注册窗口关闭回调函数
             this.Closed += Window_Closed;
+        }
+
+        private void LogLines_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                if (LogList.Items.Count > 0)
+                {
+                    LogList.SelectedIndex = LogList.Items.Count - 1;
+                    LogList.ScrollIntoView(LogList.SelectedItem);
+                }
+            });
         }
 
         private void Window_Closed(object? sender, EventArgs e)
@@ -307,6 +321,11 @@ namespace DOF5RobotControl_GUI
         {
             if (e.Key == Key.Enter && sender is TextBox textBox)
                 textBox.GetBindingExpression(TextBox.TextProperty).UpdateSource();
+        }
+
+        private void LogExpander_Expanded(object sender, RoutedEventArgs e)
+        {
+            SizeToContent = SizeToContent.Height;
         }
     }
 }

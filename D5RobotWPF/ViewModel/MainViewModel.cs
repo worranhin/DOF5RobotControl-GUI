@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Messaging.Messages;
 using D5R;
 using DOF5RobotControl_GUI.Model;
 using DOF5RobotControl_GUI.Services;
+using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Threading;
 
@@ -24,6 +25,10 @@ namespace DOF5RobotControl_GUI.ViewModel
         public static readonly Joints PreAssemblePos2 = new(9000, 0, 0, 0, 0); // 90, 0, 0, 0, 0 -> 90, 14, -12, 5, 0 
         public static readonly Joints AssemblePos2 = new(9000, 14000000, -12000000, 5000000, 0); // 90, 0, 0, 0, 0 -> 90, 14, -12, 5, 0 
         public static readonly Joints AssemblePos3 = new(0, -2500000, 4000000, 7000000, 0); // 0, -2.5, 4, 7, 0
+
+        /***** Log 容器 *****/
+        const int MaxLogCount = 100;
+        public ObservableCollection<string> LogLines { get; } = [];
 
         /***** 依赖服务应用 *****/
         private readonly IRobotControlService _robotControlService;
@@ -111,6 +116,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                 _cameraCtrlService.ConnectCamMotor(Properties.Settings.Default.CamMotorPort);
                 StartUpdateState();
                 SystemConnected = true;
+                AddLog("System is connected.");
             }
             catch (InvalidOperationException ex)
             {
@@ -127,6 +133,15 @@ namespace DOF5RobotControl_GUI.ViewModel
             _robotControlService.Disconnect();
             _cameraCtrlService.DisconnectCamMotor();
             SystemConnected = false;
+            AddLog("System is disconnected.");
+        }
+
+        /***** Log 相关 *****/
+        private void AddLog(string log)
+        {
+            if (LogLines.Count >= MaxLogCount)
+                LogLines.RemoveAt(0);
+            LogLines.Add(log);
         }
     }
 }

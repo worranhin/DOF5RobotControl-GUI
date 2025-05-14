@@ -161,7 +161,13 @@ namespace DOF5RobotControl_GUI.ViewModel
         [RelayCommand]
         private void RobotSetZero()
         {
-            _robotControlService.SetZero();
+            try
+            {
+                _robotControlService.SetZero();
+            } catch (InvalidOperationException ex)
+            {
+                _popUpService.Show(ex.ToString());
+            }
         }
 
         /***** Jog 点动相关代码 *****/
@@ -330,9 +336,13 @@ namespace DOF5RobotControl_GUI.ViewModel
                     updateJointAction();
                     _robotControlService.MoveAbsolute(TargetState);
                 }
-                catch (ArgumentException exc)
+                catch(InvalidOperationException ex)
                 {
-                    _popUpService.Show(exc.Message);
+                    AddLog(ex.Message);
+                }
+                catch (ArgumentException ex)
+                {
+                    _popUpService.Show(ex.ToString());
                     jogTimer?.Stop();
                 }
             };

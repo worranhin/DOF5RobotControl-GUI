@@ -55,7 +55,7 @@
         <cvt:RecordBtnConverter x:Key="RecordBtnConverter"/>
         <cvt:FeedBtnConverter x:Key="FeedBtnConverter" />
     </Window.Resources>
-    <Grid Margin="12">
+    <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="auto" MinHeight="40"/>
             <RowDefinition Height="12"/>
@@ -117,7 +117,6 @@
                     </Grid.Resources>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="auto"/>
-                        <RowDefinition Height="auto"/>
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="0.3*"/>
@@ -142,7 +141,7 @@
                     <TextBlock Grid.Row="0" Grid.Column="7" Text="{Binding CurrentState.JointSpace.P4, StringFormat=F4}"/>
                     <TextBlock Grid.Row="0" Grid.Column="8">R5:</TextBlock>
                     <TextBlock Grid.Row="0" Grid.Column="9" Text="{Binding CurrentState.JointSpace.R5, StringFormat=F2}"/>
-                    <Button Grid.Row="0" Grid.Column="10" Grid.ColumnSpan="10" Margin="0" Command="{Binding SetTargetJointsFromCurrentCommand}">设为当前值</Button>
+                    <Button Grid.Row="0" Grid.Column="10" Command="{Binding SetTargetJointsFromCurrentCommand}">设为当前值</Button>
                 </Grid>
             </mah:MetroHeader>
             <Separator/>
@@ -362,14 +361,13 @@
             </mah:MetroHeader>
             <Separator/>
             <!-- 机械臂控制按钮阵列 -->
-            <UniformGrid Margin="5" Columns="1">
+            <UniformGrid Columns="1">
                 <UniformGrid Rows="1">
                     <Button Command="{Binding RobotRunCommand}">运行</Button>
                     <Button Command="{Binding RobotSetZeroCommand}" ToolTip="将当前的位置设为零点">置零</Button>
-                    <Button Command="{Binding RobotStopCommand}" Background="#FFFFDEDE">停止
-                    </Button>
+                    <Button Command="{Binding RobotStopCommand}" Background="#FFFFDEDE">停止</Button>
                 </UniformGrid>
-                <UniformGrid Rows="1">
+                <UniformGrid Rows="1" Margin="0 4 0 0">
                     <Button Command="{Binding PreAlignJawCommand}">前往插入预备位</Button>
                     <Button Command="{Binding InsertJawCommand}" Content="振动适配"/>
                     <Button Command="{Binding AttachJawCommand}" IsEnabled="{Binding IsAttachingJaw, Converter={StaticResource BoolInverseConverter}}">
@@ -382,7 +380,7 @@
                 </UniformGrid>
             </UniformGrid>
             <Separator/>
-            <UniformGrid Margin="5" Columns="1">
+            <UniformGrid Columns="1">
                 <UniformGrid Rows="1">
                     <Label Content="进给速度"/>
                     <TextBox Text="{Binding FeedVelocity}"/>
@@ -408,6 +406,9 @@
                     </UniformGrid>
                 </StackPanel>
             </mah:MetroHeader>
+            <Expander Header="Log" IsExpanded="True" Margin="0 16 0 0" Expanded="LogExpander_Expanded">
+                <ListBox x:Name="LogList" ItemsSource="{Binding LogLines}" MaxHeight="200"/>
+            </Expander>
         </StackPanel>
         <!-- 预存点位 -->
         <mah:MetroHeader Grid.Row="2" Grid.Column="3" Header="预存点位" MinWidth="150">
