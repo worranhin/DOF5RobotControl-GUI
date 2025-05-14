@@ -21,9 +21,9 @@
             </Style>
         </StackPanel.Resources>
         <Label Content="RMD 电机通讯端口"/>
-        <ComboBox ItemsSource="{Binding PortsAvailable}" SelectedItem="{Binding RmdPort}" IsEnabled="{Binding SystemConnected, Converter={StaticResource BoolInverseConverter}}"/>
+        <ComboBox ItemsSource="{Binding PortsAvailable}" SelectedItem="{Binding RmdPort}"/>
         <Label Content="相机电机通讯端口"/>
-        <ComboBox ItemsSource="{Binding PortsAvailable}" SelectedItem="{Binding CamMotorPort}" IsEnabled="{Binding SystemConnected, Converter={StaticResource BoolInverseConverter}}"/>
+        <ComboBox ItemsSource="{Binding PortsAvailable}" SelectedItem="{Binding CamMotorPort}"/>
         <Button Content="刷新端口" Command="{Binding PortRefreshCommand}"/>
         <Button Content="保存配置" Command="{Binding SavePropertiesCommand}"/>
     </StackPanel>

@@ -1,19 +1,12 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DOF5RobotControl_GUI.Model;
-using Opc.Ua;
-using System;
-using System.Collections.Generic;
 using System.IO.Ports;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DOF5RobotControl_GUI.ViewModel
 {
     internal partial class ConfigViewModel : ObservableObject
     {
-        public ConfigViewModel() 
+        public ConfigViewModel()
         {
             PortsAvailable = SerialPort.GetPortNames();
             if (PortsAvailable.Length > 0)

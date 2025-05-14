@@ -79,7 +79,7 @@
                     <Setter Property="Margin" Value="5 0"/>
                 </Style>
             </StackPanel.Resources>
-            <Button Content="配置通讯端口" MinWidth="120" Command="{Binding OpenConfigWindowCommand}"/>
+            <Button Content="配置通讯端口" MinWidth="120" Command="{Binding OpenConfigWindowCommand}"  IsEnabled="{Binding SystemConnected, Converter={StaticResource BoolInverseConverter}}"/>
             <Separator Margin="5 0"/>
             <Button MinWidth="80" Command="{Binding ToggleConnectCommand}" Content="{Binding SystemConnected, Converter={StaticResource ConnectBtnConverter}}"/>
             <Separator Margin="15 0"/>
