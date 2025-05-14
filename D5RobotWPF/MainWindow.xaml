@@ -55,10 +55,10 @@
         <cvt:RecordBtnConverter x:Key="RecordBtnConverter"/>
         <cvt:FeedBtnConverter x:Key="FeedBtnConverter" />
     </Window.Resources>
-    <Grid Margin="10">
+    <Grid Margin="12">
         <Grid.RowDefinitions>
-            <RowDefinition Height="auto" MinHeight="30"/>
-            <RowDefinition Height="10"/>
+            <RowDefinition Height="auto" MinHeight="40"/>
+            <RowDefinition Height="12"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -70,7 +70,7 @@
         <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" MaxHeight="50" Margin="0 0 0 10">
             <StackPanel.Resources>
                 <Style TargetType="TextBlock" BasedOn="{StaticResource centerTextBlock}">
-                    <Setter Property="Margin" Value="0 0 5 0"/>
+                    <Setter Property="Margin" Value="0 0 4 0"/>
                 </Style>
                 <Style TargetType="Button" BasedOn="{StaticResource userButton}">
                     <Setter Property="VerticalAlignment" Value="Stretch"/>
@@ -393,51 +393,11 @@
                 </UniformGrid>
             </UniformGrid>
             <Separator/>
-            <mah:MetroHeader Header="相机位置控制">
+            <mah:MetroHeader Header="其它操作">
                 <StackPanel>
                     <UniformGrid Rows="1">
                         <Button Command="{Binding ToggleCameraCommand}" Content="{Binding CameraIsOpened, Converter={StaticResource CameraBtnConverter}}"/>
                     </UniformGrid>
-                    <UniformGrid Rows="1">
-                        <Button Content="前往钳口库位置" Command="{Binding CameraGotoJawVaultCommand}"/>
-                        <Button Content="前往零件库位置" Command="{Binding CameraGotoPartsVaultCommand}"/>
-                    </UniformGrid>
-                    <UniformGrid Rows="1" Margin="0 2">
-                        <UniformGrid.Resources>
-                            <Style TargetType="TextBox" BasedOn="{StaticResource MahApps.Styles.TextBox}">
-                                <Setter Property="MinWidth" Value="100"/>
-                                <Setter Property="FontSize" Value="14"/>
-                            </Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource userButton}">
-                                <Setter Property="Padding" Value="5 0"/>
-                            </Style>
-                        </UniformGrid.Resources>
-                        <Grid Margin="0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="auto"/>
-                                <ColumnDefinition Width="auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Label Grid.Column="0" Content="顶部相机移动距离"/>
-                            <TextBox Grid.Column="1" Text="{Binding TopCamMoveDistance}"/>
-                            <Button Grid.Column="2" Content="顶部相机移动" Margin="5 0 2.5 0" Command="{Binding TopCamMoveCommand}"/>
-                        </Grid>
-                        <Grid Margin="0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="auto"/>
-                                <ColumnDefinition Width="auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Label Grid.Column="0" Content="底部相机移动角度"/>
-                            <TextBox Grid.Column="1" Text="{Binding BottomCamMoveAngle}"/>
-                            <Button Grid.Column="2" Content="底部相机移动" Margin="5 0 2.5 0" Command="{Binding BottomCamMoveCommand}"/>
-                        </Grid>
-                    </UniformGrid>
-                </StackPanel>
-            </mah:MetroHeader>
-            <Separator/>
-            <mah:MetroHeader Header="其它操作">
-                <StackPanel>
                     <UniformGrid Rows="1">
                         <Button Command="{Binding ToggleOpcServerCommand}" Content="{Binding OpcServerIsOn, Converter={StaticResource OpcBtnConverter}}"/>
                         <Button Command="{Binding ToggleRecordCommand}" Content="{Binding IsRecording, Converter={StaticResource RecordBtnConverter}}"/>

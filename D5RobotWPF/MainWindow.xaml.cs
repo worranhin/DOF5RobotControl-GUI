@@ -22,6 +22,8 @@ namespace DOF5RobotControl_GUI
         {
             InitializeComponent();
 
+            SizeToContent = SizeToContent.Height;
+
             // 初始化 ViewModel
             viewModel = vm;
             DataContext = viewModel;

@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using DOF5RobotControl_GUI.Model;
 using DOF5RobotControl_GUI.Services;
+using GxIAPINET;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System.Diagnostics;
@@ -19,9 +20,6 @@ namespace DOF5RobotControl_GUI.ViewModel
             TopCamera,
             BottomCamera
         };
-
-        private readonly ICameraControlService cameraControlService;
-        private readonly IYoloDetectionService yoloDetectionService;
 
         [ObservableProperty]
         private bool _topCameraConnected = false;
@@ -52,11 +50,24 @@ namespace DOF5RobotControl_GUI.ViewModel
         [ObservableProperty]
         bool _isDisplayYoloBox = false;
 
+        [ObservableProperty]
+        private int _topCamMoveDistance = 0;
+        [ObservableProperty]
+        private int _bottomCamMoveAngle = 0;
 
-        public CameraViewModel(ICameraControlService cameraControlService, IYoloDetectionService yoloDetectionService)
+        readonly ICameraControlService cameraControlService;
+        readonly IYoloDetectionService yoloDetectionService;
+        readonly IProcessImageService processImageService;
+        readonly IPopUpService popUpService;
+
+
+        public CameraViewModel(ICameraControlService cameraControlService, 
+            IYoloDetectionService yoloDetectionService, IProcessImageService processImageService, IPopUpService popUpService)
         {
             this.cameraControlService = cameraControlService;
             this.yoloDetectionService = yoloDetectionService;
+            this.processImageService = processImageService;
+            this.popUpService = popUpService;
 
             this.cameraControlService.RegisterCallback(TopFrameReceived, BottomFrameReceived);
         }
@@ -79,8 +90,15 @@ namespace DOF5RobotControl_GUI.ViewModel
 
             try
             {
-                (DPx, DPy, DRz) = await ImageProcessor.ProcessTopImgAsync(topBitmap);
-                DPz = await ImageProcessor.ProcessBottomImgAsync(bottomBitmap);
+                var topImg = cameraControlService.GetTopFrame();
+                var bottomImg = cameraControlService.GetBottomFrame();
+                
+                processImageService.Init(topImg, bottomImg);                
+                var topTask = processImageService.ProcessTopImgAsync(topImg);
+                var bottomTask = processImageService.ProcessBottomImageAsync(bottomImg);
+                
+                (DPx, DPy, DRz) = await topTask;
+                DPz = await bottomTask;
             }
             catch (InvalidOperationException ex)
             {
@@ -88,6 +106,62 @@ namespace DOF5RobotControl_GUI.ViewModel
             }
 
             IsProcessingImg = false;
+        }
+
+        [RelayCommand]
+        private async Task CameraGotoJawVaultAsync()
+        {
+            try
+            {
+                cameraControlService.MoveTopCamera(TopCamMoveDistance);
+                await Task.Delay(100); // 需要延时一小段时间才能确保通讯正常
+                cameraControlService.MoveBottomCamera(BottomCamMoveAngle);
+            }
+            catch (InvalidOperationException exc)
+            {
+                popUpService.Show(exc.Message);
+            }
+        }
+
+        [RelayCommand]
+        private async Task CameraGotoPartsVaultAsync()
+        {
+            try
+            {
+                cameraControlService.MoveTopCamera(-TopCamMoveDistance);
+                await Task.Delay(100);
+                cameraControlService.MoveBottomCamera(-BottomCamMoveAngle);
+            }
+            catch (InvalidOperationException exc)
+            {
+                popUpService.Show(exc.Message);
+            }
+        }
+
+        [RelayCommand]
+        private void TopCamMove()
+        {
+            try
+            {
+                cameraControlService.MoveTopCamera(TopCamMoveDistance);
+            }
+            catch (InvalidOperationException exc)
+            {
+                popUpService.Show(exc.Message);
+            }
+        }
+
+        [RelayCommand]
+        private void BottomCamMove()
+        {
+            try
+            {
+                cameraControlService.MoveBottomCamera(BottomCamMoveAngle);
+            }
+            catch (InvalidOperationException exc)
+            {
+                popUpService.Show(exc.Message);
+            }
         }
 
         private void TopFrameReceived(object? sender, CamFrame e)
