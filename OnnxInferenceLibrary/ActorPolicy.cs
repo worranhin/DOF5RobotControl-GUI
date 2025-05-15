@@ -6,10 +6,10 @@ namespace OnnxInferenceLibrary
     {
         const float scale = 0.01F;
         readonly long[] InputShape = [1, 7];
-        readonly ReadOnlyCollection<float> min = Array.AsReadOnly([-0.2F, -0.015F, -0.015F, -0.015F, -0.01F]);
-        readonly ReadOnlyCollection<float> max = Array.AsReadOnly([0.2F, 0.015F, 0.015F, 0.015F, 0.01F]);
+        readonly ReadOnlyCollection<float> min = Array.AsReadOnly([-0.2F, -0.002F, -0.002F, -0.002F, -0.01F]);
+        readonly ReadOnlyCollection<float> max = Array.AsReadOnly([0.2F, 0.002F, 0.002F, 0.002F, 0.01F]);
 
-        public ActorPolicy() : base("policy.onnx")
+        public ActorPolicy() : base("policy_v0.3.onnx")
         {
         }
 

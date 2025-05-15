@@ -401,21 +401,21 @@
                 </TabItem>
                 <TabItem Header="其它操作">
                     <StackPanel>
-                        <UniformGrid Rows="1">
-                            <Button Command="{Binding ToggleCameraCommand}" Content="{Binding CameraIsOpened, Converter={StaticResource CameraBtnConverter}}"/>
+                        <UniformGrid Rows="1" Margin="0 4">
+                            <Button Margin="0 2" Command="{Binding ToggleCameraCommand}" Content="{Binding CameraIsOpened, Converter={StaticResource CameraBtnConverter}}"/>
                         </UniformGrid>
-                        <UniformGrid Rows="1">
-                            <Button Command="{Binding ToggleOpcServerCommand}" Content="{Binding OpcServerIsOn, Converter={StaticResource OpcBtnConverter}}"/>
-                            <Button Command="{Binding ToggleRecordCommand}" Content="{Binding IsRecording, Converter={StaticResource RecordBtnConverter}}"/>
+                        <UniformGrid Rows="1" Margin="0 4">
+                            <Button Margin="0 0 4 0" Command="{Binding ToggleOpcServerCommand}" Content="{Binding OpcServerIsOn, Converter={StaticResource OpcBtnConverter}}"/>
+                            <Button Margin="4 0 0 0" Command="{Binding ToggleRecordCommand}" Content="{Binding IsRecording, Converter={StaticResource RecordBtnConverter}}"/>
                         </UniformGrid>
-                        <UniformGrid Rows="1">
-                            <Button Command="{Binding CollectRLDataCommand}" Content="采集强化学习数据"/>
-                            <Button Command="{Binding StopCollectRlDataCommand}" Content="中断数据采集过程"/>
+                        <UniformGrid Rows="1" Margin="0 4">
+                            <Button Margin="0 0 4 0" Command="{Binding CollectRLDataCommand}" Content="采集强化学习数据"/>
+                            <Button Margin="4 0 0 0" Command="{Binding StopCollectRlDataCommand}" Content="中断数据采集过程"/>
                         </UniformGrid>
                     </StackPanel>
                 </TabItem>
             </TabControl>
-            <Expander Header="Log" IsExpanded="True" Margin="0 16 0 0" Expanded="LogExpander_Expanded">
+            <Expander Header="Log" IsExpanded="True" Margin="0 16 0 0" Expanded="LogExpander_Expanded" Visibility="{Binding IsLogVisible}">
                 <ListBox x:Name="LogList" ItemsSource="{Binding LogLines}" MaxHeight="200"/>
             </Expander>
         </StackPanel>

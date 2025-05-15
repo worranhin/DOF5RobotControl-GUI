@@ -28,7 +28,10 @@ namespace DOF5RobotControl_GUI.ViewModel
 
         /***** Log 容器 *****/
         const int MaxLogCount = 100;
+
         public ObservableCollection<string> LogLines { get; } = [];
+
+        public Visibility IsLogVisible => (LogLines.Count > 0) ? Visibility.Visible : Visibility.Hidden;
 
         /***** 依赖服务应用 *****/
         private readonly IRobotControlService _robotControlService;
@@ -66,6 +69,8 @@ namespace DOF5RobotControl_GUI.ViewModel
             _dataRecordService = dataRecordService;
             _gamepadService = gamepadService;
             _imageService = processImageService;
+
+            LogLines.CollectionChanged += LogLines_CollectionChanged;
         }
 
         ~MainViewModel()
@@ -102,7 +107,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         private void ToggleConnect()
         {
             // 若系统未连接，则建立连接
-            if (!SystemConnected)  
+            if (!SystemConnected)
                 ConnectSystem();
             else  // 否则断开连接
                 DisconnectSystem();
@@ -142,6 +147,11 @@ namespace DOF5RobotControl_GUI.ViewModel
             if (LogLines.Count >= MaxLogCount)
                 LogLines.RemoveAt(0);
             LogLines.Add(log);
+        }
+
+        private void LogLines_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            OnPropertyChanged(nameof(IsLogVisible));
         }
     }
 }

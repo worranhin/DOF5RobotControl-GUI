@@ -196,7 +196,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                 float[] state = await GetState();
 
                 // 将误差作为模型的输入获取动作
-                const float kp = 0.3f;
+                const float kp = 0.8f;
                 var action = policy.Step(state);
 
                 for (int i = 0; i < action.Length; i++)
@@ -210,11 +210,11 @@ namespace DOF5RobotControl_GUI.ViewModel
 
                 JointSpace error = new()
                 {
-                    R1rad = action[0] + GenerateGaussianNoise(mean, Math.Abs(action[0] * std)),
+                    R1rad = 0, // action[0] + GenerateGaussianNoise(mean, Math.Abs(action[0] * std)),
                     P2 = action[1] * 1000.0 + GenerateGaussianNoise(mean, Math.Abs(action[1] * std)),  // 策略网络的输出单位为 m，控制时转换为 mm
                     P3 = action[2] * 1000.0 + GenerateGaussianNoise(mean, Math.Abs(action[2] * std)),
                     P4 = action[3] * 1000.0 + GenerateGaussianNoise(mean, Math.Abs(action[3] * std)),
-                    R5rad = action[4] + GenerateGaussianNoise(mean, Math.Abs(action[4] * std)),
+                    R5rad = 0, // action[4] + GenerateGaussianNoise(mean, Math.Abs(action[4] * std)),
                 };
 
                 Debug.WriteLine(error);
