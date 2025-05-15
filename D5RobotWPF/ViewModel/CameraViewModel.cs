@@ -64,6 +64,8 @@ namespace DOF5RobotControl_GUI.ViewModel
         readonly IProcessImageService processImageService;
         readonly IPopUpService popUpService;
 
+        bool isTopFrameProcessing = false;
+        bool isBottomFrameProcessing = false;
 
         public CameraViewModel(ICameraControlService cameraControlService, 
             IYoloDetectionService yoloDetectionService, IProcessImageService processImageService, IPopUpService popUpService)
@@ -150,6 +152,11 @@ namespace DOF5RobotControl_GUI.ViewModel
 
         private async void TopFrameReceived(object? sender, CamFrame e)
         {
+            if (isTopFrameProcessing)
+                return;
+
+            isTopFrameProcessing = true;
+
             if (IsDisplayYoloBox)
             {
                 using var img = yoloDetectionService.TopPlot(e);
@@ -191,10 +198,17 @@ namespace DOF5RobotControl_GUI.ViewModel
                     IsDisplayError = false;
                 }
             }
+
+            isTopFrameProcessing = false;
         }
 
         private async void BottomFrameReceived(object? sender, CamFrame e)
         {
+            if (isBottomFrameProcessing)
+                return;
+
+            isBottomFrameProcessing = true;
+
             if (IsDisplayYoloBox)
             {
                 using var img = yoloDetectionService.BottomPlot(e);
@@ -235,6 +249,8 @@ namespace DOF5RobotControl_GUI.ViewModel
                     IsDisplayError = false;
                 }
             }
+
+            isBottomFrameProcessing = false;
         }
     }
 }
