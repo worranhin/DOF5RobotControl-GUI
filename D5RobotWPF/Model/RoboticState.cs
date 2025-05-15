@@ -70,6 +70,12 @@ namespace DOF5RobotControl_GUI.Model
             //InitHandler();
         }
 
+        public RoboticState(JointSpace joint)
+        {
+            JointSpace = joint.Clone();
+            TaskSpace = KineHelper.Forward(JointSpace);
+        }
+
         public RoboticState(double r1, double p2, double p3, double p4, double r5)
         {
             JointSpace = new() { R1 = r1, P2 = p2, P3 = p3, P4 = p4, R5 = r5 };

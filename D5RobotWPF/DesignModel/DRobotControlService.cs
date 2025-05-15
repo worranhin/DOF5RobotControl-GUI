@@ -16,6 +16,8 @@ namespace DOF5RobotControl_GUI.DesignModel
 
         public RoboticState TargetState { get; } = new();
 
+        public JointSpace CurrentJoint => throw new NotImplementedException();
+
         public void Connect(string port)
         {
             throw new NotImplementedException();

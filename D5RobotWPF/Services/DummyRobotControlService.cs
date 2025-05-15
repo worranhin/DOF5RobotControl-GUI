@@ -11,6 +11,8 @@ namespace DOF5RobotControl_GUI.Services
 
         public RoboticState TargetState { get; private set; } = new();
 
+        public JointSpace CurrentJoint => throw new NotImplementedException();
+
         private CancellationTokenSource? mockRunCancelSource;
         private Task? mockRunTask;
 

@@ -9,6 +9,8 @@ namespace DOF5RobotControl_GUI.Services
         /// </summary>
         bool IsConnected { get; }
 
+        JointSpace CurrentJoint { get; }
+
         /// <summary>
         /// 机器人的当前状态
         /// </summary>

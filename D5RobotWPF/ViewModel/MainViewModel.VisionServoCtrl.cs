@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DOF5RobotControl_GUI.Model;
+using DOF5RobotControl_GUI.Services;
 using System.Diagnostics;
 using VisionLibrary;
 
@@ -26,6 +27,8 @@ namespace DOF5RobotControl_GUI.ViewModel
         [RelayCommand]
         private async Task PreAlignJawAsync()
         {
+            const double EntrancePointX = 5.7;
+
             preAlignCancelSource = new();
             var token = preAlignCancelSource.Token;
 
@@ -38,27 +41,37 @@ namespace DOF5RobotControl_GUI.ViewModel
                 token.ThrowIfCancellationRequested();
 
                 // 更新关节状态与图像
+                var current1 = CurrentState;
+                var current = _robotControlService.CurrentState;
+                var cj = _robotControlService.CurrentJoint;
+                var ct = KineHelper.Forward(cj);
+
                 var target = _robotControlService.CurrentState.TaskSpace.Clone();
                 var topFrame = _cameraCtrlService.GetTopFrame();
                 var bottomFrame = _cameraCtrlService.GetBottomFrame();
 
                 // 处理图像
-                var TopProcessTask = ImageProcessor.ProcessTopImgAsync(
-                    topFrame.Buffer, topFrame.Width, topFrame.Height, topFrame.Stride, MatchingMode.ROUGH); // 耗时 2038ms
-                var BottomProcessTask = ImageProcessor.ProcessBottomImgAsync(
-                    bottomFrame.Buffer, bottomFrame.Width, bottomFrame.Height, bottomFrame.Stride); // 耗时 231ms
-                await Task.WhenAll(TopProcessTask, BottomProcessTask); // 同时处理两个图片并等待完成 耗时 2051ms
+                _imageService.Init(topFrame, bottomFrame);
+
+                //var TopProcessTask = ImageProcessor.ProcessTopImgAsync(
+                //    topFrame.Buffer, topFrame.Width, topFrame.Height, topFrame.Stride, MatchingMode.ROUGH); // 耗时 2038ms
+                //var BottomProcessTask = ImageProcessor.ProcessBottomImgAsync(
+                //    bottomFrame.Buffer, bottomFrame.Width, bottomFrame.Height, bottomFrame.Stride); // 耗时 231ms
+                //await Task.WhenAll(TopProcessTask, BottomProcessTask); // 同时处理两个图片并等待完成 耗时 2051ms
+                var TopProcessTask = _imageService.ProcessTopImgAsync(topFrame);
+                var BottomProcessTask = _imageService.ProcessBottomImageAsync(bottomFrame);
                 token.ThrowIfCancellationRequested();
 
                 var (x, y, rz) = await TopProcessTask; // 获取处理结果
                 var pz = await BottomProcessTask;
 
                 // 计算目标位置
-                target.Px += x;
+                target.Px += x - EntrancePointX;
                 target.Py += y;
                 target.Pz += pz;
 
                 var targetJoints = KineHelper.Inverse(target); // 求解逆运动学
+                var ts = KineHelper.Forward(targetJoints);
                 if (targetJoints.P4 > 12) // 安全检查
                     throw new InvalidOperationException($"前往初始位置时，关节移动量超出安全范围，请检查！\nP4: {targetJoints.P4}");
                 TargetState.JointSpace = targetJoints;
@@ -66,7 +79,6 @@ namespace DOF5RobotControl_GUI.ViewModel
                 await _robotControlService.WaitForTargetedAsync(token);
 
                 // 进行重复预对准
-                const double EntrancePointX = 4;
                 TargetState.Copy(CurrentState);
 
                 while (!token.IsCancellationRequested)
@@ -75,7 +87,8 @@ namespace DOF5RobotControl_GUI.ViewModel
                     UpdateCurrentState();
                     topFrame = _cameraCtrlService.GetTopFrame();
 
-                    (x, y, rz) = await ImageProcessor.ProcessTopImgAsync(topFrame.Buffer, topFrame.Width, topFrame.Height, topFrame.Stride, MatchingMode.FINE);
+                    //(x, y, rz) = await ImageProcessor.ProcessTopImgAsync(topFrame.Buffer, topFrame.Width, topFrame.Height, topFrame.Stride, MatchingMode.FINE);
+                    (x, y, rz) = await _imageService.ProcessTopImgAsync(topFrame);
                     if (token.IsCancellationRequested) break;
 
                     //Debug.WriteLine($"Fine  x:{x}, y:{y}, z:{rz}");
@@ -85,8 +98,9 @@ namespace DOF5RobotControl_GUI.ViewModel
 
                     TargetState.TaskSpace.Px += x - EntrancePointX;
                     TargetState.TaskSpace.Py += y;
-                    _robotControlService.MoveAbsolute(TargetState);
-                    await _robotControlService.WaitForTargetedAsync(token, 100, 0.01);
+                    await _robotControlService.MoveAbsoluteAsync(TargetState, token);
+                    //_robotControlService.MoveAbsolute(TargetState);
+                    //await _robotControlService.WaitForTargetedAsync(token, 100, 0.01);
                 }
             }
             catch (OperationCanceledException ex)
@@ -124,7 +138,8 @@ namespace DOF5RobotControl_GUI.ViewModel
                     RoboticState target = _robotControlService.CurrentState;
                     CurrentState = target.Clone();
                     var topFrame = _cameraCtrlService.GetTopFrame();
-                    var (dx, dy, drz) = await ImageProcessor.ProcessTopImgAsync(topFrame.Buffer, topFrame.Width, topFrame.Height, topFrame.Stride, MatchingMode.FINE);
+                    //var (dx, dy, drz) = await ImageProcessor.ProcessopImgAsync(topFrame.Buffer, topFrame.Width, topFrame.Height, topFrame.Stride, MatchingMode.FINE);
+                    var (dx, dy, drz) = await _imageService.ProcessTopImgAsync(topFrame);
                     if (token.IsCancellationRequested) break;
 
                     if (dx < 0.05) // 若误差小于一定值则退出循环

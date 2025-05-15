@@ -11,7 +11,7 @@ namespace DOF5RobotControl_GUI.Services
     {
         public bool IsConnected { get; private set; } = false;
 
-        public JointSpace CurrentJoints
+        public JointSpace CurrentJoint
         {
             get
             {
@@ -28,7 +28,7 @@ namespace DOF5RobotControl_GUI.Services
             }
         }
 
-        public RoboticState CurrentState => new() { JointSpace = CurrentJoints };
+        public RoboticState CurrentState => new(CurrentJoint);
 
         public RoboticState TargetState { get; private set; } = new();
 
@@ -273,9 +273,6 @@ namespace DOF5RobotControl_GUI.Services
         /// <exception cref="ArgumentOutOfRangeException"></exception>
         public void MoveAbsolute(RoboticState target)
         {
-            if (rmdMotor1 == null || rmdMotor2 == null || ntMotor1 == null || ntMotor2 == null || ntMotor3 == null)
-                throw new InvalidOperationException("Robot is not connected.");
-
             if (target.JointSpace.HasErrors)
                 throw new ArgumentOutOfRangeException(nameof(target), "Joint value is not valid.");
 
@@ -326,7 +323,7 @@ namespace DOF5RobotControl_GUI.Services
 
         public async Task MoveRelativeAsync(JointSpace diff, CancellationToken token = default)
         {
-            TargetState.JointSpace = CurrentJoints.Add(diff);
+            TargetState.JointSpace = CurrentJoint.Add(diff);
 
             JointMoveRelative(1, diff.R1);
             JointMoveRelative(2, diff.P2);
@@ -386,7 +383,7 @@ namespace DOF5RobotControl_GUI.Services
             vibrateCancelSource = new();
             var token = vibrateCancelSource.Token;
 
-            var origin = CurrentJoints;
+            var origin = CurrentJoint;
             var p2 = origin.P2;
             var p4 = origin.P4;
 
@@ -415,8 +412,21 @@ namespace DOF5RobotControl_GUI.Services
         {
             while (!token.IsCancellationRequested)
             {
-                if (TaskSpace.Distance(CurrentState.TaskSpace, TargetState.TaskSpace) < CheckDistance)
+                //if (TaskSpace.Distance(CurrentState.TaskSpace, TargetState.TaskSpace) < CheckDistance)
+                //    break;
+
+                var current = CurrentJoint;
+                var target = TargetState.JointSpace;
+
+                if (Math.Abs(current.R1 - target.R1) < 0.1
+                    && Math.Abs(current.P2 - target.P2) < 0.01
+                    && Math.Abs(current.P3 - target.P3) < 0.01
+                    && Math.Abs(current.P4 - target.P4) < 0.01
+                    && Math.Abs(current.R5 - target.R5) < 0.1)
                     break;
+                
+                //Debug.WriteLine(CurrentState.TaskSpace);
+                //Debug.WriteLine(TargetState.TaskSpace);
 
                 try
                 {
