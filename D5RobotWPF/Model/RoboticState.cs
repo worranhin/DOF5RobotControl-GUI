@@ -22,6 +22,8 @@ namespace DOF5RobotControl_GUI.Model
 
         partial void OnJointSpaceChanged(JointSpace value)
         {
+            isJointUpdating = true;
+
             value.PropertyChanging += (sender, e) =>
             {
                 isJointUpdating = true; // 指示正在更新属性
@@ -39,6 +41,11 @@ namespace DOF5RobotControl_GUI.Model
 
                 isJointUpdating = false; // 指示结束更新属性
             };
+
+            if (!isTaskUpdating)
+                TaskSpace = KineHelper.Forward(value);
+
+            isJointUpdating = false;
         }
 
         [ObservableProperty]
@@ -46,6 +53,8 @@ namespace DOF5RobotControl_GUI.Model
 
         partial void OnTaskSpaceChanged(TaskSpace value)
         {
+            isTaskUpdating = true;
+
             value.PropertyChanging += (sender, e) =>
             {
                 isTaskUpdating = true;
@@ -61,6 +70,11 @@ namespace DOF5RobotControl_GUI.Model
                 }
                 isTaskUpdating = false;
             };
+
+            if (!isJointUpdating)
+                JointSpace = KineHelper.Inverse(value);
+
+            isTaskUpdating = false;
         }
 
         public RoboticState()
