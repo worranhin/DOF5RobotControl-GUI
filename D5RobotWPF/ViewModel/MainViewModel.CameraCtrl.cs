@@ -38,7 +38,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                 CameraIsOpened = true;
             } catch (InvalidOperationException ex)
             {
-                _popUpService.Show(ex.ToString());
+                _popUpService.Show("请检查相机网卡是否打开，并尝试重启应用\n" + ex.ToString(), "Error when Open Camera");
             }
         }
 

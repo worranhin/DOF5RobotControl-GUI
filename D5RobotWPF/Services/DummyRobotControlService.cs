@@ -66,7 +66,7 @@ namespace DOF5RobotControl_GUI.Services
             TargetState = target.Clone();
         }
 
-        public async Task MoveAbsoluteAsync(RoboticState target, CancellationToken token = default)
+        public async Task MoveAbsoluteAsync(RoboticState target, CancellationToken token)
         {
             MoveAbsolute(target);
             await WaitForTargetedAsync(token);
@@ -79,7 +79,7 @@ namespace DOF5RobotControl_GUI.Services
             TargetState = target;
         }
 
-        public async Task MoveRelativeAsync(JointSpace diff, CancellationToken token = default)
+        public async Task MoveRelativeAsync(JointSpace diff, CancellationToken token)
         {
             MoveRelative(diff);
             await WaitForTargetedAsync(token);
@@ -135,6 +135,16 @@ namespace DOF5RobotControl_GUI.Services
         }
 
         public double GetJointValue(int axis)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void MoveAbsolute(JointSpace target)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task MoveAbsoluteAsync(JointSpace target, CancellationToken token, int checkPeriod = 100, double checkDistance = 0.1)
         {
             throw new NotImplementedException();
         }

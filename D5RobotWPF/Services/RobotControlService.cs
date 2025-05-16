@@ -267,6 +267,32 @@ namespace DOF5RobotControl_GUI.Services
         }
 
         /// <summary>
+        /// 关节绝对运动
+        /// </summary>
+        /// <param name="target"></param>
+        /// <exception cref="InvalidOperationException"></exception>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
+        public void MoveAbsolute(JointSpace target)
+        {
+            if (target.HasErrors)
+                throw new ArgumentOutOfRangeException(nameof(target), "Joint value is not valid.");
+
+            TargetState.JointSpace = target;
+
+            JointMoveAbsolute(1, target.R1);
+            JointMoveAbsolute(2, target.P2);
+            JointMoveAbsolute(3, target.P3);
+            JointMoveAbsolute(4, target.P4);
+            JointMoveAbsolute(5, target.R5);
+        }
+
+        public async Task MoveAbsoluteAsync(JointSpace target, CancellationToken token, int checkPeriod = 100, double checkDistance = 0.1)
+        {
+            MoveAbsolute(target);
+            await WaitForTargetedAsync(token, checkPeriod, checkDistance);
+        }
+
+        /// <summary>
         /// 运动到指定机器人状态
         /// </summary>
         /// <param name="target"></param>
@@ -405,7 +431,7 @@ namespace DOF5RobotControl_GUI.Services
             }
 
             // 运动到原来的位置
-            MoveAbsolute(new(origin));
+            await MoveAbsoluteAsync(origin, token);
         }
 
         public Task WaitForTargetedAsync(int CheckPeriod = 100, double CheckDistance = 0.1) => 

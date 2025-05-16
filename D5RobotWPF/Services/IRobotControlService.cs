@@ -33,6 +33,23 @@ namespace DOF5RobotControl_GUI.Services
         void Disconnect();
 
         /// <summary>
+        /// 绝对移动
+        /// </summary>
+        /// <param name="target">目标关节值</param>
+        /// <param name="checkPeriod"></param>
+        /// <param name="checkDistance"></param>
+        void MoveAbsolute(JointSpace target);
+
+        /// <summary>
+        /// 异步地绝对移动，任务将在关节到位后返回
+        /// </summary>
+        /// <param name="target">目标关节值</param>
+        /// <param name="checkPeriod">检查周期</param>
+        /// <param name="checkDistance">检查距离，每个关节均小于该值则返回</param>
+        /// <returns></returns>
+        Task MoveAbsoluteAsync(JointSpace target, CancellationToken token, int checkPeriod = 100, double checkDistance = 0.1);
+
+        /// <summary>
         /// 绝对运动
         /// </summary>
         /// <param name="target"></param>
@@ -111,6 +128,5 @@ namespace DOF5RobotControl_GUI.Services
         /// <exception cref="InvalidOperationException"></exception>
         /// <exception cref="ArgumentOutOfRangeException"></exception>
         double GetJointValue(int axis);
-        
     }
 }
