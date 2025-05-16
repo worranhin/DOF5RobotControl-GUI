@@ -144,9 +144,13 @@ namespace DOF5RobotControl_GUI.ViewModel
         /***** Log 相关 *****/
         private void AddLog(string log)
         {
-            if (LogLines.Count >= MaxLogCount)
-                LogLines.RemoveAt(0);
-            LogLines.Add(log);
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                if (LogLines.Count >= MaxLogCount)
+                    LogLines.RemoveAt(0);
+
+                LogLines.Add(log);
+            });
         }
 
         private void LogLines_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)

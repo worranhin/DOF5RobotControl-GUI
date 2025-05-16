@@ -41,7 +41,7 @@ namespace DOF5RobotControl_GUI
                 if (LogList.Items.Count > 0)
                 {
                     LogList.SelectedIndex = LogList.Items.Count - 1;
-                    LogList.ScrollIntoView(LogList.SelectedItem);
+                    //LogList.ScrollIntoView(LogList.SelectedItem);  //这个地方会导致错误
                 }
             });
         }

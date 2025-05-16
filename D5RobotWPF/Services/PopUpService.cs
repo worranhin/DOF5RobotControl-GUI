@@ -11,12 +11,18 @@ namespace DOF5RobotControl_GUI.Services
     {
         public void Show(string text)
         {
-            MessageBox.Show(text);
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                MessageBox.Show(text);
+            });
         }
 
         public void Show(string text, string title)
         {
-            MessageBox.Show(text, title);
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                MessageBox.Show(text, title);
+            });
         }
     }
 }
