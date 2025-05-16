@@ -1,4 +1,5 @@
 ﻿using DOF5RobotControl_GUI.Services;
+using System.Diagnostics;
 using System.IO.Ports;
 using System.Threading.Tasks;
 
@@ -46,6 +47,42 @@ namespace UnitTest
             //var joint = robotService.CurrentJoints;
 
             robotService.Disconnect();
+        }
+
+        [Fact]
+        public async Task TestJointMove()
+        {
+            try
+            {
+                robotService.Connect("COM16");
+            }
+            catch (FileNotFoundException)
+            {
+                return;
+            }
+            Assert.True(robotService.IsConnected, "Fail to connect robot");
+
+            const double f = 5;
+            var trackX = (double t) => Math.Sin(2 * Math.PI * f * t);
+
+            robotService.JointMoveAbsolute(4, 0);
+            await Task.Delay(1000);
+
+            var sw = Stopwatch.StartNew();
+            while (robotService.IsConnected)
+            {
+                var t = sw.ElapsedMilliseconds / 1000.0;  // 单位 s
+                if (t > 10)
+                    break;
+                
+                var x = trackX(t);
+
+                robotService.JointMoveAbsolute(4, x);
+                await Task.Delay(1);                
+            }
+
+            robotService.JointMoveAbsolute(4, 0);
+            await Task.Delay(1000);
         }
 
         //[Fact]

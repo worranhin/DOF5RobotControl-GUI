@@ -3,6 +3,7 @@ using DOF5RobotControl_GUI.Model;
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using System.IO.Ports;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace DOF5RobotControl_GUI.Services
@@ -378,7 +379,7 @@ namespace DOF5RobotControl_GUI.Services
         /// <param name="vibrateVertical"></param>
         /// <param name="amplitude">振动的单向幅值，单位 mm</param>
         /// <param name="frequency">振动的频率</param>
-        private void VibrateTask(bool vibrateHorizontal, bool vibrateVertical, double amplitude, double frequency)
+        private async Task VibrateTask(bool vibrateHorizontal, bool vibrateVertical, double amplitude, double frequency)
         {
             vibrateCancelSource = new();
             var token = vibrateCancelSource.Token;
@@ -398,11 +399,13 @@ namespace DOF5RobotControl_GUI.Services
                 if (vibrateVertical)
                     JointMoveAbsolute(4, p4 + d);
 
+                await Task.Delay(1);  // 必须延时一小段时间，否则 Nators 电机会产生零点漂移
+
                 // 目前的控制周期实际是 (6ms) 左右，如果输出debug信息会更久，猜测瓶颈在于 RMD 的通讯速率（115200 baud)
             }
 
             // 运动到原来的位置
-            MoveAbsolute(new() { JointSpace = origin });
+            MoveAbsolute(new(origin));
         }
 
         public Task WaitForTargetedAsync(int CheckPeriod = 100, double CheckDistance = 0.1) => 
