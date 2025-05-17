@@ -166,9 +166,22 @@ namespace DOF5RobotControl_GUI.Services
             var (x_g, y_g, rz_g) = await getGripperPoseTask;
             var (x_j, y_j, rz_j) = await getJawPoseTask;
 
+            const double EntranceLength = 392.8;  // px
+            var jawCenter = new Point<double>(x_j, y_j);
+            var entrancePoint = new Point<double>(x_j, y_j + EntranceLength);
+            entrancePoint = RotatePoint(jawCenter, entrancePoint, rz_j);
 
-            // 转换为机器人坐标系，返回位姿差
-            throw new NotImplementedException();
+            // 计算它们的位姿差值
+            double dx = entrancePoint.X - x_g;
+            double dy = entrancePoint.Y - y_g;
+            double drz = rz_j - rz_g;
+
+            // 将图像坐标转换为机器人坐标
+            double err_x = -dy * PixelToMMScale;
+            double err_y = -dx * PixelToMMScale;
+            double err_rz = -drz;
+
+            return (err_x, err_y, err_rz);
         }
 
         /// <summary>

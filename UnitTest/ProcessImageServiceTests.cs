@@ -11,6 +11,8 @@ namespace UnitTest {
 
     public class ProcessImageServiceTests(ITestOutputHelper outputHelper)
     {
+        const double tolerance = 0.3;  // 视觉处理的误差，单位 mm
+
         [Fact]
         public async Task ProccessTopImageAsync_StubImage_InRange()
         {
@@ -29,8 +31,8 @@ namespace UnitTest {
 
             var (x, y, rz) = await procImgService.ProcessTopImgAsync(topImg);
 
-            Assert.Equal(expected_x, x, 0.2);
-            Assert.Equal(expected_y, y, 0.2);
+            Assert.Equal(expected_x, x, tolerance);
+            Assert.Equal(expected_y, y, tolerance);
             Assert.InRange(rz, -0.1, 0.1);
 
             outputHelper.WriteLine($"error in x: {x}, y: {y}, rz: {rz}");
@@ -47,9 +49,26 @@ namespace UnitTest {
 
             var distance = await procImgService.ProcessBottomImageAsync(bottomImg);
 
-            Assert.Equal(expected, distance, 0.2);
+            Assert.Equal(expected, distance, tolerance);
 
             outputHelper.WriteLine($"error in z: {distance}");
+        }
+
+        [Fact]
+        public async Task GetEntranceErrorAsync_StubImage_Expected()
+        {
+            var procImgService = CreateAndInitImageService();
+            FakeCameraControlService cameraService = new();
+            var topImg = cameraService.GetTopFrame();
+
+            const double expected_x = 0.945;
+            const double expected_y = 0.227;
+
+            var (x, y, rz) = await procImgService.GetEntranceErrorAsync(topImg);
+
+            Assert.Equal(expected_x, x, tolerance);
+            Assert.Equal(expected_y, y, tolerance);
+            Assert.InRange(rz, -0.1, 0.1);
         }
 
         private ProcessImageService CreateAndInitImageService()

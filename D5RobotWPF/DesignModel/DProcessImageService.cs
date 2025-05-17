@@ -1,15 +1,15 @@
 ﻿using DOF5RobotControl_GUI.Model;
 using DOF5RobotControl_GUI.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DOF5RobotControl_GUI.DesignModel
 {
     class DProcessImageService : IProcessImageService
     {
+        public Task<(double x, double y, double rz)> GetEntranceErrorAsync(CamFrame topImg)
+        {
+            throw new NotImplementedException();
+        }
+
         public void Init(CamFrame topFrame, CamFrame bottomFrame)
         {
             throw new NotImplementedException();
