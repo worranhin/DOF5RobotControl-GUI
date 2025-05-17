@@ -32,7 +32,11 @@ namespace DOF5RobotControl_GUI.ViewModel
                 _cameraCtrlService.OpenCamera();
 
                 _camWindow = App.Current.Services.GetRequiredService<CameraWindow>();
-                _camWindow.Closed += (sender, e) => _cameraCtrlService.CloseCamera();
+                _camWindow.Closed += (sender, e) =>
+                {
+                    _cameraCtrlService.CloseCamera();
+                    CameraIsOpened = false;
+                };
                 _camWindow.Show();
 
                 CameraIsOpened = true;
