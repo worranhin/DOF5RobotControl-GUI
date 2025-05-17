@@ -1,7 +1,9 @@
 ﻿using Compunet.YoloSharp.Data;
 using DOF5RobotControl_GUI.Model;
+using OpenCvSharp;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using VisionLibrary;
 
 namespace DOF5RobotControl_GUI.Services
@@ -87,10 +89,12 @@ namespace DOF5RobotControl_GUI.Services
                 var getJawPoseTask = Task.Run(() => vision.GetJawPos(pointer, width, height, stride));
 
                 // 等待任務完成并获取处理结果
-                await Task.WhenAll(getGripperPoseTask, getJawPoseTask);
                 var (x_g, y_g, rz_g) = await getGripperPoseTask;
                 var (x_j, y_j, rz_j) = await getJawPoseTask;
                 rz_j = -rz_j; // GetJawPos 获取的角度好像逆时针为正 TODO: 确认这个地方
+
+                Debug.WriteLine($"Gripper pose: x={x_g}, y={y_g}, rz={rz_g}");
+                Debug.WriteLine($"Jaw pose: x={x_j}, y={y_j}, rz={rz_j}");
 
                 // 计算它们的位姿差值
                 double dx = x_j - x_g;
@@ -145,6 +149,134 @@ namespace DOF5RobotControl_GUI.Services
                 throw new InvalidOperationException($"Detection error occured. Expect 2 results, but got {result.Count}");
 
             return ProcessBottomYoloResult(result);
+        }
+
+
+        //public async Task<(double x, double y, double rz)> GetEntranceErrorAsync(CamFrame topImg)
+        //{
+        //    if (!hasInitialized)
+        //        throw new InvalidOperationException("Init should be called before process image after the camera moved.");
+
+        //    // 获取夹钳前端位姿
+        //    var getGripperPoseTask = GetGripperPoseAsync(topImg);
+
+        //    // 获取钳口入口位姿
+        //    var getJawPoseTask = GetJawPoseAsync(topImg);
+
+        //    var (x_g, y_g, rz_g) = await getGripperPoseTask;
+        //    var (x_j, y_j, rz_j) = await getJawPoseTask;
+
+
+        //    // 转换为机器人坐标系，返回位姿差
+        //}
+
+        /// <summary>
+        /// 处理顶部图像 YOLO 检测的结果
+        /// </summary>
+        /// <param name="result">YOLO 检测的结果</param>
+        /// <returns>夹钳末端的位姿(x(px), y(px), rz(rad))，注意坐标系为向右为 +x，向下为 +y，顺时针为 +rz</returns>
+        private static (double x, double y, double rz) ProcessTopYoloResult(YoloResult<ObbDetection> result)
+        {
+            ObbDetection[] goodResults;
+
+            /// 对检测结果进行预处理 ///
+
+            // 如果初始检测结果小于 2 个，则丢出异常
+            if (result.Count < 2)
+                throw new InvalidOperationException("(Part of) gripper not detected.");
+
+            if (result.Count == 2)  // 如果检测结果数等于 2 个，就直接取这个结果
+            {
+                goodResults = [.. result];
+            }
+            else  // 如果初始检测结果大于 2 个，做后续处理
+            {
+                const double threshold = 0.8;
+                var thresholdQuery = from item in result
+                                     where item.Confidence > threshold
+                                     select item;
+
+                if (thresholdQuery.Count() == 2)  // 如果去除置信度低的结果数刚好为 2 则直接取这个结果
+                {
+                    goodResults = [.. thresholdQuery];
+                }
+                else  // 否则使用分类的方法
+                {
+                    SortedSet<ObbDetection> res1 = new(new DetectionComparer());
+                    SortedSet<ObbDetection> res2 = new(new DetectionComparer());
+
+                    foreach (var detection in result)
+                    {
+                        // 首次迭代的情况
+                        if (res1.Count == 0)
+                        {
+                            res1.Add(detection);
+                            continue;
+                        }
+
+                        var detection1 = res1.First();
+                        if (Math.Abs(detection.Bounds.X - detection1.Bounds.X) < detection1.Bounds.Width / 2 &&
+                            Math.Abs(detection.Bounds.Y - detection1.Bounds.Y) < detection1.Bounds.Height / 2)
+                            res1.Add(detection);
+                        else
+                            res2.Add(detection);
+                    }
+
+                    if (res1.Max is not null && res2.Max is not null)
+                        goodResults = [res1.Max, res2.Max];
+                    else
+                        throw new InvalidOperationException("Max should not be null at this place");
+                }
+            }
+
+            // 获取夹钳左右两边的结果
+
+            Debug.Assert(goodResults.Length == 2);
+            var tip1 = goodResults[0];
+            var tip2 = goodResults[1];
+
+            ObbDetection leftTip, rightTip;
+            if (tip1.Bounds.X < tip2.Bounds.X)
+            {
+                leftTip = tip1;
+                rightTip = tip2;
+            }
+            else
+            {
+                leftTip = tip2;
+                rightTip = tip1;
+            }
+
+            // 通过坐标变换，取夹钳末端的中点，注意这里图像的坐标是向右为 +x，向下为 +y，顺时针为 +rz
+            Point<double> leftCenter = new(leftTip.Bounds.X, leftTip.Bounds.Y);
+            Point<double> rightCenter = new(rightTip.Bounds.X, rightTip.Bounds.Y);
+
+            Point<double> leftPoint = new(leftCenter.X - leftTip.Bounds.Width / 2.0, leftCenter.Y);
+            Point<double> rightPoint = new(rightCenter.X - rightTip.Bounds.Width / 2.0, rightCenter.Y);
+
+            leftPoint = RotatePoint(leftCenter, leftPoint, leftTip.Angle * Math.PI / 180.0);
+            rightPoint = RotatePoint(rightCenter, rightPoint, rightTip.Angle * Math.PI / 180.0);
+
+            //Point<double> pll, plr, prl, prr;  // 分别对应左边夹钳末端左角点，右角点，右边夹钳末端的左角点，右角点
+
+            //pll = new(leftTip.Bounds.X - leftTip.Bounds.Width / 2.0, leftTip.Bounds.Y + leftTip.Bounds.Height / 2.0);
+            //pll = RotatePoint(leftCenter, pll, leftTip.Angle * Math.PI / 180.0);
+            //plr = new(leftTip.Bounds.X - leftTip.Bounds.Width / 2.0, leftTip.Bounds.Y - leftTip.Bounds.Height / 2.0);
+            //plr = RotatePoint(leftCenter, plr, leftTip.Angle * Math.PI / 180.0);
+
+            //prl = new(rightTip.Bounds.X - rightTip.Bounds.Width / 2.0, rightTip.Bounds.Y + rightTip.Bounds.Height / 2.0);
+            //prl = RotatePoint(rightCenter, prl, rightTip.Angle * Math.PI / 180.0);
+            //prr = new(rightTip.Bounds.X - rightTip.Bounds.Width / 2.0, rightTip.Bounds.Y - rightTip.Bounds.Height / 2.0);
+            //prr = RotatePoint(rightCenter, prr, rightTip.Angle * Math.PI / 180.0);
+
+            //Point<double> rightPoint = new(rightTip.Bounds.X - rightTip.Bounds.Width / 2.0, rightTip.Bounds.Y + rightTip.Bounds.Height / 2.0);
+            //rightPoint = RotatePoint(rightCenter, rightPoint, rightTip.Angle * Math.PI / 180);
+
+            Point<double> midPoint = new((leftPoint.X + rightPoint.X) / 2, (leftPoint.Y + rightPoint.Y) / 2);
+            //Point<double> midPoint = new((pll.X + plr.X + prl.X + prr.X) / 4.0, (pll.Y + plr.Y + prl.Y + prr.Y) / 4.0);
+            double rz = Math.Atan2(rightPoint.Y - leftPoint.Y, rightPoint.X - leftPoint.X);
+
+            return (midPoint.X, midPoint.Y, rz);
         }
 
         /// <summary>
@@ -207,87 +339,42 @@ namespace DOF5RobotControl_GUI.Services
         }
 
         /// <summary>
-        /// 处理顶部图像 YOLO 检测的结果
+        /// 异步获取钳口中心点位姿
         /// </summary>
-        /// <param name="result">YOLO 检测的结果</param>
-        /// <returns>夹钳末端的位姿(x(px), y(px), rz(rad))，注意坐标系为向右为 +x，向下为 +y，顺时针为 +rz</returns>
-        private (double x, double y, double rz) ProcessTopYoloResult(YoloResult<ObbDetection> result)
+        /// <param name="topImg">顶部相机图像</param>
+        /// <returns>钳口中心点位姿，单位为 pixel 和 rad</returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        private async Task<(double x, double y, double rz)> GetJawPoseAsync(CamFrame topImg)
         {
-            ObbDetection[] goodResults;
+            var rawBuffer = topImg.Buffer;
+            var width = topImg.Width;
+            var height = topImg.Height;
+            var stride = topImg.Stride;
 
-            // 如果初始检测结果小于 2 个，则丢出异常
-            if (result.Count < 2)
-                throw new InvalidOperationException("(Part of) gripper not detected.");
-
-            // 如果初始检测结果大于 2 个，做后续处理
-            if (result.Count > 2)
+            GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
+            try
             {
-                var thresholdQuery = from item in result
-                                     where item.Confidence > 0.8
-                                     select item;
+                IntPtr pointer = handle.AddrOfPinnedObject();
 
-                Debug.Assert(thresholdQuery.Count() <= 2, "More than 2 result where confidence greater than threshold, threshold can be set larger.");
+                // 通过 Halcon 模板匹配获取钳口位姿
+                var getJawPoseTask = Task.Run(() => vision.GetJawPos(pointer, width, height, stride));
 
-                if (thresholdQuery.Count() == 2)  // 如果去除置信度低的结果数刚好为 2 则直接取这个结果
-                    goodResults = [.. thresholdQuery];
-                else  // 否则使用分类的方法
-                {
-                    SortedSet<ObbDetection> res1 = new(new DetectionComparer());
-                    SortedSet<ObbDetection> res2 = new(new DetectionComparer());
+                // 等待任務完成并获取处理结果
+                var (x_j, y_j, rz_j) = await getJawPoseTask;
+                rz_j = -rz_j; // GetJawPos 获取的角度好像逆时针为正 TODO: 确认这个地方
 
-                    foreach (var detection in result)
-                    {
-                        // 首次迭代的情况
-                        if (res1.Count == 0)
-                        {
-                            res1.Add(detection);
-                            continue;
-                        }
+                Debug.WriteLine($"Jaw pose: x={x_j}, y={y_j}, rz={rz_j}");
 
-                        var detection1 = res1.First();
-                        if (Math.Abs(detection.Bounds.X - detection1.Bounds.X) < detection1.Bounds.Width / 2 &&
-                            Math.Abs(detection.Bounds.Y - detection1.Bounds.Y) < detection1.Bounds.Height / 2)
-                            res1.Add(detection);
-                        else
-                            res2.Add(detection);
-                    }
-
-                    if (res1.Max is not null && res2.Max is not null)
-                        goodResults = [res1.Max, res2.Max];
-                }
+                return (x_j, y_j, rz_j);
             }
-
-            goodResults = [.. result];
-
-            Debug.Assert(goodResults.Length == 2);
-            var tip1 = goodResults[0];
-            var tip2 = goodResults[1];
-
-            ObbDetection leftTip, rightTip;
-            if (tip1.Bounds.X < tip2.Bounds.X)
+            catch (VisionException ex)
             {
-                leftTip = tip1;
-                rightTip = tip2;
+                throw new InvalidOperationException("Error occured when process image", ex);
             }
-            else
+            finally
             {
-                leftTip = tip2;
-                rightTip = tip1;
+                handle.Free();
             }
-
-            // 通过坐标变换，取夹钳末端的中点，注意这里图像的坐标是向右为 +x，向下为 +y，顺时针为 +rz
-            Point<double> leftPoint = new(leftTip.Bounds.Left, leftTip.Bounds.Top);
-            Point<double> leftCenter = new(leftTip.Bounds.X, leftTip.Bounds.Y);
-            leftPoint = RotatePoint(leftCenter, leftPoint, leftTip.Angle * Math.PI / 180);
-
-            Point<double> rightPoint = new(rightTip.Bounds.Left, rightTip.Bounds.Bottom);
-            Point<double> rightCenter = new(rightTip.Bounds.X, rightTip.Bounds.Y);
-            rightPoint = RotatePoint(rightCenter, rightPoint, rightTip.Angle * Math.PI / 180);
-
-            Point<double> midPoint = new((leftPoint.X + rightPoint.X) / 2, (leftPoint.Y + rightPoint.Y) / 2);
-            double rz = Math.Atan2(rightPoint.Y - leftPoint.Y, rightPoint.X - leftPoint.X);
-
-            return (midPoint.X, midPoint.Y, rz);
         }
 
         class DetectionComparer : IComparer<ObbDetection>

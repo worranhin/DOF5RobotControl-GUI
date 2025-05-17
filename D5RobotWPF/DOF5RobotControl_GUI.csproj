@@ -152,10 +152,10 @@
     <None Update="libDOF5RobotControl.dll">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
-    <None Update="MockBottomImage.png">
+    <None Update="FakeBottomImage.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="MockTopImage.png">
+    <None Update="FakeTopImage.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Properties\Settings.settings">

@@ -55,8 +55,8 @@ namespace DOF5RobotControl_GUI
             services.AddSingleton<IProcessImageService, ProcessImageService>();
             services.AddSingleton<ActorPolicy>();
 #if USE_DUMMY // 使用虚假服务，用于测试代码逻辑
-            services.AddSingleton<IRobotControlService, DummyRobotControlService>(); // 虚假类，仅用于测试代码逻辑
-            services.AddSingleton<ICameraControlService, DummyCameraControlService>(); // 虚假类，仅用于测试代码逻辑
+            services.AddSingleton<IRobotControlService, FakeRobotControlService>(); // 虚假类，仅用于测试代码逻辑
+            services.AddSingleton<ICameraControlService, FakeCameraControlService>(); // 虚假类，仅用于测试代码逻辑
 #endif
 
             // 注册 ViewModel

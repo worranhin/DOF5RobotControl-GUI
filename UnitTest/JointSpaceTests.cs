@@ -11,8 +11,9 @@ namespace UnitTest
     public class JointSpaceTests
     {
         [Fact]
-        public void TestD5RJoint()
+        public void TestToD5RJoints()
         {
+            // Arrange
             var jointSpace = new JointSpace()
             {
                 R1 = -10,
@@ -22,7 +23,6 @@ namespace UnitTest
                 R5 = 10
             };
 
-            var controlJoint = jointSpace.ToD5RJoints();
             var expectJoint = new Joints()
             {
                 R1 = 35000,
@@ -32,12 +32,15 @@ namespace UnitTest
                 R5 = 35000
             };
 
+            // Act
+            var controlJoint = jointSpace.ToD5RJoints();
+            
+            // Assert
             Assert.Equal(expectJoint.R1, controlJoint.R1);
             Assert.Equal(expectJoint.R5, controlJoint.R5);
             Assert.Equal(expectJoint.P2, controlJoint.P2);
             Assert.Equal(expectJoint.P3, controlJoint.P3);
             Assert.Equal(expectJoint.P4, controlJoint.P4);
-
         }
     }
 }

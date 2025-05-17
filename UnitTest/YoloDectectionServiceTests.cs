@@ -32,7 +32,7 @@ namespace UnitTest
         //}
 
         readonly YoloDetectionService yoloService = new();
-        readonly DummyCameraControlService cameraService = new();
+        readonly FakeCameraControlService cameraService = new();
 
         [Fact]
         public async Task TestTopDetect()
