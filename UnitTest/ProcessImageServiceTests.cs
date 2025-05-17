@@ -9,27 +9,8 @@ using Xunit.Abstractions;
 
 namespace UnitTest {
 
-    public class ProcessImageServiceTests
+    public class ProcessImageServiceTests(ITestOutputHelper outputHelper)
     {
-        FakeCameraControlService cameraService;
-        YoloDetectionService yoloService;
-        ProcessImageService processImgService;
-        ITestOutputHelper outputHelper;
-
-        public ProcessImageServiceTests(ITestOutputHelper outputHelper)
-        {
-            this.outputHelper = outputHelper;
-
-            cameraService = new();
-            yoloService = new();
-            processImgService = new(yoloService);
-
-            var topImg = cameraService.GetTopFrame();
-            var bottomImg = cameraService.GetBottomFrame();
-
-            processImgService.Init(topImg, bottomImg);
-        }
-
         [Fact]
         public async Task ProccessTopImageAsync_StubImage_InRange()
         {
@@ -48,11 +29,9 @@ namespace UnitTest {
 
             var (x, y, rz) = await procImgService.ProcessTopImgAsync(topImg);
 
-            Assert.InRange(x, 0, 8);
-            Assert.InRange(y, -0.5, 0.5);
+            Assert.Equal(expected_x, x, 0.2);
+            Assert.Equal(expected_y, y, 0.2);
             Assert.InRange(rz, -0.1, 0.1);
-            Assert.Equal(expected_x, x, expected_x * 0.2);
-            Assert.Equal(expected_y, y, expected_y * 0.2);
 
             outputHelper.WriteLine($"error in x: {x}, y: {y}, rz: {rz}");
         }
@@ -61,12 +40,14 @@ namespace UnitTest {
         public async Task ProccessBottomImageAsync_StubImage_InRange()
         {
             var procImgService = CreateAndInitImageService();
-            FakeCameraControlService cameraService = new();
+            var cameraService = new FakeCameraControlService();
             var bottomImg = cameraService.GetBottomFrame();
 
-            var distance = await processImgService.ProcessBottomImageAsync(bottomImg);
+            const double expected = -6.636;
 
-            Assert.InRange(distance, -8, 0);
+            var distance = await procImgService.ProcessBottomImageAsync(bottomImg);
+
+            Assert.Equal(expected, distance, 0.2);
 
             outputHelper.WriteLine($"error in z: {distance}");
         }

@@ -152,23 +152,24 @@ namespace DOF5RobotControl_GUI.Services
         }
 
 
-        //public async Task<(double x, double y, double rz)> GetEntranceErrorAsync(CamFrame topImg)
-        //{
-        //    if (!hasInitialized)
-        //        throw new InvalidOperationException("Init should be called before process image after the camera moved.");
+        public async Task<(double x, double y, double rz)> GetEntranceErrorAsync(CamFrame topImg)
+        {
+            if (!hasInitialized)
+                throw new InvalidOperationException("Init should be called before process image after the camera moved.");
 
-        //    // 获取夹钳前端位姿
-        //    var getGripperPoseTask = GetGripperPoseAsync(topImg);
+            // 获取夹钳前端位姿
+            var getGripperPoseTask = GetGripperPoseAsync(topImg);
 
-        //    // 获取钳口入口位姿
-        //    var getJawPoseTask = GetJawPoseAsync(topImg);
+            // 获取钳口入口位姿
+            var getJawPoseTask = GetJawPoseAsync(topImg);
 
-        //    var (x_g, y_g, rz_g) = await getGripperPoseTask;
-        //    var (x_j, y_j, rz_j) = await getJawPoseTask;
+            var (x_g, y_g, rz_g) = await getGripperPoseTask;
+            var (x_j, y_j, rz_j) = await getJawPoseTask;
 
 
-        //    // 转换为机器人坐标系，返回位姿差
-        //}
+            // 转换为机器人坐标系，返回位姿差
+            throw new NotImplementedException();
+        }
 
         /// <summary>
         /// 处理顶部图像 YOLO 检测的结果
@@ -257,23 +258,7 @@ namespace DOF5RobotControl_GUI.Services
             leftPoint = RotatePoint(leftCenter, leftPoint, leftTip.Angle * Math.PI / 180.0);
             rightPoint = RotatePoint(rightCenter, rightPoint, rightTip.Angle * Math.PI / 180.0);
 
-            //Point<double> pll, plr, prl, prr;  // 分别对应左边夹钳末端左角点，右角点，右边夹钳末端的左角点，右角点
-
-            //pll = new(leftTip.Bounds.X - leftTip.Bounds.Width / 2.0, leftTip.Bounds.Y + leftTip.Bounds.Height / 2.0);
-            //pll = RotatePoint(leftCenter, pll, leftTip.Angle * Math.PI / 180.0);
-            //plr = new(leftTip.Bounds.X - leftTip.Bounds.Width / 2.0, leftTip.Bounds.Y - leftTip.Bounds.Height / 2.0);
-            //plr = RotatePoint(leftCenter, plr, leftTip.Angle * Math.PI / 180.0);
-
-            //prl = new(rightTip.Bounds.X - rightTip.Bounds.Width / 2.0, rightTip.Bounds.Y + rightTip.Bounds.Height / 2.0);
-            //prl = RotatePoint(rightCenter, prl, rightTip.Angle * Math.PI / 180.0);
-            //prr = new(rightTip.Bounds.X - rightTip.Bounds.Width / 2.0, rightTip.Bounds.Y - rightTip.Bounds.Height / 2.0);
-            //prr = RotatePoint(rightCenter, prr, rightTip.Angle * Math.PI / 180.0);
-
-            //Point<double> rightPoint = new(rightTip.Bounds.X - rightTip.Bounds.Width / 2.0, rightTip.Bounds.Y + rightTip.Bounds.Height / 2.0);
-            //rightPoint = RotatePoint(rightCenter, rightPoint, rightTip.Angle * Math.PI / 180);
-
             Point<double> midPoint = new((leftPoint.X + rightPoint.X) / 2, (leftPoint.Y + rightPoint.Y) / 2);
-            //Point<double> midPoint = new((pll.X + plr.X + prl.X + prr.X) / 4.0, (pll.Y + plr.Y + prl.Y + prr.Y) / 4.0);
             double rz = Math.Atan2(rightPoint.Y - leftPoint.Y, rightPoint.X - leftPoint.X);
 
             return (midPoint.X, midPoint.Y, rz);
@@ -286,10 +271,31 @@ namespace DOF5RobotControl_GUI.Services
         /// <returns>夹钳到钳口库的竖直方向上的距离，单位 mm</returns>
         private double ProcessBottomYoloResult(YoloResult<Detection> result)
         {
-            var left = result[0];
-            var right = result[1];
-            var x_mean = (left.Bounds.X + right.Bounds.X) / 2.0;
-            var y_mean = (left.Bounds.Y + right.Bounds.Y) / 2.0;
+            Detection left, right;
+            Detection[] goodResults;
+
+            if (result.Count < 2)
+                throw new InvalidOperationException("(Part of) grippers are not detected.");
+
+            if (result.Count > 2)
+                goodResults = [.. result.OrderDescending(new DetectionComparer())];
+            else
+                goodResults = [.. result];
+
+            if (goodResults[0].Bounds.X < goodResults[1].Bounds.X)
+            {
+                left = goodResults[0];
+                right = goodResults[1];
+            }
+            else
+            {
+                left = goodResults[1];
+                right = goodResults[0];
+            }
+
+
+            var x_mean = (left.Bounds.Right + right.Bounds.Left) / 2.0;
+            var y_mean = (left.Bounds.Top + right.Bounds.Top) / 2.0;
             var (a, b) = vision.GetJawLibLine();  // 获取钳口库线的参数 y = ax + b
             double A = a, B = -1, C = b;  // 转换为标准形式 Ax + By + C = 0
             double distance_p = Math.Abs(A * x_mean + B * y_mean + C) / Math.Sqrt(A * A + B * B);  // 计算点到直线距离
@@ -377,12 +383,24 @@ namespace DOF5RobotControl_GUI.Services
             }
         }
 
-        class DetectionComparer : IComparer<ObbDetection>
+        class DetectionComparer : IComparer<ObbDetection>, IComparer<Detection>
         {
             public int Compare(ObbDetection? x, ObbDetection? y)
             {
                 if (x != null && y != null)
-                    return (int)(x.Confidence * 100) - (int)(y.Confidence * 100);
+                    return (int)((x.Confidence  - y.Confidence) * 10000);
+                else if (x == null && y != null)
+                    return -1;
+                else if (x != null && y == null)
+                    return 1;
+                else
+                    return 0;
+            }
+
+            public int Compare(Detection? x, Detection? y)
+            {
+                if (x != null && y != null)
+                    return (int)((x.Confidence - y.Confidence) * 10000);
                 else if (x == null && y != null)
                     return -1;
                 else if (x != null && y == null)
