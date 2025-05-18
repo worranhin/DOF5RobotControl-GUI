@@ -4,7 +4,7 @@
     /// 用于计算运动学正逆解
     /// A helper for calculating kinematics
     /// </summary>
-    internal class KineHelper
+    public class KineHelper
     {
         // 机械臂参数 updated on 2024-11-13
         const double l1 = 38.0;

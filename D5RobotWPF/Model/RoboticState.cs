@@ -20,16 +20,19 @@ namespace DOF5RobotControl_GUI.Model
         [ObservableProperty]
         private JointSpace _jointSpace = new();
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("CommunityToolkit.Mvvm.SourceGenerators.ObservablePropertyGenerator", "MVVMTK0034:Direct field reference to [ObservableProperty] backing field", Justification = "<挂起>")]
         partial void OnJointSpaceChanged(JointSpace value)
         {
+            _jointSpace = value.Clone();  // 这里用克隆代替，以避免被重复引用
+
             isJointUpdating = true;
 
-            value.PropertyChanging += (sender, e) =>
+            _jointSpace.PropertyChanging += (sender, e) =>
             {
                 isJointUpdating = true; // 指示正在更新属性
             };
 
-            value.PropertyChanged += (sender, e) =>
+            _jointSpace.PropertyChanged += (sender, e) =>
             {
                 if (!isTaskUpdating) // 如果本来就在更新属性，则不要再根据 joint 更新，避免互相递归地调用
                 {
@@ -51,22 +54,23 @@ namespace DOF5RobotControl_GUI.Model
         [ObservableProperty]
         private TaskSpace _taskSpace = new();
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("CommunityToolkit.Mvvm.SourceGenerators.ObservablePropertyGenerator", "MVVMTK0034:Direct field reference to [ObservableProperty] backing field", Justification = "<挂起>")]
         partial void OnTaskSpaceChanged(TaskSpace value)
         {
+            _taskSpace = value.Clone();  // 这里用克隆代替，以避免被重复引用
+
             isTaskUpdating = true;
 
-            value.PropertyChanging += (sender, e) =>
+            _taskSpace.PropertyChanging += (sender, e) =>
             {
                 isTaskUpdating = true;
             };
 
-            value.PropertyChanged += (sender, e) =>
+            _taskSpace.PropertyChanged += (sender, e) =>
             {
                 if (!isJointUpdating)
                 {
                     KineHelper.Inverse(TaskSpace, JointSpace);
-                    //KineHelper.ClipJoint(JointSpace);  // TODO: 处理超程问题
-                    //KineHelper.Forward(JointSpace, TaskSpace);
                 }
                 isTaskUpdating = false;
             };
