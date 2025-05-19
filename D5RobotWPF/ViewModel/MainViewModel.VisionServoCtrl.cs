@@ -69,7 +69,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                 //TargetState.JointSpace = targetJoint;
                 //await _robotControlService.MoveAbsoluteAsync(targetJoint, token);  // 控制机器人前往目标位置
 
-                double x, y, z, rz;
+                double x, y, z;
                 JointSpace currentJoint, targetJoint;
                 TaskSpace targetPose;
 
@@ -77,48 +77,62 @@ namespace DOF5RobotControl_GUI.ViewModel
                 currentJoint = _robotControlService.CurrentJoint;
                 topFrame = _cameraCtrlService.GetTopFrame();
                 (x, y, _) = await _imageService.GetEntranceErrorAsync(topFrame);
-                
+
                 targetPose = KineHelper.Forward(currentJoint);
                 targetPose.Px += x - 1;
                 targetPose.Py += y;
                 targetJoint = KineHelper.Inverse(targetPose);
                 TargetState.JointSpace = targetJoint;
                 await _robotControlService.MoveAbsoluteAsync(targetJoint, token);
+                await Task.Delay(500);
 
                 // 2. 再往下降
                 currentJoint = _robotControlService.CurrentJoint;
                 bottomFrame = _cameraCtrlService.GetBottomFrame();
                 z = await _imageService.ProcessBottomImageAsync(bottomFrame);
+                if (double.IsNaN(z))
+                    throw new ArgumentOutOfRangeException(nameof(z), z, "Error in z is NaN");
 
                 targetPose = KineHelper.Forward(currentJoint);
                 targetPose.Pz += z;
                 targetJoint = KineHelper.Inverse(targetPose);
                 TargetState.JointSpace = targetJoint;
                 await _robotControlService.MoveAbsoluteAsync(targetJoint, token);
+                await Task.Delay(100);
 
-                // 3. 最后进行重复预对准直到精度达到要求
+                // 3. 预接触配合
+                currentJoint = _robotControlService.CurrentJoint;
+                topFrame = _cameraCtrlService.GetTopFrame();
+                (x, y, _) = await _imageService.GetEntranceErrorAsync(topFrame);
+
+                targetPose = KineHelper.Forward(currentJoint);
+                targetPose.Px += x + 1;
+                targetPose.Py += y;
+
+                targetJoint = KineHelper.Inverse(targetPose);
+                TargetState.JointSpace = targetJoint;
+                await _robotControlService.MoveAbsoluteAsync(targetJoint, token);
+
+                // 4. 最后进行重复预对准直到精度达到要求
+                const double Kp = 0.5;
                 while (!token.IsCancellationRequested)
                 {
                     currentJoint = _robotControlService.CurrentJoint;
                     topFrame = _cameraCtrlService.GetTopFrame();
 
-                    //(x, y, rz) = await _imageService.ProcessTopImgAsync(topFrame);
-                    (x, y, rz) = await _imageService.GetEntranceErrorAsync(topFrame);
-                    if (token.IsCancellationRequested) break;
+                    (_, y, _) = await _imageService.GetJawErrorAsync(topFrame);
 
-                    if (Math.Abs(y) < tolerance
-                        && Math.Abs(x) < tolerance
-                        && Math.Abs(rz) < tolerance) // 判断预对准是否完成
+                    if (Math.Abs(y) < tolerance * 0.1) // 判断预对准是否完成
                         break;
 
                     targetPose = KineHelper.Forward(currentJoint);
-                    targetPose.Px += x;
-                    targetPose.Py += y;
-                    targetPose.Rz += rz * 180.0 / Math.PI;
+                    targetPose.Py += y * Kp;
+                    //targetPose.Rz += rz * 180.0 / Math.PI;
 
                     targetJoint = KineHelper.Inverse(targetPose);
                     TargetState.JointSpace = targetJoint;
                     await _robotControlService.MoveAbsoluteAsync(targetJoint, token);
+                    //await Task.Delay(500);
                 }
             }
             catch (OperationCanceledException ex)
@@ -128,6 +142,10 @@ namespace DOF5RobotControl_GUI.ViewModel
             catch (InvalidOperationException ex)
             {
                 _popUpService.Show(ex.Message, "Error when Pre-align");
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                _popUpService.Show(ex.ToString(), "Error when pre algin");
             }
             finally
             {
@@ -143,33 +161,44 @@ namespace DOF5RobotControl_GUI.ViewModel
         [RelayCommand]
         private async Task InsertJawAsync()
         {
-            const double tolerance = 0.3;
+            const double tolerance = 0.1;
 
             IsInserting = true;
             insertCancelSource = new();
             var token = insertCancelSource.Token;
 
+            var topImg = _cameraCtrlService.GetTopFrame();
+            var bottomImg = _cameraCtrlService.GetBottomFrame();
+            _imageService.Init(topImg, bottomImg);
+
             try
             {
+                _robotControlService.StartVibrate(IsVibrateHorizontal, IsVibrateVertical, VibrateAmplitude, VibrateFrequency);
                 //// 开始振动配合 ////
                 while (!token.IsCancellationRequested)
                 {
                     // 更新状态
                     var currentJoint = _robotControlService.CurrentJoint;
                     var topFrame = _cameraCtrlService.GetTopFrame();
-                    var (dx, _, _) = await _imageService.GetJawErrorAsync(topFrame);
-                    
-                    if (token.IsCancellationRequested) break;
+                    var (dx, dy, _) = await _imageService.GetJawErrorAsync(topFrame);
 
                     if (dx < tolerance) // 若误差小于一定值则退出循环
                         break;
 
-                    // 规划进给轨迹
+                    // 1. y 方向先对齐
+                    var targetPose = KineHelper.Forward(currentJoint);
+                    targetPose.Py += dy;
+                    var targetJoint = KineHelper.Inverse(targetPose);
+                    await _robotControlService.MoveAbsoluteAsync(targetJoint, token);
+
+                    // 2.1. 规划进给轨迹
+                    currentJoint = _robotControlService.CurrentJoint;
                     double x0 = currentJoint.P3;
-                    double tf = dx / FeedVelocity; // seconds, depends on FeedVelocity
+                    double xf = Math.Min(dx, 2);
+                    double tf = xf / FeedVelocity; // seconds, depends on FeedVelocity
                     double trackX(double t) => x0 + t * FeedVelocity;
 
-                    // 规划振动轨迹
+                    // 2.2. 规划振动轨迹
                     double y0 = currentJoint.P2;
                     double z0 = currentJoint.P4;
                     Func<double, double> trackY;
@@ -185,37 +214,42 @@ namespace DOF5RobotControl_GUI.ViewModel
                     else
                         trackZ = t => z0;
 
-                    // 安排一个振动进给任务并等待执行完毕
-                    await Task.Run(async () =>
+                    // 3. 振动进给
+                    double t = 0;
+                    Stopwatch sw = Stopwatch.StartNew();
+                    
+                    //await Task.Delay(500);
+
+                    while (t < tf && !token.IsCancellationRequested)
                     {
-                        double t = 0;
-                        //var targetPose = KineHelper.Forward(currentJoint);
-                        Stopwatch sw = Stopwatch.StartNew();
+                        t = sw.ElapsedMilliseconds / 1000.0;
+                        if (t > tf)
+                            break;
 
-                        while (t < tf && !token.IsCancellationRequested)
-                        {
-                            t = sw.ElapsedMilliseconds / 1000.0;
-                            if (t > tf)
-                                break;
+                        //targetPose.Px = trackX(t);
+                        //targetPose.Py = trackY(t);
+                        //targetPose.Pz = trackZ(t);
 
-                            //targetPose.Px = trackX(t);
-                            //targetPose.Py = trackY(t);
-                            //targetPose.Pz = trackZ(t);
+                        _robotControlService.JointMoveAbsolute(3, trackX(t));
+                        //_robotControlService.JointMoveAbsolute(2, trackY(t));
+                        //_robotControlService.JointMoveAbsolute(4, trackZ(t));
+                        //await _robotControlService.WaitForTargetedAsync(token, 10);
+                        await Task.Delay(100);
+                    }
 
-                            _robotControlService.JointMoveAbsolute(3, trackX(t));
-                            _robotControlService.JointMoveAbsolute(2, trackY(t));
-                            _robotControlService.JointMoveAbsolute(4, trackZ(t));
-                            await _robotControlService.WaitForTargetedAsync(token, 10);
-                        }
-
-                        sw.Stop();
-                    });
+                    sw.Stop();
                 }
+                _robotControlService.StopVibrate();
             }
             catch (OperationCanceledException ex)
             {
                 Debug.WriteLine("Insertion is canceled: " + ex.Message);
             }
+            catch (InvalidOperationException ex)
+            {
+                _popUpService.Show(ex.ToString(), "Error when Insert Jaw");
+            }
+
             finally
             {
                 insertCancelSource?.Dispose();
@@ -241,18 +275,27 @@ namespace DOF5RobotControl_GUI.ViewModel
 
             try
             {
+                var sw = Stopwatch.StartNew();
                 await PreAlignJawAsync(); // 前往装钳口初始位置
                 cancelToken.ThrowIfCancellationRequested();
 
+                var t1 = sw.ElapsedMilliseconds;
+
                 await InsertJawAsync(); // 插装钳口
-                await Task.Delay(500, cancelToken); // 插入完成，先停一会
+                //await Task.Delay(500, cancelToken); // 插入完成，先停一会
                 cancelToken.ThrowIfCancellationRequested();
+
+                var t2 = sw.ElapsedMilliseconds;
+
+                AddLog($"预对准用时：{t1}, 插装用时：{t2 - t1}, 总用时：{t2}");
+                return;
+
 
                 // 此时应处于插入的状态，接下来将夹钳抬起来
                 var target = _robotControlService.CurrentState;
                 target.TaskSpace.Rz = 0; // 将 Rz 转正用于检测是否接触
                 target.TaskSpace.Pz += 1; // 抬起一点距离，使其与底座脱离接触
-                
+
                 TargetState.Copy(target);
                 await _robotControlService.MoveAbsoluteAsync(target, cancelToken);
                 cancelToken.ThrowIfCancellationRequested();
@@ -262,7 +305,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                     target = _robotControlService.CurrentState;
                     target.TaskSpace.Px -= 1; // 向后退 1mm，避免与台子前方有挤压
                     await _robotControlService.MoveAbsoluteAsync(target, cancelToken);
-                } while (Math.Abs(_robotControlService.CurrentState.TaskSpace.Rz) > 0.02 
+                } while (Math.Abs(_robotControlService.CurrentState.TaskSpace.Rz) > 0.02
                          && !cancelToken.IsCancellationRequested); // 若与目标值0相差太多，则说明仍有接触，需继续后退
                 cancelToken.ThrowIfCancellationRequested();
 

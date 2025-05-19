@@ -290,7 +290,7 @@ namespace DOF5RobotControl_GUI.Services
         public void MoveAbsolute(JointSpace target)
         {
             if (target.HasErrors)
-                throw new ArgumentOutOfRangeException(nameof(target), "Joint value is not valid.");
+                throw new ArgumentOutOfRangeException(nameof(target), target, "Joint value is not valid.");
 
             JointMoveAbsolute(1, target.R1);
             JointMoveAbsolute(2, target.P2);
@@ -384,12 +384,21 @@ namespace DOF5RobotControl_GUI.Services
             TargetState = CurrentState.Clone();
         }
 
-        public void StartVibrate(bool vibrateHorizontal, bool vibrateVertical, double amplitude, double frequency)
+        public async void StartVibrate(bool vibrateHorizontal, bool vibrateVertical, double amplitude, double frequency)
         {
             if (vibrateHorizontal == false && vibrateVertical == false)
                 throw new ArgumentException("At least one of vibrateHorizontal and vibrateVertical should be true.", nameof(vibrateVertical));
 
-            Task.Run(() => VibrateTask(vibrateHorizontal, vibrateVertical, amplitude, frequency));
+            //Task.Run(() => VibrateTask(vibrateHorizontal, vibrateVertical, amplitude, frequency));
+            await VibrateTask(vibrateHorizontal, vibrateVertical, amplitude, frequency);
+        }
+
+        public Task StartVibrateAsync(bool vibrateHorizontal, bool vibrateVertical, double amplitude, double frequency, CancellationToken token)
+        {
+            if (vibrateHorizontal == false && vibrateVertical == false)
+                throw new ArgumentException("At least one of vibrateHorizontal and vibrateVertical should be true.", nameof(vibrateVertical));
+
+            return Task.Run(() => VibrateTask(vibrateHorizontal, vibrateVertical, amplitude, frequency), token);
         }
 
         public void StopVibrate()
@@ -414,24 +423,31 @@ namespace DOF5RobotControl_GUI.Services
             var p4 = origin.P4;
 
             Stopwatch sw = Stopwatch.StartNew();
-            while (!token.IsCancellationRequested)
+            await Task.Run(() =>
             {
-                var t = sw.ElapsedMilliseconds / 1000.0;
-                var d = amplitude * Math.Sin(2 * Math.PI * frequency * t);  // 正弦函数，频率为 frequency，幅值为正负 amplitude 单位 mm
+                while (!token.IsCancellationRequested)
+                {
+                    var t = sw.ElapsedMilliseconds / 1000.0;
+                    var d = amplitude * Math.Sin(2 * Math.PI * frequency * t);  // 正弦函数，频率为 frequency，幅值为正负 amplitude 单位 mm
 
-                if (vibrateHorizontal)
-                    JointMoveAbsolute(2, p2 + d);
-                if (vibrateVertical)
-                    JointMoveAbsolute(4, p4 + d);
+                    if (vibrateHorizontal)
+                        JointMoveAbsolute(2, p2 + d);
+                    if (vibrateVertical)
+                        JointMoveAbsolute(4, p4 + d);
 
-                await WaitForTargetedAsync(token, 10);
-                //await Task.Delay(1);  // 必须延时一小段时间，否则 Nators 电机会产生零点漂移
+                    //await WaitForTargetedAsync(token, 10);
+                    //await Task.Delay(1);  // 必须延时一小段时间，否则 Nators 电机会产生零点漂移
+                    Thread.Sleep(1);
 
-                // 目前的控制周期实际是 (6ms) 左右，如果输出debug信息会更久，猜测瓶颈在于 RMD 的通讯速率（115200 baud)
-            }
+                    // 目前的控制周期实际是 (6ms) 左右，如果输出debug信息会更久，猜测瓶颈在于 RMD 的通讯速率（115200 baud)
+                }
+            });
 
             // 运动到原来的位置
-            await MoveAbsoluteAsync(origin, token);
+            if (vibrateHorizontal)
+                JointMoveAbsolute(2, p2);
+            if (vibrateVertical)
+                JointMoveAbsolute(4, p4);
         }
 
         public async Task WaitForTargetedAsync(CancellationToken token, int CheckPeriod = 100, double tolerance = 0.1, double angleTolerance = 0.1)
