@@ -31,6 +31,8 @@ namespace DOF5RobotControl_GUI.ViewModel
         private async Task PreAlignJawAsync()
         {
             const double tolerance = 0.1;
+            const double offset_y = 0.1;
+            const double offset_z = 0.3;
             //const double EntrancePointX = 5.7;
 
             preAlignCancelSource = new();
@@ -94,11 +96,11 @@ namespace DOF5RobotControl_GUI.ViewModel
                     throw new ArgumentOutOfRangeException(nameof(z), z, "Error in z is NaN");
 
                 targetPose = KineHelper.Forward(currentJoint);
-                targetPose.Pz += z;
+                targetPose.Pz += z + offset_z;
                 targetJoint = KineHelper.Inverse(targetPose);
                 TargetState.JointSpace = targetJoint;
                 await _robotControlService.MoveAbsoluteAsync(targetJoint, token);
-                await Task.Delay(100);
+                await Task.Delay(500);
 
                 // 3. 预接触配合
                 currentJoint = _robotControlService.CurrentJoint;
@@ -106,8 +108,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                 (x, y, _) = await _imageService.GetEntranceErrorAsync(topFrame);
 
                 targetPose = KineHelper.Forward(currentJoint);
-                targetPose.Px += x + 1;
-                targetPose.Py += y;
+                targetPose.Px += x + 0.2;
 
                 targetJoint = KineHelper.Inverse(targetPose);
                 TargetState.JointSpace = targetJoint;
@@ -121,18 +122,19 @@ namespace DOF5RobotControl_GUI.ViewModel
                     topFrame = _cameraCtrlService.GetTopFrame();
 
                     (_, y, _) = await _imageService.GetJawErrorAsync(topFrame);
+                    y += offset_y;
 
-                    if (Math.Abs(y) < tolerance * 0.1) // 判断预对准是否完成
+                    if (Math.Abs(y) < tolerance * 0.2) // 判断预对准是否完成
                         break;
 
                     targetPose = KineHelper.Forward(currentJoint);
-                    targetPose.Py += y * Kp;
+                    targetPose.Py += (y) * Kp;
                     //targetPose.Rz += rz * 180.0 / Math.PI;
 
                     targetJoint = KineHelper.Inverse(targetPose);
                     TargetState.JointSpace = targetJoint;
                     await _robotControlService.MoveAbsoluteAsync(targetJoint, token);
-                    //await Task.Delay(500);
+                    await Task.Delay(500);
                 }
             }
             catch (OperationCanceledException ex)
@@ -162,6 +164,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         private async Task InsertJawAsync()
         {
             const double tolerance = 0.1;
+            const double Kp = 0.5;
 
             IsInserting = true;
             insertCancelSource = new();
@@ -187,32 +190,35 @@ namespace DOF5RobotControl_GUI.ViewModel
 
                     // 1. y 方向先对齐
                     var targetPose = KineHelper.Forward(currentJoint);
-                    targetPose.Py += dy;
+                    targetPose.Py += dy * Kp;
                     var targetJoint = KineHelper.Inverse(targetPose);
-                    await _robotControlService.MoveAbsoluteAsync(targetJoint, token);
+                    _robotControlService.JointMoveAbsolute(2, targetJoint.P2);
+                    _robotControlService.JointMoveAbsolute(3, targetJoint.P3);
+                    await _robotControlService.WaitForTargetedAsync(token);
 
                     // 2.1. 规划进给轨迹
                     currentJoint = _robotControlService.CurrentJoint;
-                    double x0 = currentJoint.P3;
+                    var currentPose = KineHelper.Forward(currentJoint);
+                    double x0 = currentPose.Px;
                     double xf = Math.Min(dx, 2);
                     double tf = xf / FeedVelocity; // seconds, depends on FeedVelocity
                     double trackX(double t) => x0 + t * FeedVelocity;
 
                     // 2.2. 规划振动轨迹
-                    double y0 = currentJoint.P2;
-                    double z0 = currentJoint.P4;
-                    Func<double, double> trackY;
-                    Func<double, double> trackZ;
+                    //double y0 = currentJoint.P2;
+                    //double z0 = currentJoint.P4;
+                    //Func<double, double> trackY;
+                    //Func<double, double> trackZ;
 
-                    if (IsVibrateHorizontal)
-                        trackY = t => y0 + VibrateAmplitude * Math.Sin(2 * Math.PI * VibrateFrequency * t);
-                    else
-                        trackY = t => y0;
+                    //if (IsVibrateHorizontal)
+                    //    trackY = t => y0 + VibrateAmplitude * Math.Sin(2 * Math.PI * VibrateFrequency * t);
+                    //else
+                    //    trackY = t => y0;
 
-                    if (IsVibrateVertical)
-                        trackZ = t => z0 + VibrateAmplitude * Math.Sin(2 * Math.PI * VibrateFrequency * t);
-                    else
-                        trackZ = t => z0;
+                    //if (IsVibrateVertical)
+                    //    trackZ = t => z0 + VibrateAmplitude * Math.Sin(2 * Math.PI * VibrateFrequency * t);
+                    //else
+                    //    trackZ = t => z0;
 
                     // 3. 振动进给
                     double t = 0;
@@ -226,11 +232,25 @@ namespace DOF5RobotControl_GUI.ViewModel
                         if (t > tf)
                             break;
 
-                        //targetPose.Px = trackX(t);
+                        //currentJoint = _robotControlService.CurrentJoint;
+                        //if (Math.Abs(currentJoint.R1 - targetJoint.R1) > 0.2)
+                        //{
+                        //    await Task.Delay(500);
+                        //    targetPose.Px = KineHelper.Forward(currentJoint).Px - 1;
+                        //    targetJoint = KineHelper.Inverse(targetPose);
+                        //    await _robotControlService.MoveAbsoluteAsync(targetJoint, token);
+                        //    break;
+                        //}
+
+                        targetPose.Px = trackX(t);
                         //targetPose.Py = trackY(t);
                         //targetPose.Pz = trackZ(t);
 
-                        _robotControlService.JointMoveAbsolute(3, trackX(t));
+                        targetJoint = KineHelper.Inverse(targetPose);
+                        //_robotControlService.MoveAbsolute(targetJoint);
+                        _robotControlService.JointMoveAbsolute(2, targetJoint.P2);
+                        _robotControlService.JointMoveAbsolute(3, targetJoint.P3);
+                        //_robotControlService.JointMoveAbsolute(3, trackX(t));
                         //_robotControlService.JointMoveAbsolute(2, trackY(t));
                         //_robotControlService.JointMoveAbsolute(4, trackZ(t));
                         //await _robotControlService.WaitForTargetedAsync(token, 10);
@@ -239,7 +259,6 @@ namespace DOF5RobotControl_GUI.ViewModel
 
                     sw.Stop();
                 }
-                _robotControlService.StopVibrate();
             }
             catch (OperationCanceledException ex)
             {
@@ -249,9 +268,10 @@ namespace DOF5RobotControl_GUI.ViewModel
             {
                 _popUpService.Show(ex.ToString(), "Error when Insert Jaw");
             }
-
             finally
             {
+                _robotControlService.StopVibrate();
+
                 insertCancelSource?.Dispose();
                 insertCancelSource = null;
                 IsInserting = false;
