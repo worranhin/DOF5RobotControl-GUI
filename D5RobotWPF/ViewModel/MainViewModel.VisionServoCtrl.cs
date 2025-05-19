@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using DOF5RobotControl_GUI.Model;
 using DOF5RobotControl_GUI.Services;
+using Org.BouncyCastle.X509;
 using System.Diagnostics;
 using VisionLibrary;
 
@@ -19,6 +20,8 @@ namespace DOF5RobotControl_GUI.ViewModel
         private CancellationTokenSource? attachCancelSource;
 
 
+        //private async Task StartPreAlignAsync()
+
         /// <summary>
         /// 移动到插入初始位置
         /// </summary>
@@ -27,7 +30,8 @@ namespace DOF5RobotControl_GUI.ViewModel
         [RelayCommand]
         private async Task PreAlignJawAsync()
         {
-            const double EntrancePointX = 5.7;
+            const double tolerance = 0.1;
+            //const double EntrancePointX = 5.7;
 
             preAlignCancelSource = new();
             var token = preAlignCancelSource.Token;
@@ -36,67 +40,85 @@ namespace DOF5RobotControl_GUI.ViewModel
             {
                 // 为了安全，先前往便于视觉检测的位置
                 TargetState.SetFromD5RJoints(PreChangeJawPos);
-                _robotControlService.MoveAbsolute(TargetState);
-                await _robotControlService.WaitForTargetedAsync(token);
+                await _robotControlService.MoveAbsoluteAsync(TargetState, token);
                 token.ThrowIfCancellationRequested();
 
-                // 更新关节状态与图像
-                var current1 = CurrentState;
-                var current = _robotControlService.CurrentState;
-                var cj = _robotControlService.CurrentJoint;
-                var ct = KineHelper.Forward(cj);
-
-                var target = _robotControlService.CurrentState.TaskSpace.Clone();
+                // 初始化图像处理器
                 var topFrame = _cameraCtrlService.GetTopFrame();
                 var bottomFrame = _cameraCtrlService.GetBottomFrame();
-
-                // 处理图像
                 _imageService.Init(topFrame, bottomFrame);
 
-                // 处理图像
-                var TopProcessTask = _imageService.GetEntranceErrorAsync(topFrame);
-                var BottomProcessTask = _imageService.ProcessBottomImageAsync(bottomFrame);
-                token.ThrowIfCancellationRequested();
+                //// 处理图像
+                //var TopProcessTask = _imageService.GetEntranceErrorAsync(topFrame);
+                //var BottomProcessTask = _imageService.ProcessBottomImageAsync(bottomFrame);
+                //token.ThrowIfCancellationRequested();
 
-                var (x, y, rz) = await TopProcessTask; // 获取处理结果
-                var pz = await BottomProcessTask;
+                //var (x, y, rz) = await TopProcessTask; // 获取处理结果
+                //var pz = await BottomProcessTask;
 
-                // 计算目标位置
-                target.Px += x - EntrancePointX;
-                target.Py += y;
-                target.Pz += pz;
+                //// 计算目标位置
+                //targetPose.Px += x;
+                //targetPose.Py += y;
+                //targetPose.Pz += pz;
 
-                var targetJoints = KineHelper.Inverse(target); // 求解逆运动学
-                var ts = KineHelper.Forward(targetJoints);
-                if (targetJoints.P4 > 12) // 安全检查
-                    throw new InvalidOperationException($"前往初始位置时，关节移动量超出安全范围，请检查！\nP4: {targetJoints.P4}");
-                TargetState.JointSpace = targetJoints;
-                _robotControlService.MoveAbsolute(TargetState); // 控制机器人前往目标位置
-                await _robotControlService.WaitForTargetedAsync(token);
+                //var targetJoint = KineHelper.Inverse(targetPose); // 求解逆运动学
 
-                // 进行重复预对准
-                TargetState.Copy(CurrentState);
+                //if (targetJoint.P4 > 12) // 安全检查
+                //    throw new InvalidOperationException($"前往初始位置时，关节移动量超出安全范围，请检查！\nP4: {targetJoint.P4}");
 
+                //TargetState.JointSpace = targetJoint;
+                //await _robotControlService.MoveAbsoluteAsync(targetJoint, token);  // 控制机器人前往目标位置
+
+                double x, y, z, rz;
+                JointSpace currentJoint, targetJoint;
+                TaskSpace targetPose;
+
+                // 1. 先前往入口上方
+                currentJoint = _robotControlService.CurrentJoint;
+                topFrame = _cameraCtrlService.GetTopFrame();
+                (x, y, _) = await _imageService.GetEntranceErrorAsync(topFrame);
+                
+                targetPose = KineHelper.Forward(currentJoint);
+                targetPose.Px += x - 1;
+                targetPose.Py += y;
+                targetJoint = KineHelper.Inverse(targetPose);
+                TargetState.JointSpace = targetJoint;
+                await _robotControlService.MoveAbsoluteAsync(targetJoint, token);
+
+                // 2. 再往下降
+                currentJoint = _robotControlService.CurrentJoint;
+                bottomFrame = _cameraCtrlService.GetBottomFrame();
+                z = await _imageService.ProcessBottomImageAsync(bottomFrame);
+
+                targetPose = KineHelper.Forward(currentJoint);
+                targetPose.Pz += z;
+                targetJoint = KineHelper.Inverse(targetPose);
+                TargetState.JointSpace = targetJoint;
+                await _robotControlService.MoveAbsoluteAsync(targetJoint, token);
+
+                // 3. 最后进行重复预对准直到精度达到要求
                 while (!token.IsCancellationRequested)
                 {
-
-                    UpdateCurrentState();
+                    currentJoint = _robotControlService.CurrentJoint;
                     topFrame = _cameraCtrlService.GetTopFrame();
 
                     //(x, y, rz) = await _imageService.ProcessTopImgAsync(topFrame);
                     (x, y, rz) = await _imageService.GetEntranceErrorAsync(topFrame);
                     if (token.IsCancellationRequested) break;
 
-                    //Debug.WriteLine($"Fine  x:{x}, y:{y}, z:{rz}");
-
-                    if (Math.Abs(y) < 0.05) // 已完成预对准
+                    if (Math.Abs(y) < tolerance
+                        && Math.Abs(x) < tolerance
+                        && Math.Abs(rz) < tolerance) // 判断预对准是否完成
                         break;
 
-                    TargetState.TaskSpace.Px += x - EntrancePointX;
-                    TargetState.TaskSpace.Py += y;
-                    await _robotControlService.MoveAbsoluteAsync(TargetState, token);
-                    //_robotControlService.MoveAbsolute(TargetState);
-                    //await _robotControlService.WaitForTargetedAsync(token, 100, 0.01);
+                    targetPose = KineHelper.Forward(currentJoint);
+                    targetPose.Px += x;
+                    targetPose.Py += y;
+                    targetPose.Rz += rz;
+
+                    targetJoint = KineHelper.Inverse(targetPose);
+                    TargetState.JointSpace = targetJoint;
+                    await _robotControlService.MoveAbsoluteAsync(targetJoint, token);
                 }
             }
             catch (OperationCanceledException ex)
@@ -105,7 +127,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             }
             catch (InvalidOperationException ex)
             {
-                _popUpService.Show(ex.Message, "Error in Pre-align");
+                _popUpService.Show(ex.Message, "Error when Pre-align");
             }
             finally
             {
@@ -121,6 +143,8 @@ namespace DOF5RobotControl_GUI.ViewModel
         [RelayCommand]
         private async Task InsertJawAsync()
         {
+            const double tolerance = 0.3;
+
             IsInserting = true;
             insertCancelSource = new();
             var token = insertCancelSource.Token;
@@ -131,72 +155,61 @@ namespace DOF5RobotControl_GUI.ViewModel
                 while (!token.IsCancellationRequested)
                 {
                     // 更新状态
-                    RoboticState target = _robotControlService.CurrentState;
-                    CurrentState = target.Clone();
+                    var currentJoint = _robotControlService.CurrentJoint;
                     var topFrame = _cameraCtrlService.GetTopFrame();
                     var (dx, _, _) = await _imageService.GetJawErrorAsync(topFrame);
                     
                     if (token.IsCancellationRequested) break;
 
-                    if (dx < 0.05) // 若误差小于一定值则退出循环
+                    if (dx < tolerance) // 若误差小于一定值则退出循环
                         break;
 
                     // 规划进给轨迹
-                    target.TaskSpace.Px += dx;
-                    double x0 = CurrentState.TaskSpace.Px;
-                    double xf = target.TaskSpace.Px;
+                    double x0 = currentJoint.P3;
                     double tf = dx / FeedVelocity; // seconds, depends on FeedVelocity
                     double trackX(double t) => x0 + t * FeedVelocity;
 
-                    // 振动轨迹
-                    double y0 = CurrentState.TaskSpace.Py;
-                    double z0 = CurrentState.TaskSpace.Pz;
+                    // 规划振动轨迹
+                    double y0 = currentJoint.P2;
+                    double z0 = currentJoint.P4;
                     Func<double, double> trackY;
                     Func<double, double> trackZ;
 
                     if (IsVibrateHorizontal)
-                        trackY = (double t) => y0 + VibrateAmplitude * Math.Sin(2 * Math.PI * VibrateFrequency * t);
+                        trackY = t => y0 + VibrateAmplitude * Math.Sin(2 * Math.PI * VibrateFrequency * t);
                     else
-                        trackY = (t) => y0;
+                        trackY = t => y0;
 
                     if (IsVibrateVertical)
-                        trackZ = (double t) => z0 + VibrateAmplitude * Math.Sin(2 * Math.PI * VibrateFrequency * t);
+                        trackZ = t => z0 + VibrateAmplitude * Math.Sin(2 * Math.PI * VibrateFrequency * t);
                     else
-                        trackZ = (t) => z0;
+                        trackZ = t => z0;
 
-                    double t = 0;
-                    TargetState.Copy(CurrentState);
-                    Stopwatch sw = Stopwatch.StartNew();
-
-                    await Task.Run(() =>
+                    // 安排一个振动进给任务并等待执行完毕
+                    await Task.Run(async () =>
                     {
-                        do
+                        double t = 0;
+                        //var targetPose = KineHelper.Forward(currentJoint);
+                        Stopwatch sw = Stopwatch.StartNew();
+
+                        while (t < tf && !token.IsCancellationRequested)
                         {
                             t = sw.ElapsedMilliseconds / 1000.0;
+                            if (t > tf)
+                                break;
 
-                            var current = _robotControlService.CurrentState.TaskSpace;
-                            var target = current.Clone();
-                            target.Px = trackX(t);
-                            target.Py = trackY(t);
-                            target.Pz = trackZ(t);
-                            TargetState.TaskSpace = target;
-                            _robotControlService.MoveAbsolute(TargetState);
+                            //targetPose.Px = trackX(t);
+                            //targetPose.Py = trackY(t);
+                            //targetPose.Pz = trackZ(t);
 
-                            // 记录数据
-                            if (_dataRecordService.IsStarted)
-                                _dataRecordService.Record(
-                                    KineHelper.Inverse(current), KineHelper.Inverse(target),
-                                    _cameraCtrlService.GetTopFrame(), _cameraCtrlService.GetBottomFrame());
-                            //JointSpace Joint = _robotControlService.GetCurrentState().JointSpace.Clone();
-                            //JointSpace targetJoint = _robotControlService.TargetState.JointSpace.Clone();
-                            //_dataRecordService.Record(`Joint, targetJoint);
-                            //JointSpace deltaJoint = TargetState.JointSpace.Clone().Minus(`Joint);
-                            //_dataRecordService.Record(`Joint, deltaJoint, _cameraCtrlService.GetTopFrame(), _cameraCtrlService.GetBottomFrame()); // TODO: 这里的记录过程会影响正常运行，急需解决
-                        } while (t < tf && !token.IsCancellationRequested);
+                            _robotControlService.JointMoveAbsolute(3, trackX(t));
+                            _robotControlService.JointMoveAbsolute(2, trackY(t));
+                            _robotControlService.JointMoveAbsolute(4, trackZ(t));
+                            await _robotControlService.WaitForTargetedAsync(token, 10);
+                        }
+
+                        sw.Stop();
                     });
-
-                    _robotControlService.TargetState.TaskSpace.Pz = z0;
-                    sw.Stop();
                 }
             }
             catch (OperationCanceledException ex)
@@ -205,9 +218,6 @@ namespace DOF5RobotControl_GUI.ViewModel
             }
             finally
             {
-                //_dataRecordService.Stop();
-                //IsRecording = false;
-
                 insertCancelSource?.Dispose();
                 insertCancelSource = null;
                 IsInserting = false;
@@ -227,50 +237,47 @@ namespace DOF5RobotControl_GUI.ViewModel
             var cancelToken = attachCancelSource.Token;
 
             // 开始记录状态动作数据
-            StartRecord(10, false);
+            //StartRecord(10, false);
 
             try
             {
-                try
-                {
-                    cancelToken.ThrowIfCancellationRequested();
-                    await PreAlignJawAsync(); // 前往装钳口初始位置
-                }
-                catch (ArgumentOutOfRangeException ex)
-                {
-                    _popUpService.Show(ex.Message, "前往初始位置时出现错误");
-                    attachCancelSource.Cancel();
-                }
-
+                await PreAlignJawAsync(); // 前往装钳口初始位置
                 cancelToken.ThrowIfCancellationRequested();
+
                 await InsertJawAsync(); // 插装钳口
-                await Task.Delay(500); // 插入完成，先停一会
+                await Task.Delay(500, cancelToken); // 插入完成，先停一会
+                cancelToken.ThrowIfCancellationRequested();
 
                 // 此时应处于插入的状态，接下来将夹钳抬起来
+                var target = _robotControlService.CurrentState;
+                target.TaskSpace.Rz = 0; // 将 Rz 转正用于检测是否接触
+                target.TaskSpace.Pz += 1; // 抬起一点距离，使其与底座脱离接触
+                
+                TargetState.Copy(target);
+                await _robotControlService.MoveAbsoluteAsync(target, cancelToken);
                 cancelToken.ThrowIfCancellationRequested();
-                TargetState.Copy(CurrentState);
-                TargetState.TaskSpace.Rz = 0; // 将 Rz 转正用于检测是否接触
-                TargetState.TaskSpace.Pz += 1; // 抬起一点距离，使其与底座脱离接触
-                _robotControlService.MoveAbsolute(TargetState);
-                await Task.Delay(500);
 
                 do
                 {
-                    cancelToken.ThrowIfCancellationRequested();
-                    TargetState.TaskSpace.Px = CurrentState.TaskSpace.Px - 1; // 向后退 1mm，避免与台子前方有挤压
-                    _robotControlService.MoveAbsolute(TargetState);
-                    await _robotControlService.WaitForTargetedAsync();
-                } while (Math.Abs(CurrentState.TaskSpace.Rz) > 0.02); // 若与目标值0相差太多，则说明仍有接触，需继续后退
-
+                    target = _robotControlService.CurrentState;
+                    target.TaskSpace.Px -= 1; // 向后退 1mm，避免与台子前方有挤压
+                    await _robotControlService.MoveAbsoluteAsync(target, cancelToken);
+                } while (Math.Abs(_robotControlService.CurrentState.TaskSpace.Rz) > 0.02 
+                         && !cancelToken.IsCancellationRequested); // 若与目标值0相差太多，则说明仍有接触，需继续后退
                 cancelToken.ThrowIfCancellationRequested();
-                TargetState.TaskSpace.Pz += 10;  // 向上抬一段距离，避免发生碰撞
-                _robotControlService.MoveAbsolute(TargetState);
-                await _robotControlService.WaitForTargetedAsync();
 
+                target = _robotControlService.CurrentState;
+                target.TaskSpace.Pz += 10;  // 向上抬一段距离，避免发生碰撞
+                await _robotControlService.MoveAbsoluteAsync(target, cancelToken);
                 cancelToken.ThrowIfCancellationRequested();
-                TargetState.SetFromD5RJoints(ZeroPos); // 返回零点
-                _robotControlService.MoveAbsolute(TargetState);
-                await _robotControlService.WaitForTargetedAsync();
+
+                target.SetFromD5RJoints(ZeroPos); // 返回零点
+                await _robotControlService.MoveAbsoluteAsync(target, cancelToken);
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                _popUpService.Show(ex.ToString(), "前往初始位置时出现错误");
+                attachCancelSource.Cancel();
             }
             catch (OperationCanceledException)
             {
@@ -278,7 +285,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             }
             catch (InvalidOperationException ex)
             {
-                _popUpService.Show(ex.Message, "Error When Attach Jaw");
+                _popUpService.Show(ex.ToString(), "Error When Attach Jaw");
                 if (ex.InnerException != null)
                     throw;
             }
@@ -315,26 +322,6 @@ namespace DOF5RobotControl_GUI.ViewModel
             preAlignCancelSource?.Cancel();
             insertCancelSource?.Cancel();
             attachCancelSource?.Cancel();
-        }
-
-        /// <summary>
-        /// 等待直到 CurrentState 与 TargetState 的距离小于一定值
-        /// </summary>
-        /// <param name="CheckDistance">检查距离，小于该值则返回，单位mm</param>
-        /// <param name="CheckPeriod">检查周期，单位ms</param>
-        /// <returns></returns>
-        [Obsolete("Use RobotControlService.WaitForTargetedAsync() instead.")]
-        private async Task WaitForTargetedAsync(double CheckDistance = 0.1, int CheckPeriod = 100)
-        {
-            using CancellationTokenSource waitCancelSource = new();
-            cancelSourceList.Add(waitCancelSource);
-            var token = waitCancelSource.Token;
-            while (!token.IsCancellationRequested && TaskSpace.Distance(CurrentState.TaskSpace, TargetState.TaskSpace) > CheckDistance)
-            {
-                await Task.Delay(CheckPeriod);
-                UpdateCurrentState();
-            }
-            cancelSourceList.Remove(waitCancelSource);
         }
     }
 }

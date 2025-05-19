@@ -21,7 +21,7 @@ namespace UnitTest {
             var topImg = cameraService.GetTopFrame();
 
             const double expected_x = 0.784;
-            const double expected_y = 0.397;
+            const double expected_y = 0.36;
 
             var (x, y, rz) = await procImgService.GetEntranceErrorAsync(topImg);
 

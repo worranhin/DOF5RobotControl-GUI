@@ -33,6 +33,20 @@ namespace DOF5RobotControl_GUI.Services
         void Disconnect();
 
         /// <summary>
+        /// 单关节绝对移动
+        /// </summary>
+        /// <param name="axis">关节轴，范围1 - 5</param>
+        /// <param name="value">移动的绝对位置</param>
+        void JointMoveAbsolute(int axis, double value);
+
+        /// <summary>
+        /// 单关节相对移动
+        /// </summary>
+        /// <param name="axis">关节轴，范围1 - 5</param>
+        /// <param name="value">移动的相对距离</param>
+        void JointMoveRelative(int axis, double value);
+
+        /// <summary>
         /// 绝对移动
         /// </summary>
         /// <param name="target">目标关节值</param>
@@ -41,19 +55,19 @@ namespace DOF5RobotControl_GUI.Services
         void MoveAbsolute(JointSpace target);
 
         /// <summary>
-        /// 异步地绝对移动，任务将在关节到位后返回
-        /// </summary>
-        /// <param name="target">目标关节值</param>
-        /// <param name="checkPeriod">检查周期</param>
-        /// <param name="checkDistance">检查距离，每个关节均小于该值则返回</param>
-        /// <returns></returns>
-        Task MoveAbsoluteAsync(JointSpace target, CancellationToken token, int checkPeriod = 100, double checkDistance = 0.1);
-
-        /// <summary>
         /// 绝对运动
         /// </summary>
         /// <param name="target"></param>
         void MoveAbsolute(RoboticState target);
+
+        /// <summary>
+        /// 异步地绝对移动，任务将在关节到位后返回
+        /// </summary>
+        /// <param name="target">目标关节值</param>
+        /// <param name="checkPeriod">检查周期</param>
+        /// <param name="tolerance">检查距离，每个关节均小于该值则返回</param>
+        /// <returns></returns>
+        Task MoveAbsoluteAsync(JointSpace target, CancellationToken token, int checkPeriod = 100, double tolerance = 0.1, double angleTolerance = 0.1);
 
         /// <summary>
         /// 异步绝对运动
@@ -61,7 +75,7 @@ namespace DOF5RobotControl_GUI.Services
         /// <param name="target"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        Task MoveAbsoluteAsync(RoboticState target, CancellationToken token = default);
+        Task MoveAbsoluteAsync(RoboticState target, CancellationToken token, int checkPeriod = 100, double tolerance = 0.1, double angleTolerance = 0.1);
 
         /// <summary>
         /// 相对运动
@@ -75,7 +89,7 @@ namespace DOF5RobotControl_GUI.Services
         /// <param name="diff"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        Task MoveRelativeAsync(JointSpace diff, CancellationToken token = default);
+        Task MoveRelativeAsync(JointSpace diff, CancellationToken token, int checkPeriod = 100, double tolerance = 0.1, double angleTolerance = 0.1);
 
 
         /// <summary>
@@ -108,17 +122,16 @@ namespace DOF5RobotControl_GUI.Services
         /// <param name="CheckPeriod">检查周期</param>
         /// <param name="CheckDistance">检查阈值</param>
         /// <returns></returns>
-        /// 
-        public Task WaitForTargetedAsync(int CheckPeriod = 100, double CheckDistance = 0.1);
+        //public Task WaitForTargetedAsync(int CheckPeriod = 100, double CheckDistance = 0.1, double angleTolerance = 0.1);
 
         /// <summary>
         /// 等待直到到达目标位置
         /// </summary>
         /// <param name="token"></param>
-        /// <param name="CheckPeriod">检查周期</param>
-        /// <param name="CheckDistance">检查阈值</param>
+        /// <param name="checkPeriod">检查周期</param>
+        /// <param name="tolerance">检查阈值</param>
         /// <returns></returns>
-        public Task WaitForTargetedAsync(CancellationToken token, int CheckPeriod = 100, double CheckDistance = 0.1);
+        public Task WaitForTargetedAsync(CancellationToken token, int checkPeriod = 100, double tolerance = 0.1, double angleTolerance = 0.1);
 
         /// <summary>
         /// 获取指定关节的值

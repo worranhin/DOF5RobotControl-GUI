@@ -72,7 +72,7 @@ namespace DOF5RobotControl_GUI.Services
                 ntMotor1 = new(ntController, 1);
                 ntMotor2 = new(ntController, 2);
                 ntMotor3 = new(ntController, 3);
-                
+
                 IsConnected = true;
             }
             catch (RobotException ex)
@@ -176,6 +176,7 @@ namespace DOF5RobotControl_GUI.Services
                     if (rmdMotor1 == null)
                         throw new InvalidOperationException("Robot is not connected.");
 
+                    TargetState.JointSpace.R1 = value;
                     rmdControl = (long)(value * 100);
                     rmdMotor1.MultiAngleControl(rmdControl);
                     break;
@@ -184,6 +185,7 @@ namespace DOF5RobotControl_GUI.Services
                     if (rmdMotor2 == null)
                         throw new InvalidOperationException("Robot is not connected.");
 
+                    TargetState.JointSpace.R5 = value;
                     rmdControl = -(long)(value * 100);
                     rmdMotor2.MultiAngleControl(rmdControl);
                     break;
@@ -192,6 +194,7 @@ namespace DOF5RobotControl_GUI.Services
                     if (ntMotor1 == null)
                         throw new InvalidOperationException("Robot is not connected.");
 
+                    TargetState.JointSpace.P2 = value;
                     ntControl = -(int)(value * 1_000_000);
                     ntMotor1.MoveAbsolute(ntControl);
                     break;
@@ -200,6 +203,7 @@ namespace DOF5RobotControl_GUI.Services
                     if (ntMotor2 == null)
                         throw new InvalidOperationException("Robot is not connected.");
 
+                    TargetState.JointSpace.P3 = value;
                     ntControl = (int)(value * 1_000_000);
                     ntMotor2.MoveAbsolute(ntControl);
                     break;
@@ -208,6 +212,7 @@ namespace DOF5RobotControl_GUI.Services
                     if (ntMotor3 == null)
                         throw new InvalidOperationException("Robot is not connected.");
 
+                    TargetState.JointSpace.P4 = value;
                     ntControl = (int)(value * 1_000_000);
                     ntMotor3.MoveAbsolute(ntControl);
                     break;
@@ -234,30 +239,40 @@ namespace DOF5RobotControl_GUI.Services
                 case 1:
                     if (rmdMotor1 == null)
                         throw new InvalidOperationException("Robot is not connected.");
+
+                    TargetState.JointSpace.R1 += value;
                     rmdControl = (int)(value * 100);
                     rmdMotor1.IncrementalControl(rmdControl);
                     break;
                 case 5:
                     if (rmdMotor2 == null)
                         throw new InvalidOperationException("Robot is not connected.");
+
+                    TargetState.JointSpace.R5 += value;
                     rmdControl = -(int)(value * 100);
                     rmdMotor2.IncrementalControl(rmdControl);
                     break;
                 case 2:
                     if (ntMotor1 == null)
                         throw new InvalidOperationException("Robot is not connected.");
+
+                    TargetState.JointSpace.P2 += value;
                     ntControl = -(int)(value * 1_000_000);
                     ntMotor1.MoveRelative(ntControl);
                     break;
                 case 3:
                     if (ntMotor2 == null)
                         throw new InvalidOperationException("Robot is not connected.");
+
+                    TargetState.JointSpace.P3 += value;
                     ntControl = (int)(value * 1_000_000);
                     ntMotor2.MoveRelative(ntControl);
                     break;
                 case 4:
                     if (ntMotor3 == null)
                         throw new InvalidOperationException("Robot is not connected.");
+
+                    TargetState.JointSpace.P4 += value;
                     ntControl = (int)(value * 1_000_000);
                     ntMotor3.MoveRelative(ntControl);
                     break;
@@ -277,8 +292,6 @@ namespace DOF5RobotControl_GUI.Services
             if (target.HasErrors)
                 throw new ArgumentOutOfRangeException(nameof(target), "Joint value is not valid.");
 
-            TargetState.JointSpace = target;
-
             JointMoveAbsolute(1, target.R1);
             JointMoveAbsolute(2, target.P2);
             JointMoveAbsolute(3, target.P3);
@@ -286,10 +299,10 @@ namespace DOF5RobotControl_GUI.Services
             JointMoveAbsolute(5, target.R5);
         }
 
-        public async Task MoveAbsoluteAsync(JointSpace target, CancellationToken token, int checkPeriod = 100, double checkDistance = 0.1)
+        public async Task MoveAbsoluteAsync(JointSpace target, CancellationToken token, int checkPeriod = 100, double tolerance = 0.1, double angleTolerance = 0.1)
         {
             MoveAbsolute(target);
-            await WaitForTargetedAsync(token, checkPeriod, checkDistance);
+            await WaitForTargetedAsync(token, checkPeriod, tolerance, angleTolerance);
         }
 
         /// <summary>
@@ -303,7 +316,6 @@ namespace DOF5RobotControl_GUI.Services
             if (target.JointSpace.HasErrors)
                 throw new ArgumentOutOfRangeException(nameof(target), "Joint value is not valid.");
 
-            TargetState = target;
             var joint = target.JointSpace;
             JointMoveAbsolute(1, joint.R1);
             JointMoveAbsolute(2, joint.P2);
@@ -312,17 +324,10 @@ namespace DOF5RobotControl_GUI.Services
             JointMoveAbsolute(5, joint.R5);
         }
 
-        public async Task MoveAbsoluteAsync(RoboticState target, CancellationToken token = default)
+        public async Task MoveAbsoluteAsync(RoboticState target, CancellationToken token, int checkPeriod = 100, double tolerance = 0.1, double angleTolerance = 0.1)
         {
-            TargetState = target;
-            var joint = target.JointSpace;
-            JointMoveAbsolute(1, joint.R1);
-            JointMoveAbsolute(2, joint.P2);
-            JointMoveAbsolute(3, joint.P3);
-            JointMoveAbsolute(4, joint.P4);
-            JointMoveAbsolute(5, joint.R5);
-
-            await WaitForTargetedAsync(token);
+            MoveAbsolute(target);
+            await WaitForTargetedAsync(token, checkPeriod, tolerance, angleTolerance);
         }
 
         /// <summary>
@@ -333,9 +338,6 @@ namespace DOF5RobotControl_GUI.Services
         /// <exception cref="ArgumentOutOfRangeException"></exception>
         public void MoveRelative(JointSpace diff)
         {
-            if (rmdMotor1 == null || rmdMotor2 == null || ntMotor1 == null || ntMotor2 == null || ntMotor3 == null)
-                throw new InvalidOperationException("Robot is not connected.");
-
             if (diff.HasErrors)
                 throw new ArgumentOutOfRangeException(nameof(diff), "Joint value is not valid.");
 
@@ -348,17 +350,10 @@ namespace DOF5RobotControl_GUI.Services
             TargetState.JointSpace.Add(diff);
         }
 
-        public async Task MoveRelativeAsync(JointSpace diff, CancellationToken token = default)
+        public async Task MoveRelativeAsync(JointSpace diff, CancellationToken token, int checkPeriod = 100, double tolerance = 0.1, double angleTolerance = 0.1)
         {
-            TargetState.JointSpace = CurrentJoint.Add(diff);
-
-            JointMoveRelative(1, diff.R1);
-            JointMoveRelative(2, diff.P2);
-            JointMoveRelative(3, diff.P3);
-            JointMoveRelative(4, diff.P4);
-            JointMoveRelative(5, diff.R5);
-
-            await WaitForTargetedAsync(token);
+            MoveRelative(diff);
+            await WaitForTargetedAsync(token, checkPeriod, tolerance, angleTolerance);
         }
 
         /// <summary>
@@ -371,6 +366,8 @@ namespace DOF5RobotControl_GUI.Services
             ntMotor1?.Stop();
             ntMotor2?.Stop();
             ntMotor3?.Stop();
+
+            TargetState = CurrentState.Clone();
         }
 
         public void SetZero()
@@ -383,6 +380,8 @@ namespace DOF5RobotControl_GUI.Services
             ntMotor1.SetPosition(0);
             ntMotor2.SetPosition(0);
             ntMotor3.SetPosition(0);
+
+            TargetState = CurrentState.Clone();
         }
 
         public void StartVibrate(bool vibrateHorizontal, bool vibrateVertical, double amplitude, double frequency)
@@ -425,7 +424,8 @@ namespace DOF5RobotControl_GUI.Services
                 if (vibrateVertical)
                     JointMoveAbsolute(4, p4 + d);
 
-                await Task.Delay(1);  // 必须延时一小段时间，否则 Nators 电机会产生零点漂移
+                await WaitForTargetedAsync(token, 10);
+                //await Task.Delay(1);  // 必须延时一小段时间，否则 Nators 电机会产生零点漂移
 
                 // 目前的控制周期实际是 (6ms) 左右，如果输出debug信息会更久，猜测瓶颈在于 RMD 的通讯速率（115200 baud)
             }
@@ -434,28 +434,23 @@ namespace DOF5RobotControl_GUI.Services
             await MoveAbsoluteAsync(origin, token);
         }
 
-        public Task WaitForTargetedAsync(int CheckPeriod = 100, double CheckDistance = 0.1) => 
-            WaitForTargetedAsync(default, CheckPeriod, CheckDistance);
-
-        public async Task WaitForTargetedAsync(CancellationToken token, int CheckPeriod = 100, double CheckDistance = 0.1)
+        public async Task WaitForTargetedAsync(CancellationToken token, int CheckPeriod = 100, double tolerance = 0.1, double angleTolerance = 0.1)
         {
+
+            ArgumentOutOfRangeException.ThrowIfLessThan(angleTolerance, 0.01, nameof(angleTolerance));
+            ArgumentOutOfRangeException.ThrowIfLessThan(tolerance, 1e-4, nameof(tolerance));
+
             while (!token.IsCancellationRequested)
             {
-                //if (TaskSpace.Distance(CurrentState.TaskSpace, TargetState.TaskSpace) < CheckDistance)
-                //    break;
-
                 var current = CurrentJoint;
                 var target = TargetState.JointSpace;
 
-                if (Math.Abs(current.R1 - target.R1) < 0.1
-                    && Math.Abs(current.P2 - target.P2) < 0.01
-                    && Math.Abs(current.P3 - target.P3) < 0.01
-                    && Math.Abs(current.P4 - target.P4) < 0.01
-                    && Math.Abs(current.R5 - target.R5) < 0.1)
+                if (Math.Abs(current.R1 - target.R1) < angleTolerance
+                    && Math.Abs(current.P2 - target.P2) < tolerance
+                    && Math.Abs(current.P3 - target.P3) < tolerance
+                    && Math.Abs(current.P4 - target.P4) < tolerance
+                    && Math.Abs(current.R5 - target.R5) < angleTolerance)
                     break;
-                
-                //Debug.WriteLine(CurrentState.TaskSpace);
-                //Debug.WriteLine(TargetState.TaskSpace);
 
                 try
                 {

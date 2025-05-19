@@ -38,6 +38,16 @@ namespace DOF5RobotControl_GUI.DesignModel
             throw new NotImplementedException();
         }
 
+        public void JointMoveAbsolute(int axis, double value)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void JointMoveRelative(int axis, double value)
+        {
+            throw new NotImplementedException();
+        }
+
         public void MoveAbsolute(RoboticState target)
         {
             throw new NotImplementedException();
@@ -58,12 +68,27 @@ namespace DOF5RobotControl_GUI.DesignModel
             throw new NotImplementedException();
         }
 
+        public Task MoveAbsoluteAsync(JointSpace target, CancellationToken token, int checkPeriod = 100, double tolerance = 0.1, double angleTolerance = 0.1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task MoveAbsoluteAsync(RoboticState target, CancellationToken token, int checkPeriod = 100, double tolerance = 0.1, double angleTolerance = 0.1)
+        {
+            throw new NotImplementedException();
+        }
+
         public void MoveRelative(JointSpace relative)
         {
             throw new NotImplementedException();
         }
 
         public Task MoveRelativeAsync(JointSpace diff, CancellationToken token = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task MoveRelativeAsync(JointSpace diff, CancellationToken token, int checkPeriod = 100, double tolerance = 0.1, double angleTolerance = 0.1)
         {
             throw new NotImplementedException();
         }
@@ -94,6 +119,16 @@ namespace DOF5RobotControl_GUI.DesignModel
         }
 
         public Task WaitForTargetedAsync(CancellationToken token, int CheckPeriod = 100, double CheckDistance = 0.1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task WaitForTargetedAsync(int CheckPeriod = 100, double CheckDistance = 0.1, double angleTolerance = 0.1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task WaitForTargetedAsync(CancellationToken token, int checkPeriod = 100, double tolerance = 0.1, double angleTolerance = 0.1)
         {
             throw new NotImplementedException();
         }
