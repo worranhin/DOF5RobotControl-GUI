@@ -240,7 +240,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                 topImg = _cameraCtrlService.GetTopFrame();
                 bottomImg = _cameraCtrlService.GetBottomFrame();
 
-                var topTask = _imageService.ProcessTopImgAsync(topImg);
+                var topTask = _imageService.GetJawErrorAsync(topImg);
                 var bottomTask = _imageService.ProcessBottomImageAsync(bottomImg);
 
                 var (x, y, rz) = await topTask; // 单位为 mm 和 rad

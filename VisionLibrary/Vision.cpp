@@ -419,7 +419,7 @@ namespace NativeVision {
 			}
 		}
 		HTuple hv_Angle = (hv_Last_Angle_DR + hv_Last_Angle_DL) / 2;
-		HTuple hv_Row = (hv_Last_Row_DL + hv_Last_Row_DR) * 0.5 - 150;
+		HTuple hv_Row = (hv_Last_Row_DL + hv_Last_Row_DR) * 0.5;
 		HTuple hv_Col = hv_Last_Col_DL * 0.5 + hv_Last_Col_DR * 0.5;
 
 		return { hv_Col.D(), hv_Row.D(),hv_Angle.D(), flag };

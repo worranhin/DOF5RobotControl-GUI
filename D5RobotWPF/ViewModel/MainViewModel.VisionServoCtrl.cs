@@ -53,12 +53,8 @@ namespace DOF5RobotControl_GUI.ViewModel
                 // 处理图像
                 _imageService.Init(topFrame, bottomFrame);
 
-                //var TopProcessTask = ImageProcessor.ProcessTopImgAsync(
-                //    topFrame.Buffer, topFrame.Width, topFrame.Height, topFrame.Stride, MatchingMode.ROUGH); // 耗时 2038ms
-                //var BottomProcessTask = ImageProcessor.ProcessBottomImgAsync(
-                //    bottomFrame.Buffer, bottomFrame.Width, bottomFrame.Height, bottomFrame.Stride); // 耗时 231ms
-                //await Task.WhenAll(TopProcessTask, BottomProcessTask); // 同时处理两个图片并等待完成 耗时 2051ms
-                var TopProcessTask = _imageService.ProcessTopImgAsync(topFrame);
+                // 处理图像
+                var TopProcessTask = _imageService.GetEntranceErrorAsync(topFrame);
                 var BottomProcessTask = _imageService.ProcessBottomImageAsync(bottomFrame);
                 token.ThrowIfCancellationRequested();
 
@@ -87,8 +83,8 @@ namespace DOF5RobotControl_GUI.ViewModel
                     UpdateCurrentState();
                     topFrame = _cameraCtrlService.GetTopFrame();
 
-                    //(x, y, rz) = await ImageProcessor.ProcessTopImgAsync(topFrame.Buffer, topFrame.Width, topFrame.Height, topFrame.Stride, MatchingMode.FINE);
-                    (x, y, rz) = await _imageService.ProcessTopImgAsync(topFrame);
+                    //(x, y, rz) = await _imageService.ProcessTopImgAsync(topFrame);
+                    (x, y, rz) = await _imageService.GetEntranceErrorAsync(topFrame);
                     if (token.IsCancellationRequested) break;
 
                     //Debug.WriteLine($"Fine  x:{x}, y:{y}, z:{rz}");
@@ -138,8 +134,8 @@ namespace DOF5RobotControl_GUI.ViewModel
                     RoboticState target = _robotControlService.CurrentState;
                     CurrentState = target.Clone();
                     var topFrame = _cameraCtrlService.GetTopFrame();
-                    //var (dx, dy, drz) = await ImageProcessor.ProcessopImgAsync(topFrame.Buffer, topFrame.Width, topFrame.Height, topFrame.Stride, MatchingMode.FINE);
-                    var (dx, dy, drz) = await _imageService.ProcessTopImgAsync(topFrame);
+                    var (dx, _, _) = await _imageService.GetJawErrorAsync(topFrame);
+                    
                     if (token.IsCancellationRequested) break;
 
                     if (dx < 0.05) // 若误差小于一定值则退出循环

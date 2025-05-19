@@ -190,7 +190,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             {
                 try
                 {
-                    (DPx, DPy, DRz) = await processImageService.ProcessTopImgAsync(e);
+                    (DPx, DPy, DRz) = await processImageService.GetJawErrorAsync(e);
                 }
                 catch (InvalidOperationException ex)
                 {
