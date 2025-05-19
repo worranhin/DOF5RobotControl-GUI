@@ -186,7 +186,7 @@ namespace DOF5RobotControl_GUI.Services
 
         public async Task<(double x, double y, double rz)> GetJawErrorAsync(CamFrame topImg)
         {
-            const double targetLength = -150;  // px
+            const double targetLength = -180;  // px
 
             if (!hasInitialized)
                 throw new InvalidOperationException("Init should be called before process image after the camera moved.");

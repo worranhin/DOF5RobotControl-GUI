@@ -37,14 +37,16 @@ namespace UnitTest {
             FakeCameraControlService cameraService = new();
             var topImg = cameraService.GetTopFrame();
 
-            const double expected_x = 4.42;
-            const double expected_y = 0.5;
+            const double expected_x = 4.68;
+            const double expected_y = 0.53;
 
             var (x, y, rz) = await procImgService.GetJawErrorAsync(topImg);
 
             Assert.Equal(expected_x, x, tolerance);
             Assert.Equal(expected_y, y, tolerance);
             Assert.Equal(0, rz, tolerance);
+
+            outputHelper.WriteLine($"x={x}, y={y}, rz={rz}");
         }
 
         [Fact]

@@ -114,7 +114,7 @@ namespace DOF5RobotControl_GUI.ViewModel
                     targetPose = KineHelper.Forward(currentJoint);
                     targetPose.Px += x;
                     targetPose.Py += y;
-                    targetPose.Rz += rz;
+                    targetPose.Rz += rz * 180.0 / Math.PI;
 
                     targetJoint = KineHelper.Inverse(targetPose);
                     TargetState.JointSpace = targetJoint;
