@@ -239,23 +239,26 @@ namespace DOF5RobotControl_GUI.ViewModel
             // 本地方法定义
             async Task<float[]> GetState()
             {
+                const double offsetX = -1.0;
+                const double offsetZ = 5.0;
+
                 CamFrame topImg, bottomImg;
                 // 获取当前位姿状态误差
                 topImg = _cameraCtrlService.GetTopFrame();
                 bottomImg = _cameraCtrlService.GetBottomFrame();
 
-                var topTask = _imageService.GetJawErrorAsync(topImg);
+                var topTask = _imageService.GetEntranceErrorAsync(topImg);
                 var bottomTask = _imageService.ProcessBottomImageAsync(bottomImg);
 
                 var (x, y, rz) = await topTask; // 单位为 mm 和 rad
                 var z = await bottomTask;
 
+                x += offsetX;
+                z += offsetZ;
+
                 double halfTheta = rz / 2.0;
                 double w = Math.Cos(halfTheta);  // 计算四元数
                 double qz = Math.Sin(halfTheta);
-
-                x = x - 5;
-                z = z + 5;
 
                 //float[] state = [((float)x), ((float)y), ((float)z), (float)w, 0, 0, (float)qz];  // 转为神经网络的输入形式（位移+四元数误差）
                 float[] state = [((float)x / 1000.0F), ((float)y / 1000.0F), ((float)z / 1000.0F), (float)w, 0, 0, (float)qz]; // 转为神经网络的输入形式（位移+四元数误差） 单位为 m
