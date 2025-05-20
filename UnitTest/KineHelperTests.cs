@@ -131,5 +131,22 @@ namespace UnitTest
             Assert.Equal(expectedPose.Ry, pose.Ry);
             Assert.Equal(expectedPose.Rz, pose.Rz);
         }
+
+        [Fact]
+        public void InverseDifferential_StubPose_ExpectedJoint()
+        {
+            var currentJoint = new JointSpace();
+            var currentPose = KineHelper.Forward(currentJoint);
+            var diffPose = new TaskSpace() { Px = 1 };
+            var expectedJoint = new JointSpace() { P3 = 1 };
+
+            var diffJoint = KineHelper.InverseDifferential(diffPose, currentPose);
+
+            Assert.Equal(expectedJoint.R1, diffJoint.R1);
+            Assert.Equal(expectedJoint.P2, diffJoint.P2);
+            Assert.Equal(expectedJoint.P3, diffJoint.P3);
+            Assert.Equal(expectedJoint.P4, diffJoint.P4);
+            Assert.Equal(expectedJoint.R5, diffJoint.R5);
+        }
     }
 }

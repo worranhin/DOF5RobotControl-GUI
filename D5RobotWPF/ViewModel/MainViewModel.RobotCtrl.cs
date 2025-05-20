@@ -177,7 +177,7 @@ namespace DOF5RobotControl_GUI.ViewModel
 
         public const int natorJogResolution = 30000;
         public const int RMDJogResolution = 20;
-        const uint jogPeriod = 20;  // ms
+        const uint jogPeriod = 100;  // ms
 
         [ObservableProperty]
         private JogMode _jogModeSelected = JogMode.OneStep;
@@ -291,6 +291,9 @@ namespace DOF5RobotControl_GUI.ViewModel
 
             jogTimer = new(jogPeriod);
             resolution = resolution * jogPeriod / 1000;  // 每次控制的步进量
+
+            // 更新目标为当前状态避免突然大范围移动
+            TargetState.JointSpace = _robotControlService.CurrentJoint;
 
             Action updateJointAction = () => { };
             switch (param.Joint)

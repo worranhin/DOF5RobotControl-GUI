@@ -30,7 +30,7 @@
         /// <returns></returns>
         public static void Forward(JointSpace joint, TaskSpace task)
         {
-            var m1 = l3 + l5 + lty + joint.P2;
+            var m1 = l3 + l5 + lty;
             double px, py, pz, ry, rz;
 
             //if (!CheckJoint(joint)) // TODO: 在别的地方处理这个限位，因为 CurrentState 也会调用这个，所以在这里不合适
@@ -38,13 +38,13 @@
             //    throw new ArgumentOutOfRangeException(nameof(joint), "关节超出限位。");
             //}
 
-            px = m1 * Sind(joint.R1)
+            px = (m1 + joint.P2) * Sind(joint.R1)
                     + joint.P3 * Cosd(joint.R1)
                     + ltx * Cosd(joint.R1) * Cosd(joint.R5)
                     + ltz * Cosd(joint.R1) * Sind(joint.R5);
 
             py = joint.P3 * Sind(joint.R1)
-                - m1 * Cosd(joint.R1)
+                - (m1 + joint.P2) * Cosd(joint.R1)
                 + ltx * Sind(joint.R1) * Cosd(joint.R5)
                 + ltz * Sind(joint.R1) * Sind(joint.R5);
 
@@ -70,6 +70,11 @@
             TaskSpace task = new();
             Forward(joint, task);
             return task;
+        }
+
+        public static TaskSpace ForwardDifferential(JointSpace current, JointSpace diff)
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>

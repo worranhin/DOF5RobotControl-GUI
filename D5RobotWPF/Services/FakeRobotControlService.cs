@@ -77,7 +77,7 @@ namespace DOF5RobotControl_GUI.Services
                 5 => CurrentState.JointSpace.R5,
                 _ => throw new ArgumentOutOfRangeException(nameof(axis), axis, "Axis should be of range 1 - 5"),
             };
-        }        
+        }
 
         public void JointMoveAbsolute(int axis, double value)
         {
@@ -180,15 +180,58 @@ namespace DOF5RobotControl_GUI.Services
                 }
             }
         }
-        
+
+        CancellationTokenSource? vibrateCancelSource;
+
         public void StartVibrate(bool vibrateHorizontal, bool vibrateVertical, double amplitude, double frequency)
         {
-            throw new NotImplementedException();
+            vibrateCancelSource = new();
+            var token = vibrateCancelSource.Token;
+
+            VibrateAsync(vibrateHorizontal, vibrateVertical, amplitude, frequency, token).ContinueWith((t) =>
+            {
+                if (t.IsFaulted)
+                {
+                    Debug.WriteLine($"Vibrate task faulted: {t.Exception?.GetBaseException().Message}");
+                }
+            });
         }
 
         public void StopVibrate()
         {
-            throw new NotImplementedException();
+            vibrateCancelSource?.Cancel();
+            vibrateCancelSource?.Dispose();
+            vibrateCancelSource = null;
+        }
+
+        public async Task VibrateAsync(bool vibrateHorizontal, bool vibrateVertical, double amplitude, double frequency, CancellationToken token)
+        {
+            var origin = CurrentJoint;
+            var p2 = origin.P2;
+            var p4 = origin.P4;
+
+            Stopwatch sw = Stopwatch.StartNew();
+            while (!token.IsCancellationRequested)
+            {
+                var t = sw.ElapsedMilliseconds / 1000.0;
+                var d = amplitude * Math.Sin(2 * Math.PI * frequency * t);  // 正弦函数，频率为 frequency，幅值为正负 amplitude 单位 mm
+
+                if (vibrateHorizontal)
+                    JointMoveAbsolute(2, p2 + d);
+                if (vibrateVertical)
+                    JointMoveAbsolute(4, p4 + d);
+
+                //await WaitForTargetedAsync(token, 10);
+                await Task.Delay(5, token);  // 必须延时一小段时间，否则 Nators 电机会产生零点漂移
+
+                // 目前的控制周期实际是 (6ms) 左右，如果输出debug信息会更久，猜测瓶颈在于 RMD 的通讯速率（115200 baud)
+            }
+
+            // 运动到原来的位置
+            if (vibrateHorizontal)
+                JointMoveAbsolute(2, p2);
+            if (vibrateVertical)
+                JointMoveAbsolute(4, p4);
         }
     }
 }
