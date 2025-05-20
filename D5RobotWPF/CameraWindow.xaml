@@ -14,57 +14,102 @@
         <cvt:BoolInverseConverter x:Key="BoolInverseConverter"/>
         <Style TargetType="Button" BasedOn="{StaticResource userButton}"/>
     </mah:MetroWindow.Resources>
-    <DockPanel Margin="10">
-            <UniformGrid DockPanel.Dock="Bottom" Rows="1">
-            <UniformGrid.Resources>
-                <Style TargetType="TextBlock" BasedOn="{StaticResource MahApps.Styles.TextBlock}">
-                    <Setter Property="VerticalAlignment" Value="Center"/>
-                </Style>
-            </UniformGrid.Resources>
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Px:"/>
-                    <TextBlock Text="{Binding DPx}"/>                    
-                </StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Py:"/>
-                    <TextBlock Text="{Binding DPy}"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Pz:"/>
-                    <TextBlock Text="{Binding DPz}"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Ry:"/>
-                    <TextBlock Text="{Binding DRy}"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Rz:"/>
-                    <TextBlock Text="{Binding DRz}"/>
-                </StackPanel>
-            <Button Command="{Binding GetErrorCommand}" Height="40" IsEnabled="{Binding IsProcessingImg, Converter={StaticResource BoolInverseConverter}}">
-                <Grid HorizontalAlignment="Stretch" Width="160">
-                    <TextBlock Text="获取误差" HorizontalAlignment="Center"/>
-                    <mah:ProgressRing Width="10" HorizontalAlignment="Right" IsActive="{Binding IsProcessingImg}"/>
-                </Grid>
-            </Button>
-        </UniformGrid>
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
-                <ColumnDefinition/>
-            </Grid.ColumnDefinitions>
-            <GroupBox Header="Top Camera" Grid.Column="0">
-                <Grid>
-                    <TextBlock Text="Camera 1 disconnected!"  VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                    <Image Source="{Binding TopImageSource}"></Image>
-                </Grid>
-            </GroupBox>
-            <GroupBox Header="Bottom Camera" Grid.Column="1">
-                <Grid>
-                    <TextBlock Text="Camera 2 disconnected!" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    <Image Source="{Binding BottomImageSource}"></Image>
-                </Grid>
-            </GroupBox>
-        </Grid>
-    </DockPanel>
+    <Grid Margin="36">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="auto"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.ColumnSpan="2" Margin="0 0 0 8" Orientation="Horizontal">
+            <mah:ToggleSwitch Content="显示检测框" IsOn="{Binding IsDisplayYoloBox}"/>
+            <mah:ToggleSwitch Content="显示误差" IsOn="{Binding IsDisplayError}" Command="{Binding ToggleDisplayErrorCommand}"/>
+            <StackPanel Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center">
+                <UniformGrid Rows="1" Grid.Column="1" Width="480">
+                    <UniformGrid.Resources>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource MahApps.Styles.TextBlock}">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                        </Style>
+                    </UniformGrid.Resources>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Px:"/>
+                        <TextBlock Text="{Binding DPx, StringFormat=F3}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Py:"/>
+                        <TextBlock Text="{Binding DPy, StringFormat=F3}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Pz:"/>
+                        <TextBlock Text="{Binding DPz, StringFormat=F3}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Ry:"/>
+                        <TextBlock Text="{Binding DRy, StringFormat=F3}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Rz:"/>
+                        <TextBlock Text="{Binding DRz, StringFormat=F3}"/>
+                    </StackPanel>
+                </UniformGrid>
+            </StackPanel>
+        </StackPanel>
+        <!-- 相机图像区 -->
+        <GroupBox Header="Top Camera" Grid.Row="1" Grid.Column="0">
+            <Grid>
+                <TextBlock Text="Camera 1 disconnected!"  VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                <Image Source="{Binding TopImageSource}"></Image>
+            </Grid>
+        </GroupBox>
+        <GroupBox Header="Bottom Camera" Grid.Row="1" Grid.Column="1">
+            <Grid>
+                <TextBlock Text="Camera 2 disconnected!" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Image Source="{Binding BottomImageSource}"></Image>
+            </Grid>
+        </GroupBox>
+        <!-- 控制区 -->
+        <mah:MetroHeader Header="相机位置控制" Grid.Row="2" Grid.ColumnSpan="2" Margin="0 8 0 0">
+            <StackPanel>
+
+                <UniformGrid Rows="1" Margin="0 8 0 0" Height="32">
+                    <Button Margin="0 0 4 0" Content="前往钳口库位置" Command="{Binding CameraGotoJawVaultCommand}"/>
+                    <Button Margin="4 0 0 0" Content="前往零件库位置" Command="{Binding CameraGotoPartsVaultCommand}"/>
+                </UniformGrid>
+                <UniformGrid Rows="1" Margin="0 8 0 0" Height="32">
+                    <UniformGrid.Resources>
+                        <Style TargetType="TextBox" BasedOn="{StaticResource MahApps.Styles.TextBox}">
+                            <Setter Property="MinWidth" Value="100"/>
+                            <Setter Property="FontSize" Value="14"/>
+                        </Style>
+                        <!--<Style TargetType="Button" BasedOn="{StaticResource userButton}">
+                            <Setter Property="Padding" Value="5 0"/>
+                        </Style>-->
+                    </UniformGrid.Resources>
+                    <Grid Margin="0 0 4 0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Label Grid.Column="0" Content="顶部相机移动距离" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" Text="{Binding TopCamMoveDistance}"/>
+                        <Button Grid.Column="2" Content="顶部相机移动" Margin="8 0 0 0" Command="{Binding TopCamMoveCommand}"/>
+                    </Grid>
+                    <Grid Margin="4 0 0 0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Label Grid.Column="0" Content="底部相机移动角度" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" Text="{Binding BottomCamMoveAngle}"/>
+                        <Button Grid.Column="2" Content="底部相机移动" Margin="8 0 0 0" Command="{Binding BottomCamMoveCommand}"/>
+                    </Grid>
+                </UniformGrid>
+            </StackPanel>
+        </mah:MetroHeader>
+    </Grid>
 </mah:MetroWindow>

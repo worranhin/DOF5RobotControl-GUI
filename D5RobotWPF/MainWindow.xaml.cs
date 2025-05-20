@@ -1,8 +1,8 @@
 ﻿using DOF5RobotControl_GUI.Model;
+using DOF5RobotControl_GUI.Services;
 using DOF5RobotControl_GUI.ViewModel;
 using MahApps.Metro.Controls;
-using Opc.UaFx;
-using Opc.UaFx.Server;
+using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -18,71 +18,43 @@ namespace DOF5RobotControl_GUI
     {
         internal readonly MainViewModel viewModel;
 
-        Thread serverThread;
-        CancellationTokenSource opcTaskCancelSource;
-        CancellationToken opcTaskCancelToken;
-
-        public MainWindow()
+        public MainWindow(MainViewModel vm)
         {
             InitializeComponent();
 
+            SizeToContent = SizeToContent.Height;
+
             // 初始化 ViewModel
-            viewModel = new(this.Dispatcher);
+            viewModel = vm;
             DataContext = viewModel;
 
-            // 初始化 OPC
-            opcTaskCancelSource = new();
-            opcTaskCancelToken = opcTaskCancelSource.Token;
-            serverThread = new(ServerRunTask);
+            viewModel.LogLines.CollectionChanged += LogLines_CollectionChanged;
 
             // 注册窗口关闭回调函数
-            this.Closing += (sender, e) => {
-                Properties.Settings.Default.Port = viewModel.SelectedPort;
-                Properties.Settings.Default.Save();
-            };
-
             this.Closed += Window_Closed;
+        }
+
+        private void LogLines_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                if (LogList.Items.Count > 0)
+                {
+                    LogList.SelectedIndex = LogList.Items.Count - 1;
+                    //LogList.ScrollIntoView(LogList.SelectedItem);  //这个地方会导致错误
+                }
+            });
         }
 
         private void Window_Closed(object? sender, EventArgs e)
         {
-            Debug.WriteLine("Window closed");
-            opcTaskCancelSource.Cancel();
-        }
+            var opc = App.Current.Services.GetService<IOpcService>();
+            opc?.Disconnect();
 
-        private void ServerRunTask()
-        {
-            var dof5robotInstance = new D5RobotOpcNodeManager(viewModel);
+            var teleopService = App.Current.Services.GetService<IGamepadService>();
+            teleopService?.Stop();
 
-            //var test = new MyNodeManager();
-            using (var server = new OpcServer("opc.tcp://localhost:4840", dof5robotInstance))//server以nodeManager初始化
-            {
-                //服务器配置
-                server.Configuration = OpcApplicationConfiguration.LoadServerConfig("Opc.UaFx.Server");
-                server.ApplicationName = "DOF5ROBOT";//应用名称
-                server.Start();
-                //Random rd = new Random(); 意义不明的操作，先注释掉，没问题再删
-                while (!opcTaskCancelToken.IsCancellationRequested)
-                {
-                    //int i = rd.Next();
-
-                    Thread.Sleep(1000);
-                }
-                server.Stop();
-            }
-        }
-
-        private void BtnDisconnectServer_Click(object sender, RoutedEventArgs e)
-        {
-            opcTaskCancelSource.Cancel();
-        }
-
-        private void BtnConnectServer_Click(object sender, RoutedEventArgs e)
-        {
-            serverThread = new Thread(ServerRunTask);
-            opcTaskCancelSource = new();
-            opcTaskCancelToken = opcTaskCancelSource.Token;
-            serverThread.Start();
+            viewModel.CloseCamera();
         }
 
         /***** UI 事件 *****/
@@ -96,7 +68,6 @@ namespace DOF5RobotControl_GUI
 
         private void BtnR1JogDown_N(object sender, MouseButtonEventArgs e)
         {
-
             JogParams param = new()
             {
                 Joint = JointSelect.R1,
@@ -350,6 +321,11 @@ namespace DOF5RobotControl_GUI
         {
             if (e.Key == Key.Enter && sender is TextBox textBox)
                 textBox.GetBindingExpression(TextBox.TextProperty).UpdateSource();
+        }
+
+        private void LogExpander_Expanded(object sender, RoutedEventArgs e)
+        {
+            SizeToContent = SizeToContent.Height;
         }
     }
 }

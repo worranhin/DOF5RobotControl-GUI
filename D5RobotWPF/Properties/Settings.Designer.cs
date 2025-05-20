@@ -34,5 +34,29 @@ namespace DOF5RobotControl_GUI.Properties {
                 this["Port"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("\"COM1\"")]
+        public string RmdPort {
+            get {
+                return ((string)(this["RmdPort"]));
+            }
+            set {
+                this["RmdPort"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("\"COM1\"")]
+        public string CamMotorPort {
+            get {
+                return ((string)(this["CamMotorPort"]));
+            }
+            set {
+                this["CamMotorPort"] = value;
+            }
+        }
     }
 }

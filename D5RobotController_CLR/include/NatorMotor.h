@@ -16,33 +16,45 @@
 #include <windows.h>
 
 namespace D5R {
-struct NTU_Point {
-  int x; // 单位: nm
-  int y;
-  int z;
-};
+	using namespace System;
 
-#define NTU_AXIS_X 1 - 1
-#define NTU_AXIS_Y 2 - 1
-#define NTU_AXIS_Z 3 - 1
+	struct NTU_Point {
+		int x;  // 关节 2 单位: nm
+		int y;  // 关节 3 单位: nm
+		int z;  // 关节 4 单位: nm
+	};
 
-class NatorMotor {
-public:
-  NatorMotor(std::string id);
-  ~NatorMotor();
-  bool Init();
-  bool SetZero();
-  bool IsInit();
-  bool GetPosition(NTU_Point *p);
-  bool GoToPoint_A(NTU_Point p);
-  void WaitUtilPositioned();
-  bool GoToPoint_R(NTU_Point p);
-  bool Stop();
+//#define NTU_AXIS_X 1 - 1
+//#define NTU_AXIS_Y 2 - 1
+//#define NTU_AXIS_Z 3 - 1
 
-private:
-  NT_INDEX _handle;
-  std::string _id;
-  bool _isInit;
-  unsigned int _status;
-};
+	public ref class NatorMotor {
+	public:
+		NatorMotor(String^ id);
+		~NatorMotor();
+		bool Init();
+		bool SetZero();
+		bool IsInit();
+		bool GetAllPosition(NTU_Point* p);
+		int GetPosition(int axis);
+		bool GoToPoint_A(NTU_Point p);
+		void WaitUtilPositioned();
+		bool GoToPoint_R(NTU_Point p);
+		void StepMove(unsigned int axis, signed int steps, unsigned int amplitude, unsigned int frequency);
+		unsigned int GetStatus(int axis);
+		bool Stop();
+
+	private:
+		static NT_INDEX MapAxisToChannel(int axis);
+
+	private:
+		static const int NTU_AXIS_X = 1 - 1;
+		static const int NTU_AXIS_Y = 2 - 1;
+		static const int NTU_AXIS_Z = 3 - 1;
+
+		NT_INDEX _handle;
+		String^ _id;
+		bool _isInit;
+		unsigned int _status;
+	};
 } // namespace D5R

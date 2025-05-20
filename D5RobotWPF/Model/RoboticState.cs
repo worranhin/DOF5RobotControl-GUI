@@ -1,6 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using D5R;
-using SharpDX;
 
 namespace DOF5RobotControl_GUI.Model
 {
@@ -21,14 +20,19 @@ namespace DOF5RobotControl_GUI.Model
         [ObservableProperty]
         private JointSpace _jointSpace = new();
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("CommunityToolkit.Mvvm.SourceGenerators.ObservablePropertyGenerator", "MVVMTK0034:Direct field reference to [ObservableProperty] backing field", Justification = "<挂起>")]
         partial void OnJointSpaceChanged(JointSpace value)
         {
-            value.PropertyChanging += (sender, e) =>
+            _jointSpace = value.Clone();  // 这里用克隆代替，以避免被重复引用
+
+            isJointUpdating = true;
+
+            _jointSpace.PropertyChanging += (sender, e) =>
             {
                 isJointUpdating = true; // 指示正在更新属性
             };
 
-            value.PropertyChanged += (sender, e) =>
+            _jointSpace.PropertyChanged += (sender, e) =>
             {
                 if (!isTaskUpdating) // 如果本来就在更新属性，则不要再根据 joint 更新，避免互相递归地调用
                 {
@@ -40,28 +44,41 @@ namespace DOF5RobotControl_GUI.Model
 
                 isJointUpdating = false; // 指示结束更新属性
             };
+
+            if (!isTaskUpdating)
+                TaskSpace = KineHelper.Forward(value);
+
+            isJointUpdating = false;
         }
 
         [ObservableProperty]
         private TaskSpace _taskSpace = new();
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("CommunityToolkit.Mvvm.SourceGenerators.ObservablePropertyGenerator", "MVVMTK0034:Direct field reference to [ObservableProperty] backing field", Justification = "<挂起>")]
         partial void OnTaskSpaceChanged(TaskSpace value)
         {
-            value.PropertyChanging += (sender, e) =>
+            _taskSpace = value.Clone();  // 这里用克隆代替，以避免被重复引用
+
+            isTaskUpdating = true;
+
+            _taskSpace.PropertyChanging += (sender, e) =>
             {
                 isTaskUpdating = true;
             };
 
-            value.PropertyChanged += (sender, e) =>
+            _taskSpace.PropertyChanged += (sender, e) =>
             {
                 if (!isJointUpdating)
                 {
                     KineHelper.Inverse(TaskSpace, JointSpace);
-                    //KineHelper.ClipJoint(JointSpace);  // TODO: 处理超程问题
-                    //KineHelper.Forward(JointSpace, TaskSpace);
                 }
                 isTaskUpdating = false;
             };
+
+            if (!isJointUpdating)
+                JointSpace = KineHelper.Inverse(value);
+
+            isTaskUpdating = false;
         }
 
         public RoboticState()
@@ -69,6 +86,12 @@ namespace DOF5RobotControl_GUI.Model
             JointSpace = new();
             TaskSpace = KineHelper.Forward(JointSpace);
             //InitHandler();
+        }
+
+        public RoboticState(JointSpace joint)
+        {
+            JointSpace = joint.Clone();
+            TaskSpace = KineHelper.Forward(JointSpace);
         }
 
         public RoboticState(double r1, double p2, double p3, double p4, double r5)
@@ -84,11 +107,6 @@ namespace DOF5RobotControl_GUI.Model
             result.JointSpace.Minus(right.JointSpace);
             return result;
         }
-
-        //public static bool operator < (RoboticState state, double value)
-        //{
-        //    state
-        //}
 
         /// <summary>
         /// 转换为控制用的 struct
@@ -120,9 +138,6 @@ namespace DOF5RobotControl_GUI.Model
             if (j.R5 > 18000)
                 j.R5 = -(36000 - j.R5);
 
-            // TODO: 优化这段代码的性能，让它在所有属性更改后再通知 Task 进行正解
-            //isJointUpdating = true;
-            //isTaskUpdating = true;
             IsManuallyUpdating = true;
 
             JointSpace.R1 = j.R1 / 100.0;
@@ -134,8 +149,6 @@ namespace DOF5RobotControl_GUI.Model
             KineHelper.Forward(JointSpace, TaskSpace);
 
             IsManuallyUpdating = false;
-            //isJointUpdating = false;
-            //isTaskUpdating = false;
         }
 
         /// <summary>

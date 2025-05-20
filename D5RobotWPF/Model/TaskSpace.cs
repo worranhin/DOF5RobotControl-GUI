@@ -1,9 +1,4 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DOF5RobotControl_GUI.Model
 {
@@ -32,6 +27,33 @@ namespace DOF5RobotControl_GUI.Model
             double dy = a.Py - b.Py;
             double dz = a.Pz - b.Pz;
             return Math.Sqrt(dx * dx + dy * dy + dz * dz);
+        }
+
+        /// <summary>
+        /// Copy values of another TaskSpace to this
+        /// </summary>
+        /// <param name="taskSpace"></param>
+        /// <returns>this instance</returns>
+        public TaskSpace Copy(TaskSpace taskSpace)
+        {
+            Px = taskSpace.Px;
+            Py = taskSpace.Py;
+            Pz = taskSpace.Pz;
+            Ry = taskSpace.Ry;
+            Rz = taskSpace.Rz;
+
+            return this;
+        }
+
+        /// <summary>
+        /// Return a new TaskSpace with same values of this
+        /// </summary>
+        /// <returns>An instance clone.</returns>
+        public TaskSpace Clone()
+        {
+            TaskSpace taskSpace = new();
+            taskSpace.Copy(this);
+            return taskSpace;
         }
     }
 }

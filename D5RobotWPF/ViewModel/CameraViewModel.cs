@@ -1,35 +1,19 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Mvvm.Messaging;
-using CommunityToolkit.Mvvm.Messaging.Messages;
 using DOF5RobotControl_GUI.Model;
+using DOF5RobotControl_GUI.Services;
 using GxIAPINET;
-using OpenCvSharp;
-using OpenCvSharp.Extensions;
-using OpenCvSharp.WpfExtensions;
-using System;
-using System.Collections.Generic;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using System.Diagnostics;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics.Arm;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Media.Media3D;
 using System.Windows.Threading;
-using VisionLibrary;
-using Windows.Graphics.Printing.Workflow;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace DOF5RobotControl_GUI.ViewModel
 {
-    internal class TopImgRequestMessage : RequestMessage<ImageSource?> { }
-
-    internal class BottomImgRequestMessage : RequestMessage<ImageSource?> { }
-
     public partial class CameraViewModel : ObservableObject
     {
         private enum CaptureTaskCameraSelect
@@ -37,9 +21,6 @@ namespace DOF5RobotControl_GUI.ViewModel
             TopCamera,
             BottomCamera
         };
-
-        //const string TopCameraMac = "00-21-49-03-4D-95";
-        //const string BottomCameraMac = "00-21-49-03-4D-94";
 
         [ObservableProperty]
         private bool _topCameraConnected = false;
@@ -51,8 +32,6 @@ namespace DOF5RobotControl_GUI.ViewModel
         [ObservableProperty]
         private ImageSource? _bottomImageSource;
 
-        private CancellationTokenSource? captureCancelSource;
-        //private CancellationToken gxCameraTaskCancelToken;
         private readonly Dispatcher dispatcher = Application.Current.Dispatcher;
 
         // 图像处理相关
@@ -69,157 +48,209 @@ namespace DOF5RobotControl_GUI.ViewModel
         [ObservableProperty]
         double _dRz = double.NaN;
 
+        [ObservableProperty]
+        bool _isDisplayYoloBox = false;
 
-        public CameraViewModel()
-        {
-            TopCamera.Instance.Open(true);
-            BottomCamera.Instance.Open(true);
-            TopCamera.Instance.FrameReceived += TopFrameReceived;
-            BottomCamera.Instance.FrameReceived += BottomFrameReceived;
-        }
+        [ObservableProperty]
+        private bool _isDisplayError = false;
 
-        private void TopFrameReceived(object? sender, GxCamera.Frame e)
-        {
-            PixelFormat pf = PixelFormats.Gray8; // 下面转成 bitmap 格式
-            int rawStride = (e.Width * pf.BitsPerPixel + 7) / 8;
-            dispatcher.Invoke(() =>
-            {
-                BitmapSource bitmap = BitmapSource.Create(e.Width, e.Height, 96, 96, pf, null, e.Buffer, rawStride);
-                TopImageSource = bitmap;
-            });
-        }
+        [ObservableProperty]
+        private int _topCamMoveDistance = 0;
+        [ObservableProperty]
+        private int _bottomCamMoveAngle = 0;
 
-        private void BottomFrameReceived(object? sender, GxCamera.Frame e)
+        readonly ICameraControlService cameraControlService;
+        readonly IYoloDetectionService yoloDetectionService;
+        readonly IProcessImageService processImageService;
+        readonly IPopUpService popUpService;
+
+        bool isTopFrameProcessing = false;
+        bool isBottomFrameProcessing = false;
+
+        public CameraViewModel(ICameraControlService cameraControlService, 
+            IYoloDetectionService yoloDetectionService, IProcessImageService processImageService, IPopUpService popUpService)
         {
-            PixelFormat pf = PixelFormats.Gray8; // 下面转成 bitmap 格式
-            int rawStride = (e.Width * pf.BitsPerPixel + 7) / 8;
-            dispatcher.Invoke(() =>
-            {
-                BitmapSource bitmap = BitmapSource.Create(e.Width, e.Height, 96, 96, pf, null, e.Buffer, rawStride);
-                BottomImageSource = bitmap;
-            });
+            this.cameraControlService = cameraControlService;
+            this.yoloDetectionService = yoloDetectionService;
+            this.processImageService = processImageService;
+            this.popUpService = popUpService;
+
+            this.cameraControlService.RegisterCallback(TopFrameReceived, BottomFrameReceived);
         }
 
         ~CameraViewModel()
         {
-            captureCancelSource?.Cancel();
-            captureCancelSource?.Dispose();
-            captureCancelSource = null;
-
-            WeakReferenceMessenger.Default.UnregisterAll(this);
+            cameraControlService.UnRegisterCallback(TopFrameReceived, BottomFrameReceived);
         }
 
         [RelayCommand]
-        private async Task GetErrorAsync()
+        private void ToggleDisplayError()
         {
-            IsProcessingImg = true;
-
-            if (TopImageSource is not BitmapSource topBitmap || BottomImageSource is not BitmapSource bottomBitmap)
+            if (IsDisplayError)
             {
-                Debug.WriteLine("ImageSource is not right.");
-                return;
+                var topImg = cameraControlService.GetTopFrame();
+                var bottomImg = cameraControlService.GetBottomFrame();
+                processImageService.Init(topImg, bottomImg);
             }
-
-            try
-            {
-                (DPx, DPy, DRz) = await ImageProcessor.ProcessTopImgAsync(topBitmap);
-                DPz = await ImageProcessor.ProcessBottomImgAsync(bottomBitmap);
-            }
-            catch (InvalidOperationException ex)
-            {
-                MessageBox.Show(ex.Message, "Error when get error");
-            }
-
-            IsProcessingImg = false;
         }
 
-        /// <summary>
-        /// 开始捕获相机图像，并更新显示的图像
-        /// </summary>
-        private async Task StartCaptureImage()
+        [RelayCommand]
+        private async Task CameraGotoJawVaultAsync()
         {
             try
             {
-                var topCamera = TopCamera.Instance;
-                topCamera.Open();
+                cameraControlService.MoveTopCamera(TopCamMoveDistance);
+                await Task.Delay(100); // 需要延时一小段时间才能确保通讯正常
+                cameraControlService.MoveBottomCamera(BottomCamMoveAngle);
+            }
+            catch (InvalidOperationException exc)
+            {
+                popUpService.Show(exc.Message);
+            }
+        }
 
-                var bottomCamera = BottomCamera.Instance;
-                bottomCamera.Open();
+        [RelayCommand]
+        private async Task CameraGotoPartsVaultAsync()
+        {
+            try
+            {
+                cameraControlService.MoveTopCamera(-TopCamMoveDistance);
+                await Task.Delay(100);
+                cameraControlService.MoveBottomCamera(-BottomCamMoveAngle);
+            }
+            catch (InvalidOperationException exc)
+            {
+                popUpService.Show(exc.Message);
+            }
+        }
 
-                captureCancelSource = new();
-                var token = captureCancelSource.Token;
+        [RelayCommand]
+        private void TopCamMove()
+        {
+            try
+            {
+                cameraControlService.MoveTopCamera(TopCamMoveDistance);
+            }
+            catch (InvalidOperationException exc)
+            {
+                popUpService.Show(exc.Message);
+            }
+        }
 
-                await Task.Run(async () =>
+        [RelayCommand]
+        private void BottomCamMove()
+        {
+            try
+            {
+                cameraControlService.MoveBottomCamera(BottomCamMoveAngle);
+            }
+            catch (InvalidOperationException exc)
+            {
+                popUpService.Show(exc.Message);
+            }
+        }
+
+        private async void TopFrameReceived(object? sender, CamFrame e)
+        {
+            if (isTopFrameProcessing)
+                return;
+
+            isTopFrameProcessing = true;
+
+            if (IsDisplayYoloBox)
+            {
+                using var img = yoloDetectionService.TopPlot(e);
+
+                if (img is Image<Rgba32> img32)
                 {
-                    const int period = 200; // 每次循环的间隔，实际刷新率可能大于这个值
+                    byte[] procRaw = new byte[img.Width * img.Height * 4];
+                    img32.CopyPixelDataTo(procRaw);
 
-                    while (!token.IsCancellationRequested)
+                    PixelFormat pf = PixelFormats.Bgra32; // 下面转成 bitmap 格式
+                    int rawStride = (e.Width * pf.BitsPerPixel + 7) / 8;
+                    dispatcher.Invoke(() =>
                     {
-                        //var topImg = topCamera.GetBitmapFrame();
-
-                        try
-                        {
-                            var topFrame = topCamera.GetRawFrame();
-                            dispatcher.Invoke(() =>
-                            {
-                                PixelFormat pf = PixelFormats.Gray8; // 下面转成 bitmap 格式
-                                int rawStride = (topFrame.Width * pf.BitsPerPixel + 7) / 8;
-                                BitmapSource bitmap = BitmapSource.Create(topFrame.Width, topFrame.Height, 96, 96, pf, null, topFrame.Buffer, rawStride);
-                                TopImageSource = bitmap;
-                            });
-                        }
-                        catch (InvalidOperationException ex)
-                        {
-                            Debug.WriteLine("Error when get top frame: " + ex.Message);
-                        }
-
-                        dispatcher.Invoke(() =>
-                        {
-                            try
-                            {
-                                var bottomImg = bottomCamera.GetBitmapFrame();
-                                BottomImageSource = bottomImg;
-                            }
-                            catch (InvalidOperationException ex)
-                            {
-                                Debug.WriteLine("Error when update Image: " + ex.Message);
-                            }
-                        });
-
-                        await Task.Delay(period);
-                    }
+                        BitmapSource bitmap = BitmapSource.Create(img32.Width, img32.Height, 96, 96, pf, null, procRaw, rawStride);  // 这个 Bitmap 需要在 UI 线程创建
+                        TopImageSource = bitmap;
+                    });
+                }
+            }
+            else
+            {
+                PixelFormat pf = PixelFormats.Gray8; // 下面转成 bitmap 格式
+                int rawStride = (e.Width * pf.BitsPerPixel + 7) / 8;
+                dispatcher.Invoke(() =>
+                {
+                    BitmapSource bitmap = BitmapSource.Create(e.Width, e.Height, 96, 96, pf, null, e.Buffer, rawStride);
+                    TopImageSource = bitmap;
                 });
             }
-            catch (InvalidOperationException ex)
+
+            if (IsDisplayError)
             {
-                MessageBox.Show(ex.Message, "开始捕获图像时发生错误");
-                //throw;
+                try
+                {
+                    (DPx, DPy, DRz) = await processImageService.GetJawErrorAsync(e);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    popUpService.Show(ex.ToString(), "Error when get error");
+                    IsDisplayError = false;
+                }
             }
 
-            //try
-            //{
-            //    gxCameraTaskCancelSource = new();
-            //    gxCameraTaskCancelToken = gxCameraTaskCancelSource.Token;
-            //    await Task.Run(GxLibTask);
-            //}
-            //finally
-            //{
-            //    gxCameraTaskCancelSource?.Dispose();
-            //    gxCameraTaskCancelSource = null;
-            //}
+            isTopFrameProcessing = false;
         }
 
-        /// <summary>
-        /// 停止捕获相机图像
-        /// </summary>
-        public void StopCaptureImage()
+        private async void BottomFrameReceived(object? sender, CamFrame e)
         {
-            captureCancelSource?.Cancel();
-            captureCancelSource?.Dispose();
-            captureCancelSource = null;
+            if (isBottomFrameProcessing)
+                return;
 
-            TopCamera.Instance.Close();
-            BottomCamera.Instance.Close();
+            isBottomFrameProcessing = true;
+
+            if (IsDisplayYoloBox)
+            {
+                using var img = yoloDetectionService.BottomPlot(e);
+
+                if (img is Image<Rgba32> img32)
+                {
+                    byte[] procRaw = new byte[img.Width * img.Height * 4];
+                    img32.CopyPixelDataTo(procRaw);
+
+                    PixelFormat pf = PixelFormats.Bgra32; // 下面转成 bitmap 格式
+                    int rawStride = (e.Width * pf.BitsPerPixel + 7) / 8;
+                    dispatcher.Invoke(() =>
+                    {
+                        BitmapSource bitmap = BitmapSource.Create(img32.Width, img32.Height, 96, 96, pf, null, procRaw, rawStride);
+                        BottomImageSource = bitmap;
+                    });
+                }
+            }
+            else
+            {
+                PixelFormat pf = PixelFormats.Gray8; // 下面转成 bitmap 格式
+                int rawStride = (e.Width * pf.BitsPerPixel + 7) / 8;
+                dispatcher.Invoke(() =>
+                {
+                    BitmapSource bitmap = BitmapSource.Create(e.Width, e.Height, 96, 96, pf, null, e.Buffer, rawStride);
+                    BottomImageSource = bitmap;
+                });
+            }
+
+            if (IsDisplayError)
+            {
+                try
+                {
+                    DPz = await processImageService.ProcessBottomImageAsync(e);
+                } catch (InvalidOperationException ex)
+                {
+                    popUpService.Show(ex.ToString(), "Error when get error");
+                    IsDisplayError = false;
+                }
+            }
+
+            isBottomFrameProcessing = false;
         }
     }
 }

@@ -7,10 +7,11 @@
         xmlns:cvt="clr-namespace:DOF5RobotControl_GUI.Converter" 
         xmlns:vm="clr-namespace:DOF5RobotControl_GUI.ViewModel"
         xmlns:md="clr-namespace:DOF5RobotControl_GUI.Model"
+        xmlns:dm="clr-namespace:DOF5RobotControl_GUI.DesignModel"
         xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
-        d:DataContext="{d:DesignInstance Type=vm:MainViewModel, IsDesignTimeCreatable=True}"
+        d:DataContext="{d:DesignInstance Type=dm:DesignMainViewModel, IsDesignTimeCreatable=True}"
         mc:Ignorable="d"
-        Title="五自由度机械臂控制面板" Height="600" Width="960"
+        Title="五自由度机械臂控制面板" Height="640" Width="960"
         FontFamily="Microsoft YaHei UI"
         FontSize="16">
     <Window.Resources>
@@ -40,16 +41,24 @@
             <Setter Property="FontWeight" Value="Regular"/>
             <Setter Property="FontSize" Value="16"/>
         </Style>
+        <Style TargetType="mah:ToggleSwitch" >
+            <Setter Property="FontFamily" Value="Microsoft Yahei UI"/>
+            <Setter Property="FontSize" Value="16"/>
+        </Style>
         <Style TargetType="Button" BasedOn="{StaticResource userButton}"/>
         <cvt:BoolInverseConverter x:Key="BoolInverseConverter"/>
         <cvt:ConnectBtnConverter x:Key="ConnectBtnConverter"/>
         <cvt:VibrateBtnConverter x:Key="VibrateBtnConverter"/>
         <cvt:InsertBtnConverter x:Key="InsertBtnConverter"/>
+        <cvt:CameraBtnConverter x:Key="CameraBtnConverter"/>
+        <cvt:OpcBtnConverter x:Key="OpcBtnConverter"/>
+        <cvt:RecordBtnConverter x:Key="RecordBtnConverter"/>
+        <cvt:FeedBtnConverter x:Key="FeedBtnConverter" />
     </Window.Resources>
-    <Grid Margin="10">
+    <Grid Margin="24">
         <Grid.RowDefinitions>
-            <RowDefinition Height="auto" MinHeight="30"/>
-            <RowDefinition Height="10"/>
+            <RowDefinition Height="auto" MinHeight="40"/>
+            <RowDefinition Height="12"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -57,10 +66,11 @@
             <ColumnDefinition Width="20"/>
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
-        <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" MaxHeight="50" Margin="0 0 0 10">
+        <!-- 顶部工具栏 -->
+        <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" MaxHeight="50" Margin="0 0 0 4">
             <StackPanel.Resources>
                 <Style TargetType="TextBlock" BasedOn="{StaticResource centerTextBlock}">
-                    <Setter Property="Margin" Value="0 0 5 0"/>
+                    <Setter Property="Margin" Value="0 0 4 0"/>
                 </Style>
                 <Style TargetType="Button" BasedOn="{StaticResource userButton}">
                     <Setter Property="VerticalAlignment" Value="Stretch"/>
@@ -69,14 +79,8 @@
                     <Setter Property="Margin" Value="5 0"/>
                 </Style>
             </StackPanel.Resources>
-            <TextBlock>端口</TextBlock>
-            <ComboBox ItemsSource="{Binding PortsAvailable}" SelectedItem="{Binding SelectedPort}" IsEnabled="{Binding SystemConnected, Converter={StaticResource BoolInverseConverter}}"/>
-            <Button Command="{Binding PortRefreshCommand}">刷新</Button>
-            <Separator Margin="15 0"/>
-            <TextBlock>波特率</TextBlock>
-            <ComboBox SelectedIndex="0" ToolTip="该功能未实现，默认 115200">
-                <ComboBoxItem>115200</ComboBoxItem>
-            </ComboBox>
+            <Button Content="配置通讯端口" MinWidth="120" Command="{Binding OpenConfigWindowCommand}"  IsEnabled="{Binding SystemConnected, Converter={StaticResource BoolInverseConverter}}"/>
+            <Separator Margin="5 0"/>
             <Button MinWidth="80" Command="{Binding ToggleConnectCommand}" Content="{Binding SystemConnected, Converter={StaticResource ConnectBtnConverter}}"/>
             <Separator Margin="15 0"/>
             <TextBlock>点动模式</TextBlock>
@@ -84,12 +88,13 @@
             <Separator Margin="10 0"/>
             <TextBlock>点动分辨率</TextBlock>
             <ComboBox SelectedIndex="0" ItemsSource="{Binding JogResolutions, Mode=OneTime}" SelectedItem="{Binding JogResolutionSelected}"/>
+            <mah:ToggleSwitch Content="相对位姿" IsOn="{Binding IsPoseRelative}"/>
+            <mah:ToggleSwitch Content="遥操作" IsOn="{Binding IsGamepadEnabled}" Command="{Binding ToggleTeleopCommand}"/>
         </StackPanel>
-        <StackPanel Grid.Row="2" Grid.Column="0">
+
+        <!-- 主控制面板 -->
+        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0 4 0 0">
             <StackPanel.Resources>
-                <Style TargetType="Grid">
-                    <Setter Property="Margin" Value="5 0"/>
-                </Style>
                 <Style TargetType="Button" BasedOn="{StaticResource userButton}">
                     <Setter Property="Margin" Value="2"/>
                 </Style>
@@ -104,42 +109,55 @@
                 </Style>
             </StackPanel.Resources>
             <mah:MetroHeader Header="关节状态">
-                <Grid>
-                    <Grid.Resources>
+                <UniformGrid Rows="1">
+                    <UniformGrid.Resources>
                         <Style TargetType="TextBlock" BasedOn="{StaticResource leftAlignTextBlock}"/>
-                    </Grid.Resources>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="auto"/>
-                        <RowDefinition Height="auto"/>
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="0.3*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="0.3*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="0.3*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="0.3*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="0.3*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="2*"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Row="0" Grid.Column="0">R1:</TextBlock>
-                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CurrentState.JointSpace.R1}"/>
-                    <TextBlock Grid.Row="0" Grid.Column="2">P2:</TextBlock>
-                    <TextBlock Grid.Row="0" Grid.Column="3" Text="{Binding CurrentState.JointSpace.P2}"/>
-                    <TextBlock Grid.Row="0" Grid.Column="4">P3:</TextBlock>
-                    <TextBlock Grid.Row="0" Grid.Column="5" Text="{Binding CurrentState.JointSpace.P3}"/>
-                    <TextBlock Grid.Row="0" Grid.Column="6">P4:</TextBlock>
-                    <TextBlock Grid.Row="0" Grid.Column="7" Text="{Binding CurrentState.JointSpace.P4}"/>
-                    <TextBlock Grid.Row="0" Grid.Column="8">R5:</TextBlock>
-                    <TextBlock Grid.Row="0" Grid.Column="9" Text="{Binding CurrentState.JointSpace.R5}"/>
-                    <Button Grid.Row="0" Grid.Column="10" Grid.ColumnSpan="10" Margin="0" Command="{Binding SetTargetJointsFromCurrentCommand}">设为当前值</Button>
-                </Grid>
+                    </UniformGrid.Resources>
+                    <Grid Margin="0 0 8 0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0">R1</TextBlock>
+                        <TextBox Grid.Column="1" Text="{Binding CurrentState.JointSpace.R1, StringFormat=F2}" IsReadOnly="True"/>
+                    </Grid>
+                    <Grid Grid.Column="1" Margin="0 0 8 0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock>P2</TextBlock>
+                        <TextBox Grid.Column="1" Text="{Binding CurrentState.JointSpace.P2, StringFormat=F4}" IsReadOnly="True"/>
+                    </Grid>
+                    <Grid Grid.Column="2" Margin="0 0 8 0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock>P3</TextBlock>
+                        <TextBox Grid.Column="1" Text="{Binding CurrentState.JointSpace.P3, StringFormat=F4}" IsReadOnly="True"/>
+                    </Grid>
+                    <Grid Grid.Column="3" Margin="0 0 8 0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock>P4</TextBlock>
+                        <TextBox Grid.Column="1" Text="{Binding CurrentState.JointSpace.P4, StringFormat=F4}" IsReadOnly="True"/>
+                    </Grid>
+                    <Grid Grid.Column="4" Margin="0 0 8 0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock>R5</TextBlock>
+                        <TextBox Grid.Column="1" Text="{Binding CurrentState.JointSpace.R5, StringFormat=F2}" IsReadOnly="True"/>
+                    </Grid>
+                    <Button Grid.Column="5" Command="{Binding SetTargetJointsFromCurrentCommand}">设为当前值</Button>
+                </UniformGrid>
             </mah:MetroHeader>
-            <Separator/>
-            <mah:MetroHeader Header="关节控制">
+            <!-- 关节控制区 -->
+            <mah:MetroHeader Header="关节控制" Margin="0 8 0 0">
                 <StackPanel>
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -231,8 +249,9 @@
                     </Grid>
                 </StackPanel>
             </mah:MetroHeader>
-            <Separator/>
-            <mah:MetroHeader Header="位姿控制">
+
+            <!-- 位姿控制区 -->
+            <mah:MetroHeader Header="位姿控制" Margin="0 8 0 0">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="auto"/>
@@ -251,11 +270,11 @@
                         <RowDefinition Height="auto"/>
                     </Grid.RowDefinitions>
                     <Label Grid.Column="0" Target="{Binding ElementName=PosValueX}">px</Label>
-                    <TextBox Grid.Column="1" x:Name="PosValueX" Text="{Binding TargetState.TaskSpace.Px, Mode=TwoWay, StringFormat=F4}" GotFocus="TextBoxSelectAll"></TextBox>
+                    <TextBox Grid.Column="1" x:Name="PosValueX" Text="{Binding TargetPx, Mode=TwoWay, StringFormat=F4}" GotFocus="TextBoxSelectAll"></TextBox>
                     <Label Grid.Column="2" Target="{Binding ElementName=PosValueY}">py</Label>
-                    <TextBox Grid.Column="3" x:Name="PosValueY" Text="{Binding TargetState.TaskSpace.Py, Mode=TwoWay, StringFormat=F4}" GotFocus="TextBoxSelectAll"></TextBox>
+                    <TextBox Grid.Column="3" x:Name="PosValueY" Text="{Binding TargetPy, Mode=TwoWay, StringFormat=F4}" GotFocus="TextBoxSelectAll"></TextBox>
                     <Label Grid.Column="4" Target="{Binding ElementName=PosValueZ}">pz</Label>
-                    <TextBox Grid.Column="5" x:Name="PosValueZ" Text="{Binding TargetState.TaskSpace.Pz, Mode=TwoWay, StringFormat=F4}" GotFocus="TextBoxSelectAll"></TextBox>
+                    <TextBox Grid.Column="5" x:Name="PosValueZ" Text="{Binding TargetPz, Mode=TwoWay, StringFormat=F4}" GotFocus="TextBoxSelectAll"></TextBox>
                     <Label Grid.Column="6" Target="{Binding ElementName=PosValueRy}">ry</Label>
                     <TextBox Grid.Column="7" x:Name="PosValueRy" Text="{Binding TargetState.TaskSpace.Ry, Mode=TwoWay, StringFormat=F4}" GotFocus="TextBoxSelectAll"></TextBox>
                     <Label Grid.Column="8" Target="{Binding ElementName=PosValueRz}">rz</Label>
@@ -322,61 +341,101 @@
                     </UniformGrid>
                 </Grid>
             </mah:MetroHeader>
-            <Separator/>
-            <mah:MetroHeader Header="振动控制">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="1.2*"/>
-                        <ColumnDefinition Width="1.2*"/>
-                        <ColumnDefinition Width="0.5*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="0.5*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="20"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.Resources>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource centerTextBlock}">
-                            <Setter Property="HorizontalAlignment" Value="Right"/>
-                            <Setter Property="Margin" Value="0 0 5 0"/>
-                        </Style>
-                    </Grid.Resources>
-                    <CheckBox Grid.Column="0" Content="水平横向振动" IsChecked="{Binding IsVibrateHorizontal}" IsEnabled="{Binding IsVibrating, Converter={StaticResource BoolInverseConverter}}"/>
-                    <CheckBox Grid.Column="1" HorizontalAlignment="Center" Content="竖直振动" IsChecked="{Binding IsVibrateVertical}" IsEnabled="{Binding IsVibrating, Converter={StaticResource BoolInverseConverter}}"/>
-                    <TextBlock Grid.Column="2" Text="振幅"/>
-                    <TextBox Grid.Column="3" Text="{Binding VibrateAmplitude}" IsEnabled="{Binding IsVibrating, Converter={StaticResource BoolInverseConverter}}"/>
-                    <TextBlock Grid.Column="4" Text="频率"/>
-                    <TextBox Grid.Column="5" Text="{Binding VibrateFrequency}" IsEnabled="{Binding IsVibrating, Converter={StaticResource BoolInverseConverter}}"/>
-                    <Button Grid.Column="7" Content="{Binding IsVibrating, Converter={StaticResource VibrateBtnConverter}}" Command="{Binding ToggleVibrateCommand}"/>
-                </Grid>
-            </mah:MetroHeader>
-            <Separator/>
-            <UniformGrid Margin="5" Columns="1">
-                <UniformGrid Rows="1">
-                    <Button Command="{Binding RobotRunCommand}">运行</Button>
-                    <Button Command="{Binding RobotSetZeroCommand}" ToolTip="将当前的位置设为零点">置零</Button>
-                    <Button Command="{Binding RobotStopCommand}">停止</Button>
-                </UniformGrid>
-                <UniformGrid Rows="1">
-                    <Button Command="{Binding MoveToInitialPositionCommand}">前往插入预备位</Button>
-                    <Button Command="{Binding ToggleInsertionCommand}" Content="{Binding IsInserting, Converter={StaticResource InsertBtnConverter}}"/>
-                    <Button Command="{Binding AttachJawCommand}" IsEnabled="{Binding IsAttachingJaw, Converter={StaticResource BoolInverseConverter}}">
-                        <Grid MinWidth="200">
-                            <TextBlock Text="装上钳口" HorizontalAlignment="Center"/>
-                            <mah:ProgressRing Width="10" Height="10" HorizontalAlignment="Right" IsActive="{Binding IsAttachingJaw}"/>
-                        </Grid>
-                    </Button>
-                </UniformGrid>
-                <UniformGrid Rows="1">
-                    <Button Command="{Binding OpenCameraCommand}">启动相机</Button>
-                </UniformGrid>
-                <UniformGrid Rows="1">
-                    <Button Content="连接服务器" Click="BtnConnectServer_Click"/>
-                    <Button Content="断开服务器" Click="BtnDisconnectServer_Click"/>
-                </UniformGrid>
+
+            <!-- 机械臂控制按钮阵列 -->
+            <UniformGrid Rows="1" Margin="0 8 0 0">
+                <Button Command="{Binding RobotRunCommand}">运行</Button>
+                <Button Command="{Binding RobotSetZeroCommand}" ToolTip="将当前的位置设为零点">置零</Button>
+                <Button Command="{Binding RobotStopCommand}" Background="#FFFFDEDE">停止</Button>
             </UniformGrid>
+
+            <!-- 其它控制命令 -->
+            <TabControl Margin="0 16 0 0">
+                <TabItem Header="进阶操作">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="auto"/>
+                                <ColumnDefinition Width="auto"/>
+                                <ColumnDefinition Width="auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <CheckBox Grid.Column="0" Content="水平横向振动" IsChecked="{Binding IsVibrateHorizontal}" IsEnabled="{Binding IsVibrating, Converter={StaticResource BoolInverseConverter}}"/>
+                            <CheckBox Grid.Column="1" Margin="8 0 0 0" HorizontalAlignment="Center" Content="竖直振动" IsChecked="{Binding IsVibrateVertical}" IsEnabled="{Binding IsVibrating, Converter={StaticResource BoolInverseConverter}}"/>
+                            <CheckBox Grid.Column="2"  Margin="8 0 8 0" HorizontalAlignment="Center" Content="进给振动" IsChecked="{Binding IsVibrateFeed}" IsEnabled="{Binding IsVibrating, Converter={StaticResource BoolInverseConverter}}"/>
+                            <StackPanel Grid.Column="3" Orientation="Horizontal">
+                                <TextBlock Text="振幅" VerticalAlignment="Center"/>
+                                <TextBox MinWidth="80" Margin="4 0 0 0" Text="{Binding VibrateAmplitude}" IsEnabled="{Binding IsVibrating, Converter={StaticResource BoolInverseConverter}}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="4" Orientation="Horizontal">
+                                <TextBlock Text="频率" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                <TextBox MinWidth="80" Margin="4 0 0 0" Text="{Binding VibrateFrequency}" IsEnabled="{Binding IsVibrating, Converter={StaticResource BoolInverseConverter}}"/>
+                            </StackPanel>
+                            <Button Grid.Column="5" Margin="8 0 0 0" Content="{Binding IsVibrating, Converter={StaticResource VibrateBtnConverter}}" Command="{Binding ToggleVibrateCommand}"/>
+                        </Grid>
+
+                        <UniformGrid Rows="1" Margin="0 4 0 0">
+                            <Button Margin="0 2 2 2" Command="{Binding PreAlignJawCommand}">前往插入预备位</Button>
+                            <Button Command="{Binding InsertJawCommand}" Content="振动适配"/>
+                            <Button Command="{Binding AttachJawCommand}" IsEnabled="{Binding IsAttachingJaw, Converter={StaticResource BoolInverseConverter}}">
+                                <Grid MinWidth="130">
+                                    <TextBlock Text="装上钳口" HorizontalAlignment="Center"/>
+                                    <mah:ProgressRing Width="10" Height="10" HorizontalAlignment="Right" IsActive="{Binding IsAttachingJaw}"/>
+                                </Grid>
+                            </Button>
+                            <Button Content="取消操作" Command="{Binding CancelTaskCommand}" Margin="2 2 0 2"/>
+                        </UniformGrid>
+
+                        <UniformGrid Rows="1">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Label Margin="0 0 4 0" Content="进给速度"/>
+                                <TextBox Grid.Column="1" MinWidth="80" Text="{Binding FeedVelocity}"/>
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Label Margin="0 0 4 0" Content="进给距离"/>
+                                <TextBox Grid.Column="1" MinWidth="80" Text="{Binding FeedDistance}"/>
+                            </Grid>
+                            <Button Content="{Binding IsFeeding, Converter={StaticResource FeedBtnConverter}}" Command="{Binding ToggleFeedCommand}"/>
+                            <Button Margin="2 2 0 2" Content="退出夹钳" Command="{Binding RetreatCommand}"/>
+                        </UniformGrid>
+                    </StackPanel>
+                </TabItem>
+                <TabItem Header="其它操作">
+                    <StackPanel>
+                        <UniformGrid Rows="1" Margin="0 4">
+                            <Button Margin="0 2" Command="{Binding ToggleCameraCommand}" Content="{Binding CameraIsOpened, Converter={StaticResource CameraBtnConverter}}"/>
+                        </UniformGrid>
+                        <UniformGrid Rows="1" Margin="0 4">
+                            <Button Margin="0 0 4 0" Command="{Binding ToggleOpcServerCommand}" Content="{Binding OpcServerIsOn, Converter={StaticResource OpcBtnConverter}}"/>
+                            <Button Margin="4 0 0 0" Command="{Binding ToggleRecordCommand}" Content="{Binding IsRecording, Converter={StaticResource RecordBtnConverter}}"/>
+                        </UniformGrid>
+                        <UniformGrid Rows="1" Margin="0 4">
+                            <Button Margin="0 0 4 0" Command="{Binding CollectRLDataCommand}" Content="采集强化学习数据"/>
+                            <Button Margin="4 0 0 0" Command="{Binding StopCollectRlDataCommand}" Content="中断数据采集过程"/>
+                        </UniformGrid>
+                    </StackPanel>
+                </TabItem>
+            </TabControl>
+            <Expander Header="Log" IsExpanded="True" Margin="0 16 0 0" Expanded="LogExpander_Expanded" Visibility="{Binding IsLogVisible}">
+                <ListBox x:Name="LogList" ItemsSource="{Binding LogLines}" MaxHeight="200"/>
+            </Expander>
         </StackPanel>
-        <mah:MetroHeader Grid.Row="2" Grid.Column="3" Header="预存点位" MinWidth="150">
+
+        <!-- 预存点位 -->
+        <mah:MetroHeader Grid.Row="2" Grid.Column="3" Header="预存点位" MinWidth="150" Margin="0 4 0 0">
             <StackPanel>
                 <StackPanel.Resources>
                     <Style TargetType="Button" BasedOn="{StaticResource userButton}">
@@ -395,6 +454,7 @@
                 <Button Command="{Binding SetTargetJointsCommand}" CommandParameter="{x:Static vm:MainViewModel.AssemblePos3}">装配位3</Button>
             </StackPanel>
         </mah:MetroHeader>
+
         <GridSplitter VerticalAlignment="Stretch" HorizontalAlignment="Center" Grid.Row="2" Grid.Column="1" Width="8" />
         <GridSplitter VerticalAlignment="Center" HorizontalAlignment="Stretch" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Height="2"/>
     </Grid>

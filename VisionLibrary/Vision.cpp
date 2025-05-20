@@ -1,27 +1,32 @@
 ﻿#include "pch.h"
 #include "Vision.h"
+#include <filesystem>
 
 namespace NativeVision {
 
-	VisualController::VisualController() {
+	VisualController::VisualController(std::filesystem::path modelBasePath = "./model/") {
+		
+		
 		// topC
 		// 夹钳模板
-		_clamp.img = cv::imread("./model/clampTemplate/clamp.png", 0);
+		_clamp.img = cv::imread((modelBasePath / "clampTemplate/clamp.png").string(), 0);
 		_clamp.center = cv::Point2f(324.0f, 119.0f);
 		_clamp.point = cv::Point2f(328.2f, 212.9f);
-		cv::FileStorage fs1("./model/clampTemplate/KeyPoints_Clamp.yml", cv::FileStorage::READ);
+
+		cv::FileStorage fs1((modelBasePath / "clampTemplate/KeyPoints_Clamp.yml").string(), cv::FileStorage::READ);
 		fs1["keypoints"] >> _clamp.keypoints;
 		fs1.release();
-		cv::FileStorage fs2("./model/clampTemplate/Descriptors_Clamp.yml", cv::FileStorage::READ);
+
+		cv::FileStorage fs2((modelBasePath / "clampTemplate/Descriptors_Clamp.yml").string(), cv::FileStorage::READ);
 		fs2["descriptors"] >> _clamp.descriptors;
 		fs2.release();
 
 		// 中号钳口模板
-		HalconCpp::ReadShapeModel("./model/jawTemplate/shm/Temp_DL.shm", &_jawMid.temp_dl);
-		HalconCpp::ReadShapeModel("./model/jawTemplate/shm/Temp_DR.shm", &_jawMid.temp_dr);
+		HalconCpp::ReadShapeModel((modelBasePath / "jawTemplate/shm/Temp_DL.shm").c_str(), &_jawMid.temp_dl);
+		HalconCpp::ReadShapeModel((modelBasePath / "jawTemplate/shm/Temp_DR.shm").c_str(), &_jawMid.temp_dr);
 
 		// 钳口库定位模板
-		_posTemplate_2 = cv::imread("./model/posTemplate/PosTemple_2.png", 0);
+		_posTemplate_2 = cv::imread((modelBasePath / "posTemplate/PosTemple_2.png").string(), 0);
 
 		// 粗定位点，相对于_roiPos而言
 		_roughPosPoint = cv::Point2f(450, 1050);
@@ -29,7 +34,7 @@ namespace NativeVision {
 
 		// botC
 		// 夹钳模板
-		_clampBot.model = cv::imread("./model/botCTemplate/clamp_bot.png", 0);
+		_clampBot.model = cv::imread((modelBasePath / "botCTemplate/clamp_bot.png").string(), 0);
 		_clampBot.pos.push_back(cv::Point2f(93.9549f, 95.2925f));
 		_clampBot.pos.push_back(cv::Point2f(513.976f, 91.9765f));
 
@@ -37,7 +42,7 @@ namespace NativeVision {
 		_jawLibLine_a = -0.00116294f;
 		_jawLibLine_b = 1718.94f;
 		// 图像与显示映射参数
-		_mapParam = 0.00945084;
+		_mapParam = 0.00945084; // mm/px
 	}
 	VisualController::~VisualController() {}
 
@@ -60,6 +65,7 @@ namespace NativeVision {
 		delete[] temp;
 		return ho_img;
 	}
+
 	/**
 	 * @brief 将Halcon HObject格式转换为OpenCV Mat格式
 	 * @param img
@@ -183,9 +189,13 @@ namespace NativeVision {
 			img_P.push_back(keyPoints_Img[match.trainIdx].pt);
 		}
 		cv::Mat homography = cv::findHomography(model_P, img_P, cv::RANSAC);
+		if (homography.empty())
+			throw std::runtime_error("Homography matrix is empty or invalid.");
+
 		std::vector<cv::Point2f> pst;
 		std::vector<cv::Point2f> pst_Global;
 		cv::perspectiveTransform(modelPosition, pst, homography);
+
 		for (auto& p : pst) {
 			p.x += _roiPos.x;
 			p.y += _roiPos.y;
@@ -369,6 +379,7 @@ namespace NativeVision {
 			}
 			else
 			{
+				//flag++; // 用这行代码替代该块中下面的代码
 				ReduceDomain(ho_img, ho_init_search_rect, &ho_ImageReduced);
 				FindShapeModel(ho_ImageReduced, _jawMid.temp_dl, hv_start, hv_range, 0.7, 1, 0.5,
 					(HTuple("least_squares").Append("max_deformation 2")), 0, 0.9, &hv_Row_DL,
@@ -391,6 +402,7 @@ namespace NativeVision {
 			}
 			else
 			{
+				//flag++; // 用这行代码替代该块中下面的代码
 				ReduceDomain(ho_img, ho_init_search_rect, &ho_ImageReduced);
 				FindShapeModel(ho_ImageReduced, _jawMid.temp_dr, hv_start, hv_range, 0.7, 1, 0.5,
 					(HTuple("least_squares").Append("max_deformation 2")), 0, 0.9, &hv_Row_DR,
@@ -407,7 +419,7 @@ namespace NativeVision {
 			}
 		}
 		HTuple hv_Angle = (hv_Last_Angle_DR + hv_Last_Angle_DL) / 2;
-		HTuple hv_Row = (hv_Last_Row_DL + hv_Last_Row_DR) * 0.5 - 150;
+		HTuple hv_Row = (hv_Last_Row_DL + hv_Last_Row_DR) * 0.5;
 		HTuple hv_Col = hv_Last_Col_DL * 0.5 + hv_Last_Col_DR * 0.5;
 
 		return { hv_Col.D(), hv_Row.D(),hv_Angle.D(), flag };
@@ -470,5 +482,19 @@ namespace NativeVision {
 	cv::Point2f VisualController::GetRoughPosPoint() { return _roughPosPoint; }
 
 	double VisualController::GetMapParam() { return _mapParam; }
+
+	/**
+	 * @brief 获取钳口库直线参数，形式为 y = ax + b
+	 * @param a 参数 a
+	 * @param b 参数 b
+	 * @return 如果成功返回 true
+	 */
+	bool VisualController::GetJawLibLine(double& a, double& b)
+	{		
+		a = _jawLibLine_a;
+		b = _jawLibLine_b;
+		
+		return true;
+	}
 
 } // namespace NativeVision

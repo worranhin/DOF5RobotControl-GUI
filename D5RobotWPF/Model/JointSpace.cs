@@ -1,19 +1,12 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using System;
-using System.Collections.Generic;
+using D5R;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DOF5RobotControl_GUI.Model
 {
     public partial class JointSpace : ObservableValidator
-    {        
-        public bool IsUpdating { get; private set; }
-
+    {
         [ObservableProperty]
         [NotifyDataErrorInfo]
         [Required]
@@ -40,6 +33,37 @@ namespace DOF5RobotControl_GUI.Model
         [Range(-90, 90, ErrorMessage = "Value of {0} must be between {1} and {2}.")]
         private double _r5 = 0.0;
 
+        public double R1rad
+        {   get
+            {
+                return R1 * Math.PI / 180.0;
+            }
+            set
+            {
+                R1 = value * 180.0 / Math.PI;
+            }
+        }
+
+        public double R5rad
+        {
+            get
+            {
+                return R5 * Math.PI / 180.0;
+            }
+            set
+            {
+                R5 = value * 180.0 / Math.PI;
+            }
+        }
+
+        public JointSpace() { }
+
+        public JointSpace(Joints joints)
+        {
+            SetFromD5RJoints(joints);
+        }
+
+        [Obsolete("This method is deprecated, use KineHelper instead. It will be removed after v0.7.0")]
         public TaskSpace? ToTaskSpace()
         {
             if (HasErrors)
@@ -47,10 +71,11 @@ namespace DOF5RobotControl_GUI.Model
                 Debug.WriteLine(GetErrors());
                 return null;
             }
-            else 
+            else
                 return KineHelper.Forward(this);
         }
 
+        [Obsolete("This method is deprecated, use Kinehelper instead. It will be removed after v0.7.0")]
         public void ToTaskSpace(TaskSpace task)
         {
             if (HasErrors)
@@ -58,7 +83,7 @@ namespace DOF5RobotControl_GUI.Model
                 Debug.WriteLine(GetErrors());
                 return;
             }
-            else 
+            else
                 KineHelper.Forward(this, task);
         }
 
@@ -113,6 +138,54 @@ namespace DOF5RobotControl_GUI.Model
             R5 = joint.R5;
 
             return this;
+        }
+
+        public JointSpace Clone()
+        {
+            JointSpace joint = new();
+            joint.Copy(this);
+            return joint;
+        }
+
+        /// <summary>
+        /// 从控制用的 Joints struct 设置当前状态
+        /// </summary>
+        /// <param name="j"></param>
+        public void SetFromD5RJoints(Joints j)
+        {
+            // 将旋转电机单圈角度 0~360 换算成 +/-180
+            if (j.R1 > 18000)
+                j.R1 = -(36000 - j.R1);
+            if (j.R5 > 18000)
+                j.R5 = -(36000 - j.R5);
+
+
+            R1 = j.R1 / 100.0;
+            P2 = -j.P2 / 1000000.0;
+            P3 = j.P3 / 1000000.0;
+            P4 = j.P4 / 1000000.0;
+            R5 = -j.R5 / 100.0;
+        }
+
+        /// <summary>
+        /// 转换为控制用的 Joints struct
+        /// </summary>
+        /// <returns></returns>
+        public Joints ToD5RJoints()
+        {
+            Joints j = new()
+            {
+                R1 = (int)(R1 * 100),
+                P2 = -(int)(P2 * 1000000),
+                P3 = (int)(P3 * 1000000),
+                P4 = (int)(P4 * 1000000),
+                R5 = -(int)(R5 * 100)
+            };
+
+            j.R1 = j.R1 < 0 ? 36000 + j.R1 : j.R1;
+            j.R5 = j.R5 < 0 ? 36000 + j.R5 : j.R5;
+
+            return j;
         }
     }
 }

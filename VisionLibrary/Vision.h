@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include <filesystem>
+
 namespace NativeVision {
 
 	struct Clamp {
@@ -52,7 +54,7 @@ namespace NativeVision {
 	class VisualController
 	{
 	public:
-		VisualController();
+		VisualController(std::filesystem::path modelBasePath);
 		~VisualController();
 		HalconCpp::HObject Mat2HImage(cv::Mat img);
 		cv::Mat HImage2Mat(HalconCpp::HObject img);
@@ -63,14 +65,13 @@ namespace NativeVision {
 		JawPos GetJawPos(HalconCpp::HObject img);
 		TaskSpaceError GetTaskSpaceError(cv::Mat img, MatchingMode m);
 
-
-
-		// ±äÁ¿½Ó¿Ú
+		// 变量接口
 		Clamp GetClamp();
 		Jaw GetJaw();
 		cv::Point2f GetROIPos();
 		cv::Point2f GetRoughPosPoint();
 		double GetMapParam();
+		bool GetJawLibLine(double& a, double& b);
 
 
 	private:
