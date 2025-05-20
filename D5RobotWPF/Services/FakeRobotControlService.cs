@@ -11,7 +11,7 @@ namespace DOF5RobotControl_GUI.Services
 
         public RoboticState TargetState { get; private set; } = new();
 
-        public JointSpace CurrentJoint => throw new NotImplementedException();
+        public JointSpace CurrentJoint => CurrentState.JointSpace.Clone();
 
         private CancellationTokenSource? mockRunCancelSource;
         private Task? mockRunTask;
@@ -56,43 +56,9 @@ namespace DOF5RobotControl_GUI.Services
             IsConnected = false;
         }
 
-        public RoboticState GetCurrentState()
-        {
-            return CurrentState;
-        }
-
-        public void MoveAbsolute(RoboticState target)
-        {
-            TargetState = target.Clone();
-        }
-
-        public async Task MoveAbsoluteAsync(RoboticState target, CancellationToken token)
-        {
-            MoveAbsolute(target);
-            await WaitForTargetedAsync(token);
-        }
-
-        public void MoveRelative(JointSpace relative)
-        {
-            var target = CurrentState.Clone();
-            target.JointSpace.Add(relative);
-            TargetState = target;
-        }
-
-        public async Task MoveRelativeAsync(JointSpace diff, CancellationToken token)
-        {
-            MoveRelative(diff);
-            await WaitForTargetedAsync(token);
-        }
-
         public void SetZero()
         {
             CurrentState = new();
-        }
-
-        public void StartVibrate(bool vibrateHorizontal, bool vibrateVertical, double amplitude, double frequency)
-        {
-            throw new NotImplementedException();
         }
 
         public void Stop()
@@ -100,23 +66,104 @@ namespace DOF5RobotControl_GUI.Services
             TargetState.Copy(CurrentState);
         }
 
-        public void StopVibrate()
+        public double GetJointValue(int axis)
         {
-            throw new NotImplementedException();
-        }
-
-        public async Task WaitForTargetedAsync(int CheckPeriod = 100, double CheckDistance = 0.1)
-        {
-            while (true)
+            return axis switch
             {
-                if (TaskSpace.Distance(CurrentState.TaskSpace, TargetState.TaskSpace) < CheckDistance)
-                    return;
+                1 => CurrentState.JointSpace.R1,
+                2 => CurrentState.JointSpace.P2,
+                3 => CurrentState.JointSpace.P3,
+                4 => CurrentState.JointSpace.P4,
+                5 => CurrentState.JointSpace.R5,
+                _ => throw new ArgumentOutOfRangeException(nameof(axis), axis, "Axis should be of range 1 - 5"),
+            };
+        }        
 
-                await Task.Delay(CheckPeriod);
+        public void JointMoveAbsolute(int axis, double value)
+        {
+            switch (axis)
+            {
+                case 1:
+                    TargetState.JointSpace.R1 = value;
+                    return;
+                case 2:
+                    TargetState.JointSpace.P2 = value;
+                    return;
+                case 3:
+                    TargetState.JointSpace.P3 = value;
+                    return;
+                case 4:
+                    TargetState.JointSpace.P4 = value;
+                    return;
+                case 5:
+                    TargetState.JointSpace.R5 = value;
+                    return;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(axis), axis, "Axis should be of range 1 - 5");
             }
         }
 
-        public async Task WaitForTargetedAsync(CancellationToken token, int CheckPeriod = 100, double CheckDistance = 0.1)
+        public void JointMoveRelative(int axis, double value)
+        {
+            switch (axis)
+            {
+                case 1:
+                    TargetState.JointSpace.R1 += value;
+                    return;
+                case 2:
+                    TargetState.JointSpace.P2 += value;
+                    return;
+                case 3:
+                    TargetState.JointSpace.P3 += value;
+                    return;
+                case 4:
+                    TargetState.JointSpace.P4 += value;
+                    return;
+                case 5:
+                    TargetState.JointSpace.R5 += value;
+                    return;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(axis), axis, "Axis should be of range 1 - 5");
+            }
+        }
+
+        public void MoveAbsolute(JointSpace target)
+        {
+            TargetState.JointSpace = target.Clone();
+        }
+
+        public void MoveAbsolute(RoboticState target)
+        {
+            TargetState = target.Clone();
+        }
+
+        public async Task MoveAbsoluteAsync(JointSpace target, CancellationToken token, int checkPeriod = 100, double tolerance = 0.1, double angleTolerance = 0.1)
+        {
+            MoveAbsolute(target);
+            await WaitForTargetedAsync(token, checkPeriod, tolerance, angleTolerance);
+        }
+
+        public Task MoveAbsoluteAsync(RoboticState target, CancellationToken token, int checkPeriod = 100, double tolerance = 0.1, double angleTolerance = 0.1)
+        {
+            return MoveAbsoluteAsync(target.JointSpace, token, checkPeriod, tolerance, angleTolerance);
+        }
+
+        public void MoveRelative(JointSpace diff)
+        {
+            var target = CurrentState.Clone();
+            target.JointSpace.Add(diff);
+            TargetState = target;
+        }
+
+        public async Task MoveRelativeAsync(JointSpace diff, CancellationToken token, int checkPeriod = 100, double tolerance = 0.1, double angleTolerance = 0.1)
+        {
+            MoveRelative(diff);
+            await WaitForTargetedAsync(token, checkPeriod, tolerance, angleTolerance);
+        }
+
+        public Task WaitForTargetedAsync(int CheckPeriod = 100, double CheckDistance = 0.1, double angleTolerance = 0.1) => WaitForTargetedAsync(CancellationToken.None);
+
+        public async Task WaitForTargetedAsync(CancellationToken token, int CheckPeriod = 100, double CheckDistance = 0.1, double angleTolerance = 0.1)
         {
             while (!token.IsCancellationRequested)
             {
@@ -133,18 +180,13 @@ namespace DOF5RobotControl_GUI.Services
                 }
             }
         }
-
-        public double GetJointValue(int axis)
+        
+        public void StartVibrate(bool vibrateHorizontal, bool vibrateVertical, double amplitude, double frequency)
         {
             throw new NotImplementedException();
         }
 
-        public void MoveAbsolute(JointSpace target)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task MoveAbsoluteAsync(JointSpace target, CancellationToken token, int checkPeriod = 100, double checkDistance = 0.1)
+        public void StopVibrate()
         {
             throw new NotImplementedException();
         }

@@ -67,56 +67,56 @@ namespace DOF5RobotControl_GUI.Services
         /// </summary>
         /// <param name="frame">顶部图像帧</param>
         /// <returns>元组 (error_x, error_y, error_rz) 单位为 mm 和 rad</returns>
-        public async Task<(double px, double py, double rz)> ProcessTopImgAsync(CamFrame frame)
-        {
-            if (!hasInitialized)
-                throw new InvalidOperationException("Init should be called before process image after the camera moved.");
+        //public async Task<(double px, double py, double rz)> GetJawErrorAsync(CamFrame frame)
+        //{
+        //    if (!hasInitialized)
+        //        throw new InvalidOperationException("Init should be called before process image after the camera moved.");
 
-            var rawBuffer = frame.Buffer;
-            var width = frame.Width;
-            var height = frame.Height;
-            var stride = frame.Stride;
+        //    var rawBuffer = frame.Buffer;
+        //    var width = frame.Width;
+        //    var height = frame.Height;
+        //    var stride = frame.Stride;
 
-            GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
-            try
-            {
-                IntPtr pointer = handle.AddrOfPinnedObject();
+        //    GCHandle handle = GCHandle.Alloc(rawBuffer, GCHandleType.Pinned);
+        //    try
+        //    {
+        //        IntPtr pointer = handle.AddrOfPinnedObject();
 
-                // 通过 YOLO 获取夹钳位姿
-                var getGripperPoseTask = GetGripperPoseAsync(frame);
+        //        // 通过 YOLO 获取夹钳位姿
+        //        var getGripperPoseTask = GetGripperPoseAsync(frame);
 
-                // 通过 Halcon 模板匹配获取钳口位姿
-                var getJawPoseTask = Task.Run(() => vision.GetJawPos(pointer, width, height, stride));
+        //        // 通过 Halcon 模板匹配获取钳口位姿
+        //        var getJawPoseTask = Task.Run(() => vision.GetJawPos(pointer, width, height, stride));
 
-                // 等待任務完成并获取处理结果
-                var (x_g, y_g, rz_g) = await getGripperPoseTask;
-                var (x_j, y_j, rz_j) = await getJawPoseTask;
-                rz_j = -rz_j; // GetJawPos 获取的角度好像逆时针为正 TODO: 确认这个地方
+        //        // 等待任務完成并获取处理结果
+        //        var (x_g, y_g, rz_g) = await getGripperPoseTask;
+        //        var (x_j, y_j, rz_j) = await getJawPoseTask;
+        //        rz_j = -rz_j; // GetJawPos 获取的角度好像逆时针为正 TODO: 确认这个地方
 
-                Debug.WriteLine($"Gripper pose: x={x_g}, y={y_g}, rz={rz_g}");
-                Debug.WriteLine($"Jaw pose: x={x_j}, y={y_j}, rz={rz_j}");
+        //        Debug.WriteLine($"Gripper pose: x={x_g}, y={y_g}, rz={rz_g}");
+        //        Debug.WriteLine($"Jaw pose: x={x_j}, y={y_j}, rz={rz_j}");
 
-                // 计算它们的位姿差值
-                double dx = x_j - x_g;
-                double dy = y_j - y_g;
-                double drz = rz_j - rz_g;
+        //        // 计算它们的位姿差值
+        //        double dx = x_j - x_g;
+        //        double dy = y_j - y_g;
+        //        double drz = rz_j - rz_g;
 
-                // 将图像坐标转换为机器人坐标
-                var err_x = -dy * PixelToMMScale;
-                var err_y = -dx * PixelToMMScale;
-                var err_rz = -drz;
+        //        // 将图像坐标转换为机器人坐标
+        //        var err_x = -dy * PixelToMMScale;
+        //        var err_y = -dx * PixelToMMScale;
+        //        var err_rz = -drz;
 
-                return (err_x, err_y, err_rz);
-            }
-            catch (VisionException ex)
-            {
-                throw new InvalidOperationException("Error occured when process image", ex);
-            }
-            finally
-            {
-                handle.Free();
-            }
-        }
+        //        return (err_x, err_y, err_rz);
+        //    }
+        //    catch (VisionException ex)
+        //    {
+        //        throw new InvalidOperationException("Error occured when process image", ex);
+        //    }
+        //    finally
+        //    {
+        //        handle.Free();
+        //    }
+        //}
 
         /// <summary>
         /// 处理底部相机的图像，若移动过相机必须先调用 Init()
@@ -166,7 +166,7 @@ namespace DOF5RobotControl_GUI.Services
             var (x_g, y_g, rz_g) = await getGripperPoseTask;
             var (x_j, y_j, rz_j) = await getJawPoseTask;
 
-            const double EntranceLength = 392.8;  // px
+            const double EntranceLength = 235;  // px
             var jawCenter = new Point<double>(x_j, y_j);
             var entrancePoint = new Point<double>(x_j, y_j + EntranceLength);
             entrancePoint = RotatePoint(jawCenter, entrancePoint, rz_j);
@@ -174,6 +174,39 @@ namespace DOF5RobotControl_GUI.Services
             // 计算它们的位姿差值
             double dx = entrancePoint.X - x_g;
             double dy = entrancePoint.Y - y_g;
+            double drz = rz_j - rz_g;
+
+            // 将图像坐标转换为机器人坐标
+            double err_x = -dy * PixelToMMScale;
+            double err_y = -dx * PixelToMMScale;
+            double err_rz = -drz;
+
+            return (err_x, err_y, err_rz);
+        }
+
+        public async Task<(double x, double y, double rz)> GetJawErrorAsync(CamFrame topImg)
+        {
+            const double targetLength = -180;  // px
+
+            if (!hasInitialized)
+                throw new InvalidOperationException("Init should be called before process image after the camera moved.");
+
+            // 获取夹钳前端位姿
+            var getGripperPoseTask = GetGripperPoseAsync(topImg);
+
+            // 获取钳口入口位姿
+            var getJawPoseTask = GetJawPoseAsync(topImg);
+
+            var (x_g, y_g, rz_g) = await getGripperPoseTask;
+            var (x_j, y_j, rz_j) = await getJawPoseTask;
+
+            var jawCenter = new Point<double>(x_j, y_j);
+            var targetPoint = new Point<double>(x_j, y_j + targetLength);
+            targetPoint = RotatePoint(jawCenter, targetPoint, rz_j);
+
+            // 计算它们的位姿差值
+            double dx = targetPoint.X - x_g;
+            double dy = targetPoint.Y - y_g;
             double drz = rz_j - rz_g;
 
             // 将图像坐标转换为机器人坐标
@@ -380,7 +413,7 @@ namespace DOF5RobotControl_GUI.Services
 
                 // 等待任務完成并获取处理结果
                 var (x_j, y_j, rz_j) = await getJawPoseTask;
-                rz_j = -rz_j; // GetJawPos 获取的角度好像逆时针为正 TODO: 确认这个地方
+                rz_j = -rz_j; // GetJawPos 获取的角度逆时针为正，而图像坐标系应该顺时针为正，所以取反
 
                 Debug.WriteLine($"Jaw pose: x={x_j}, y={y_j}, rz={rz_j}");
 

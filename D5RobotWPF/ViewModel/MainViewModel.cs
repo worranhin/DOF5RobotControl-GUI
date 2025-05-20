@@ -18,7 +18,7 @@ namespace DOF5RobotControl_GUI.ViewModel
         public static readonly Joints ZeroPos = new(0, 0, 0, 0, 0);
         public static readonly Joints IdlePos = new(0, 0, -10000000, 0, 0);
         public static readonly Joints ChangeJawPos = new(0, -1500000, 8000000, 5000000, 0); // 0, -1.5, 8, 5, 0
-        public static readonly Joints PreChangeJawPos = new(0, -1200000, 8000000, 5000000, 0);
+        public static readonly Joints PreChangeJawPos = new(0, -1200000, 9_000_000, 5000000, 0);
         public static readonly Joints FetchRingPos = new(0, 10000000, 10000000, 0, 0); // 0, 10, 10, 0, 0
         public static readonly Joints PreFetchRingPos = new(0, 8673000, -15000000, -10000000, 0);
         public static readonly Joints AssemblePos1 = new(0, -600000, 900000, 9000000, 0); // 0, -0.6, 0.9, 9, 0
@@ -108,9 +108,27 @@ namespace DOF5RobotControl_GUI.ViewModel
         {
             // 若系统未连接，则建立连接
             if (!SystemConnected)
-                ConnectSystem();
+            {
+                try
+                {
+                    ConnectSystem();
+                }
+                catch (InvalidOperationException ex)
+                {
+                    _popUpService.Show(ex.ToString(), "Error when toggle connection");
+                }
+            }
             else  // 否则断开连接
-                DisconnectSystem();
+            {
+                try
+                {
+                    DisconnectSystem();
+                }
+                catch (InvalidOperationException ex)
+                {
+                    _popUpService.Show(ex.ToString(), "Error when toggle connection");
+                }
+            }
         }
 
         private void ConnectSystem()
@@ -127,8 +145,13 @@ namespace DOF5RobotControl_GUI.ViewModel
             {
                 _robotControlService.Disconnect();
                 _cameraCtrlService.DisconnectCamMotor();
-                _popUpService.Show(ex.Message);
-                throw;
+                _popUpService.Show(ex.ToString());
+            }
+            catch (ArgumentException ex)
+            {
+                _robotControlService.Disconnect();
+                _cameraCtrlService.DisconnectCamMotor();
+                _popUpService.Show(ex.ToString());
             }
         }
 

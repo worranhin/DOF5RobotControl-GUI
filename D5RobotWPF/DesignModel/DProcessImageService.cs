@@ -20,7 +20,7 @@ namespace DOF5RobotControl_GUI.DesignModel
             throw new NotImplementedException();
         }
 
-        public Task<(double px, double py, double rz)> ProcessTopImgAsync(CamFrame frame)
+        public Task<(double x, double y, double rz)> GetJawErrorAsync(CamFrame topImg)
         {
             throw new NotImplementedException();
         }
