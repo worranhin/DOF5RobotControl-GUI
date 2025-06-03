@@ -109,38 +109,52 @@
                 </Style>
             </StackPanel.Resources>
             <mah:MetroHeader Header="关节状态">
-                <Grid>
-                    <Grid.Resources>
+                <UniformGrid Rows="1">
+                    <UniformGrid.Resources>
                         <Style TargetType="TextBlock" BasedOn="{StaticResource leftAlignTextBlock}"/>
-                    </Grid.Resources>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="auto"/>
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="0.3*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="0.3*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="0.3*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="0.3*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="0.3*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="2*"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Row="0" Grid.Column="0">R1:</TextBlock>
-                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CurrentState.JointSpace.R1, StringFormat=F2}"/>
-                    <TextBlock Grid.Row="0" Grid.Column="2">P2:</TextBlock>
-                    <TextBlock Grid.Row="0" Grid.Column="3" Text="{Binding CurrentState.JointSpace.P2, StringFormat=F4}"/>
-                    <TextBlock Grid.Row="0" Grid.Column="4">P3:</TextBlock>
-                    <TextBlock Grid.Row="0" Grid.Column="5" Text="{Binding CurrentState.JointSpace.P3, StringFormat=F4}"/>
-                    <TextBlock Grid.Row="0" Grid.Column="6">P4:</TextBlock>
-                    <TextBlock Grid.Row="0" Grid.Column="7" Text="{Binding CurrentState.JointSpace.P4, StringFormat=F4}"/>
-                    <TextBlock Grid.Row="0" Grid.Column="8">R5:</TextBlock>
-                    <TextBlock Grid.Row="0" Grid.Column="9" Text="{Binding CurrentState.JointSpace.R5, StringFormat=F2}"/>
-                    <Button Grid.Row="0" Grid.Column="10" Command="{Binding SetTargetJointsFromCurrentCommand}">设为当前值</Button>
-                </Grid>
+                    </UniformGrid.Resources>
+                    <Grid Margin="0 0 8 0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0">R1</TextBlock>
+                        <TextBox Grid.Column="1" Text="{Binding CurrentState.JointSpace.R1, StringFormat=F2}" IsReadOnly="True"/>
+                    </Grid>
+                    <Grid Grid.Column="1" Margin="0 0 8 0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock>P2</TextBlock>
+                        <TextBox Grid.Column="1" Text="{Binding CurrentState.JointSpace.P2, StringFormat=F4}" IsReadOnly="True"/>
+                    </Grid>
+                    <Grid Grid.Column="2" Margin="0 0 8 0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock>P3</TextBlock>
+                        <TextBox Grid.Column="1" Text="{Binding CurrentState.JointSpace.P3, StringFormat=F4}" IsReadOnly="True"/>
+                    </Grid>
+                    <Grid Grid.Column="3" Margin="0 0 8 0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock>P4</TextBlock>
+                        <TextBox Grid.Column="1" Text="{Binding CurrentState.JointSpace.P4, StringFormat=F4}" IsReadOnly="True"/>
+                    </Grid>
+                    <Grid Grid.Column="4" Margin="0 0 8 0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock>R5</TextBlock>
+                        <TextBox Grid.Column="1" Text="{Binding CurrentState.JointSpace.R5, StringFormat=F2}" IsReadOnly="True"/>
+                    </Grid>
+                    <Button Grid.Column="5" Command="{Binding SetTargetJointsFromCurrentCommand}">设为当前值</Button>
+                </UniformGrid>
             </mah:MetroHeader>
             <!-- 关节控制区 -->
             <mah:MetroHeader Header="关节控制" Margin="0 8 0 0">
