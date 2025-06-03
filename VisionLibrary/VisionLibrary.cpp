@@ -23,7 +23,7 @@ namespace VisionLibrary {
 			throw gcnew VisionException(gcnew System::String(cvEx.what()));
 		}
 		catch (HalconCpp::HException& hEx) {
-			throw gcnew VisionException(gcnew System::String(hEx.ErrorMessage().Text()) + " 请在可执行文件目录中提供 model");
+			throw gcnew VisionException(gcnew System::String(hEx.ErrorMessage().Text()) + " 请检查Halcon 证书，以及可执行文件目录中是否有 model");
 		}
 		catch (const std::exception& e) {
 			throw gcnew VisionException(gcnew System::String(e.what()));
