@@ -174,7 +174,8 @@ namespace DOF5RobotControl_GUI.ViewModel
         [RelayCommand]
         private async Task CollectRLDataAsync()
         {
-            const int maxTime = 12000; // ms
+            //const int maxTime = 12000; // ms
+            int count = 0;
 
             collectRlDataCancelSource = new();
             var token = collectRlDataCancelSource.Token;
@@ -190,13 +191,14 @@ namespace DOF5RobotControl_GUI.ViewModel
             recorder.Start();  // 初始化记录器
 
             var sw = Stopwatch.StartNew();
-            while(!token.IsCancellationRequested)
+            float kp = 0.2f;
+            while (!token.IsCancellationRequested)
             {
+                if (count >= 15) kp = 0.05f;
                 // 获取当前状态
                 float[] state = await GetState();
 
                 // 将误差作为模型的输入获取动作
-                const float kp = 0.8f;
                 var action = policy.Step(state);
 
                 for (int i = 0; i < action.Length; i++)
@@ -220,35 +222,44 @@ namespace DOF5RobotControl_GUI.ViewModel
                 Debug.WriteLine(error);
 
                 // 执行动作
-                await _robotControlService.MoveRelativeAsync(error, token);
+                //await _robotControlService.MoveRelativeAsync(error, token);
+                _robotControlService.MoveRelative(error);
+                await Task.Delay(1000);
+
+                float[] nextState = await GetState();
 
                 // 记录 state, action
-                recorder.Record(state, action);
+                recorder.Record(state, action, error, nextState);
 
-                // 若达到最大时间，则停止
-                var t = sw.ElapsedMilliseconds;
-                if (t > maxTime) break;
+                if (count++ == 25) break;
             }
 
             recorder.Stop();
-            
+
             // 本地方法定义
             async Task<float[]> GetState()
             {
+                const double offsetX = -1.0;
+                const double offsetZ = 5.0;
+
                 CamFrame topImg, bottomImg;
                 // 获取当前位姿状态误差
                 topImg = _cameraCtrlService.GetTopFrame();
                 bottomImg = _cameraCtrlService.GetBottomFrame();
 
-                var topTask = _imageService.GetJawErrorAsync(topImg);
+                var topTask = _imageService.GetEntranceErrorAsync(topImg);
                 var bottomTask = _imageService.ProcessBottomImageAsync(bottomImg);
 
                 var (x, y, rz) = await topTask; // 单位为 mm 和 rad
                 var z = await bottomTask;
 
+                x += offsetX;
+                z += offsetZ;
+
                 double halfTheta = rz / 2.0;
                 double w = Math.Cos(halfTheta);  // 计算四元数
                 double qz = Math.Sin(halfTheta);
+
                 //float[] state = [((float)x), ((float)y), ((float)z), (float)w, 0, 0, (float)qz];  // 转为神经网络的输入形式（位移+四元数误差）
                 float[] state = [((float)x / 1000.0F), ((float)y / 1000.0F), ((float)z / 1000.0F), (float)w, 0, 0, (float)qz]; // 转为神经网络的输入形式（位移+四元数误差） 单位为 m
                 return state;

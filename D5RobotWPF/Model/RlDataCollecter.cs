@@ -9,7 +9,10 @@ namespace DOF5RobotControl_GUI.Model
 
         record Data(long Timestamp, float X, float Y, float Z,
             float W, float Qx, float Qy, float Qz,
-            float R1, float P2, float P3, float P4, float R5);
+            float R1, float P2, float P3, float P4, float R5,
+            double E1, double E2, double E3, double E4, double E5,
+            float X1, float Y1, float Z1,
+            float W1, float Qx1, float Qy1, float Qz1);
 
         static readonly string RootDir = "Records";
 
@@ -85,31 +88,52 @@ namespace DOF5RobotControl_GUI.Model
         /// <param name="p3"></param>
         /// <param name="p4"></param>
         /// <param name="r5"></param>
+        /// <param name="e1"></param>
+        /// <param name="e2"></param>
+        /// <param name="e3"></param>
+        /// <param name="e4"></param>
+        /// <param name="e5"></param>
+        /// <param name="x1"></param>
+        /// <param name="y1"></param>
+        /// <param name="z1"></param>
+        /// <param name="w1"></param>
+        /// <param name="qx1"></param>
+        /// <param name="qy1"></param>
+        /// <param name="qz1"></param>
         /// <exception cref="InvalidOperationException"></exception>
         public void Record(float x, float y, float z, float w, float qx, float qy, float qz,
-            float r1, float p2, float p3, float p4, float r5)
+            float r1, float p2, float p3, float p4, float r5,
+            double e1, double e2, double e3, double e4, double e5,
+            float x1, float y1, float z1, float w1, float qx1, float qy1, float qz1)
         {
             if (records == null)
                 throw new InvalidOperationException("Data recorder has not started yet.");
 
             var t = stopWatch.ElapsedMilliseconds;
-            Data data = new(t, x, y, z, w, qx, qy, qz, r1, p2, p3, p4, r5);
+            Data data = new(t, x, y, z, w, qx, qy, qz,
+                r1, p2, p3, p4, r5,
+                e1, e2, e3, e4, e5,
+                x1, y1, z1, w1, qx1, qy1, qz1);
             records.Add(data);
         }
 
         /// <summary>
         /// 记录一次数据
         /// </summary>
-        /// <param name="state">状态数组</param>
-        /// <param name="action">动作数组</param>
+        /// <param name="state">视觉输出状态</param>
+        /// <param name="action">神经网络输出动作</param>
+        /// <param name="error">电机实际执行动作</param>
+        /// <param name="nextState">视觉输出下一状态</param>
         /// <exception cref="ArgumentException"></exception>
-        public void Record(float[] state, float[] action)
+        public void Record(float[] state, float[] action, JointSpace error, float[] nextState)
         {
             if (state.Length != 7 || action.Length != 5)
                 throw new ArgumentException("State must be of length 7 and action must be of length 5.");
 
             Record(state[0], state[1], state[2], state[3], state[4], state[5], state[6],
-                action[0], action[1], action[2], action[3], action[4]);
+                action[0], action[1], action[2], action[3], action[4],
+                error.R1, error.P2, error.P3, error.P4, error.R5,
+                nextState[0], nextState[1], nextState[2], nextState[3], nextState[4], nextState[5], nextState[6]);
         }
 
         /// <summary>
@@ -127,7 +151,7 @@ namespace DOF5RobotControl_GUI.Model
             using var writer = new StreamWriter(filePath);
 
             // 写入 CSV 标题
-            writer.WriteLine("Timestamp,X,Y,Z,W,Qx,Qy,Qz,R1,P2,P3,P4,R5");
+            writer.WriteLine("Timestamp,X,Y,Z,W,Qx,Qy,Qz,R1,P2,P3,P4,R5,J1,J2,J3,J4,J5,X1,Y1,Z1,W1,Qx1,Qy1,Qz1");
 
             // 写入每条记录
             foreach (var record in records)
@@ -135,7 +159,9 @@ namespace DOF5RobotControl_GUI.Model
                 // 将记录转换为 CSV 格式
                 var line = $"{record.Timestamp}," +
                            $"{record.X},{record.Y},{record.Z},{record.W},{record.Qx},{record.Qy},{record.Qz}," +
-                           $"{record.R1},{record.P2},{record.P3},{record.P4},{record.R5}";
+                           $"{record.R1},{record.P2},{record.P3},{record.P4},{record.R5}," +
+                           $"{record.E1},{record.E2},{record.E3},{record.E4},{record.E5}," +
+                           $"{record.X1},{record.Y1},{record.Z1},{record.W1},{record.Qx1},{record.Qy1},{record.Qz1}";
 
                 writer.WriteLine(line);
             }

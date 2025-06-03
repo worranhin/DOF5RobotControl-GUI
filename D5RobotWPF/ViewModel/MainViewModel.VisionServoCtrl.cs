@@ -290,9 +290,7 @@ namespace DOF5RobotControl_GUI.ViewModel
             attachCancelSource = new();
             var cancelToken = attachCancelSource.Token;
 
-            // 开始记录状态动作数据
-            //StartRecord(10, false);
-
+            StartRecord(100, true);
             try
             {
                 var sw = Stopwatch.StartNew();
@@ -354,13 +352,11 @@ namespace DOF5RobotControl_GUI.ViewModel
             }
             finally
             {
+                await StopRecordAsync();
+
                 IsAttachingJaw = false;
                 attachCancelSource.Dispose();
                 attachCancelSource = null;
-
-                await StopRecordAsync();
-                //await recordTask;
-                recordTask = null;
             }
         }
 

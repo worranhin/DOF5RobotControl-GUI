@@ -41,11 +41,11 @@ namespace DOF5RobotControl_GUI.Services
                 server.Configuration = OpcApplicationConfiguration.LoadServerConfig("Opc.UaFx.Server");
                 server.ApplicationName = "DOF5ROBOT";//应用名称
                 server.Start();
+                Debug.WriteLine("Opc Server running");
                 //Random rd = new Random(); 意义不明的操作，先注释掉，没问题再删
                 while (!token.IsCancellationRequested)
                 {
                     //int i = rd.Next();
-                    Debug.WriteLine("Opc Server running");
                     Thread.Sleep(1000);
                 }
                 server.Stop();
