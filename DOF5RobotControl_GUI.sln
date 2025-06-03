@@ -20,6 +20,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTest", "UnitTest\UnitTe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OnnxInferenceLibrary", "OnnxInferenceLibrary\OnnxInferenceLibrary.csproj", "{6E2807C6-1571-484A-A0C6-EA3705C430B0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "D5Robot", "D5Robot\D5Robot.csproj", "{44121595-BD8A-409C-8172-314E01E0F6E5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -132,6 +134,24 @@ Global
 		{6E2807C6-1571-484A-A0C6-EA3705C430B0}.Release|x64.Build.0 = Release|Any CPU
 		{6E2807C6-1571-484A-A0C6-EA3705C430B0}.Release|x86.ActiveCfg = Release|Any CPU
 		{6E2807C6-1571-484A-A0C6-EA3705C430B0}.Release|x86.Build.0 = Release|Any CPU
+		{44121595-BD8A-409C-8172-314E01E0F6E5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44121595-BD8A-409C-8172-314E01E0F6E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44121595-BD8A-409C-8172-314E01E0F6E5}.Debug|x64.ActiveCfg = Debug|x64
+		{44121595-BD8A-409C-8172-314E01E0F6E5}.Debug|x64.Build.0 = Debug|x64
+		{44121595-BD8A-409C-8172-314E01E0F6E5}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{44121595-BD8A-409C-8172-314E01E0F6E5}.Debug|x86.Build.0 = Debug|Any CPU
+		{44121595-BD8A-409C-8172-314E01E0F6E5}.Dummy_Debug|Any CPU.ActiveCfg = Release|Any CPU
+		{44121595-BD8A-409C-8172-314E01E0F6E5}.Dummy_Debug|Any CPU.Build.0 = Release|Any CPU
+		{44121595-BD8A-409C-8172-314E01E0F6E5}.Dummy_Debug|x64.ActiveCfg = Release|Any CPU
+		{44121595-BD8A-409C-8172-314E01E0F6E5}.Dummy_Debug|x64.Build.0 = Release|Any CPU
+		{44121595-BD8A-409C-8172-314E01E0F6E5}.Dummy_Debug|x86.ActiveCfg = Release|Any CPU
+		{44121595-BD8A-409C-8172-314E01E0F6E5}.Dummy_Debug|x86.Build.0 = Release|Any CPU
+		{44121595-BD8A-409C-8172-314E01E0F6E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44121595-BD8A-409C-8172-314E01E0F6E5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{44121595-BD8A-409C-8172-314E01E0F6E5}.Release|x64.ActiveCfg = Release|Any CPU
+		{44121595-BD8A-409C-8172-314E01E0F6E5}.Release|x64.Build.0 = Release|Any CPU
+		{44121595-BD8A-409C-8172-314E01E0F6E5}.Release|x86.ActiveCfg = Release|Any CPU
+		{44121595-BD8A-409C-8172-314E01E0F6E5}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
