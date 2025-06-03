@@ -34,7 +34,15 @@ namespace VisionLibrary {
 	}
 
 	VisionWrapper::~VisionWrapper() {
-		delete instance;
+		this->!VisionWrapper();
+	}
+
+	VisionWrapper::!VisionWrapper()
+	{
+		if (instance != nullptr) {
+			delete instance;
+			instance = nullptr;
+		}
 	}
 
 	void VisionWrapper::JawLibSegmentation(IntPtr imgBuffer, int width, int height, int stride)
@@ -56,16 +64,6 @@ namespace VisionLibrary {
 		}
 	}
 
-
-	/// <summary>
-	/// 通过顶部相机获取的图像，得到任务空间中夹钳与钳口的误差
-	/// </summary>
-	/// <param name="imgBuffer">存储图像信息的 Buffer 指针，函数退出前请勿释放内存</param>
-	/// <param name="width">图像宽度</param>
-	/// <param name="height">图像高度</param>
-	/// <param name="stride">图像单行的字节数</param>
-	/// <param name="mode">FINE 表示插入后的定位点，ROUGH 表示插入前的定位点</param>
-	/// <returns>误差结构体</returns>
 	TaskSpaceError VisionWrapper::GetTaskSpaceError(IntPtr imgBuffer, int width, int height, int stride, MatchingMode mode) {
 		try {
 			unsigned char* data = static_cast<unsigned char*>(imgBuffer.ToPointer());
@@ -115,14 +113,6 @@ namespace VisionLibrary {
 		}
 	}
 
-	/// <summary>
-	/// 通过底部相机的图像，获取竖直高度上夹钳与钳口平面之间的距离
-	/// </summary>
-	/// <param name="imgBuffer">存储图像信息的 Buffer 指针，函数退出前请勿释放内存</param>
-	/// <param name="width">图像的宽度</param>
-	/// <param name="height">图像的高度</param>
-	/// <param name="stride">图像单行的字节数</param>
-	/// <returns>夹钳与钳口之间的距离，单位为 mm</returns>
 	double VisionWrapper::GetVerticalError(IntPtr imgBuffer, int width, int height, int stride)
 	{
 		try {
